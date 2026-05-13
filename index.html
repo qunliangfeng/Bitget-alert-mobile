@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>价格播报 · Bitget</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #0d0f14;
+  --bg2:   #13161d;
+  --bg3:   #1a1e28;
+  --bd:    #252a38;
+  --bd2:   #2e3445;
+  --tx:    #e8eaf0;
+  --tx2:   #8891a8;
+  --tx3:   #555e72;
+  --blue:  #3b82f6;
+  --blue-d:#1d3461;
+  --green: #22c55e;
+  --gd:    #0f2d1e;
+  --red:   #ef4444;
+  --rd:    #2d0f0f;
+  --amber: #f59e0b;
+  --ad:    #2d1f06;
+  --mono:  'JetBrains Mono', monospace;
+  --sans:  'Inter', sans-serif;
+  --nav-h: 56px;
+  --bottom-h: 64px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-size: 14px; }
+
+/* ── Top Nav ── */
+.topnav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+}
+.nav-logo { display: flex; align-items: center; gap: 8px; }
+.nav-logo-icon { width: 26px; height: 26px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.nav-title { font-size: 15px; font-weight: 600; letter-spacing: -.3px; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+
+.ws-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; font-size: 11px; border-radius: 99px;
+  font-family: var(--mono); border: 1px solid var(--bd);
+  color: var(--tx3); background: var(--bg3);
+}
+.ws-pill.connected { border-color: #166534; color: var(--green); background: var(--gd); }
+.ws-pill.connecting { border-color: #713f12; color: var(--amber); background: var(--ad); }
+.ws-pill.error { border-color: #7f1d1d; color: var(--red); background: var(--rd); }
+
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; flex-shrink: 0; }
+.dot.off { background: var(--tx3); animation: none; }
+.dot.warn { background: var(--amber); animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.nav-settings-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer;
+}
+
+/* ── Scroll area ── */
+.scroll-area {
+  position: fixed;
+  top: var(--nav-h); bottom: var(--bottom-h);
+  left: 0; right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+}
+
+/* ── Market type bar ── */
+.mkt-bar {
+  display: flex; gap: 6px; margin-bottom: 12px;
+}
+.mkt-btn {
+  flex: 1; padding: 9px 0; font-size: 13px; font-weight: 500;
+  text-align: center; border: 1px solid var(--bd); border-radius: 10px;
+  background: var(--bg2); color: var(--tx3); cursor: pointer;
+  font-family: var(--sans); transition: all .15s;
+}
+.mkt-btn.active { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+
+/* ── Cards ── */
+.cards { display: flex; flex-direction: column; gap: 10px; }
+
+.card {
+  background: var(--bg2); border: 1px solid var(--bd); border-radius: 14px;
+  overflow: hidden; transition: border-color .4s, box-shadow .4s;
+}
+.card.flash-up { border-color: var(--green); box-shadow: 0 0 0 1px #22c55e33, 0 0 16px #22c55e18; }
+.card.flash-down { border-color: var(--red); box-shadow: 0 0 0 1px #ef444433, 0 0 16px #ef444418; }
+.card.near-target { border-color: var(--amber) !important; box-shadow: 0 0 0 1px #f59e0b33, 0 0 16px #f59e0b18 !important; }
+
+/* card top row */
+.card-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 14px 0;
+}
+.coin-left { display: flex; align-items: center; gap: 10px; }
+.cicon {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; font-family: var(--mono); flex-shrink: 0;
+}
+.coin-name { font-size: 14px; font-weight: 600; color: var(--tx); }
+.coin-sub { font-size: 11px; color: var(--tx3); margin-top: 1px; }
+.card-right { display: flex; align-items: center; gap: 8px; }
+.ch-icons { display: flex; gap: 4px; }
+.chi { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: .2; transition: opacity .2s; }
+.chi.on { opacity: 1; }
+.chi.tg { background: #0d2137; }
+.chi.wx { background: #0d2116; }
+.tgl { width: 36px; height: 20px; background: var(--bd2); border-radius: 99px; position: relative; cursor: pointer; border: none; transition: background .2s; flex-shrink: 0; }
+.tgl.on { background: var(--green); }
+.tgl::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: left .2s; }
+.tgl.on::after { left: 18px; }
+
+/* price */
+.card-price { padding: 6px 14px 10px; }
+.price-main { display: flex; align-items: baseline; gap: 10px; }
+.price-val {
+  font-size: 32px; font-weight: 600; font-family: var(--mono);
+  color: var(--tx); letter-spacing: -1px; line-height: 1;
+  transition: color .3s;
+}
+.price-val.tick-up { color: var(--green); }
+.price-val.tick-down { color: var(--red); }
+.change-tag { font-size: 13px; padding: 3px 8px; border-radius: 99px; font-family: var(--mono); white-space: nowrap; }
+.change-tag.up { background: var(--gd); color: var(--green); }
+.change-tag.down { background: var(--rd); color: var(--red); }
+.price-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.price-hl { font-size: 11px; color: var(--tx3); font-family: var(--mono); }
+.last-fire { font-size: 11px; color: var(--tx3); font-family: var(--mono); }
+
+/* range bar */
+.range-wrap { margin: 0 14px 10px; }
+.range-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--tx3); font-family: var(--mono); margin-bottom: 3px; }
+.range-bar { height: 3px; border-radius: 2px; background: var(--bd2); position: relative; }
+.range-fill { position: absolute; top: 0; height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--red), var(--green)); }
+.range-cur { position: absolute; top: -3px; width: 3px; height: 9px; background: var(--tx2); border-radius: 1px; transform: translateX(-50%); transition: left .4s; }
+
+/* expand toggle */
+.card-expand-btn {
+  width: 100%; padding: 8px 14px;
+  background: none; border: none; border-top: 1px solid var(--bd);
+  color: var(--tx3); font-size: 12px; font-family: var(--sans);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: background .15s;
+}
+.card-expand-btn:active { background: var(--bg3); }
+
+/* expandable settings */
+.card-settings { display: none; border-top: 1px solid var(--bd); padding: 12px 14px; }
+.card-settings.open { display: block; }
+
+.mode-tabs { display: flex; gap: 3px; margin-bottom: 10px; background: var(--bg3); border-radius: 8px; padding: 3px; }
+.mtab { flex: 1; padding: 7px 0; font-size: 12px; font-weight: 500; text-align: center; border: none; border-radius: 6px; background: transparent; color: var(--tx3); cursor: pointer; font-family: var(--sans); transition: all .15s; }
+.mtab.active { background: var(--bg2); color: var(--tx); box-shadow: 0 1px 3px #0005; }
+.mbody { display: none; }
+.mbody.active { display: block; }
+
+.presets { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+.preset { padding: 6px 12px; font-size: 12px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 99px; background: var(--bg3); color: var(--tx3); cursor: pointer; transition: all .15s; }
+.preset.sel { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+
+.step-row { display: flex; align-items: center; gap: 8px; }
+.step-inp { flex: 1; padding: 8px 10px; font-size: 14px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 8px; background: var(--bg3); color: var(--tx); outline: none; }
+.step-inp:focus { border-color: var(--blue); }
+.step-unit { font-size: 12px; color: var(--tx3); white-space: nowrap; }
+
+.next-lvls { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.lvlp { font-size: 11px; padding: 3px 8px; border-radius: 99px; font-family: var(--mono); border: 1px solid var(--bd); color: var(--tx3); background: var(--bg3); }
+.lvlp.above { border-color: #166534; color: var(--green); }
+.lvlp.below { border-color: #7f1d1d; color: var(--red); }
+
+.tgt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.tgt-field label { display: block; font-size: 10px; color: var(--tx3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+.tgt-field input { width: 100%; padding: 8px 9px; font-size: 13px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 8px; background: var(--bg3); color: var(--tx); outline: none; }
+.tgt-field input:focus { border-color: var(--amber); }
+
+.zone-info { padding: 9px 11px; background: var(--bg3); border-radius: 8px; font-size: 12px; color: var(--tx3); line-height: 1.8; border: 1px solid var(--bd); }
+.zone-info b { color: var(--tx2); }
+.zone-info .amb { color: var(--amber); font-weight: 600; }
+.zone-bar { height: 4px; border-radius: 2px; background: var(--bd); position: relative; overflow: hidden; margin-top: 8px; }
+.zone-near-bg { position: absolute; top: 0; height: 100%; background: #2d1f0680; }
+.zone-cur-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px; transition: width .4s; }
+.zone-tgt-mark { position: absolute; top: -2px; width: 2px; height: 8px; background: var(--amber); border-radius: 1px; }
+
+/* log panel */
+.log-panel { background: var(--bg2); border: 1px solid var(--bd); border-radius: 14px; overflow: hidden; margin-bottom: 4px; }
+.log-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--bd); }
+.log-title { font-size: 13px; font-weight: 500; color: var(--tx2); }
+.log-clr { font-size: 12px; color: var(--tx3); background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 4px 8px; }
+.log-list { max-height: 200px; overflow-y: auto; }
+.log-row { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-bottom: 1px solid var(--bd); font-size: 12px; }
+.log-row:last-child { border-bottom: none; }
+.lt { color: var(--tx3); font-family: var(--mono); min-width: 54px; font-size: 11px; }
+.lc { font-weight: 600; min-width: 32px; font-family: var(--mono); color: var(--tx); }
+.ld { min-width: 12px; text-align: center; }
+.lp { font-family: var(--mono); flex: 1; color: var(--tx2); font-size: 11px; }
+.lm { font-size: 10px; padding: 1px 6px; border-radius: 99px; white-space: nowrap; }
+.lm.target { background: var(--ad); color: var(--amber); }
+.lm.fixed { background: var(--bg3); color: var(--tx3); }
+.lchs { display: flex; gap: 3px; }
+.lch { font-size: 10px; padding: 1px 6px; border-radius: 99px; font-family: var(--mono); }
+.lch.tg { background: #0d2137; color: #60a5fa; }
+.lch.wx { background: #0d2116; color: var(--green); }
+.lch.snd { background: var(--bg3); color: var(--tx3); }
+.lch.err { background: var(--rd); color: var(--red); }
+.log-empty { text-align: center; padding: 1.5rem; color: var(--tx3); font-size: 12px; }
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  height: var(--bottom-h);
+  background: var(--bg2); border-top: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0 8px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px; cursor: pointer; background: none; border: none;
+  color: var(--tx3); font-family: var(--sans); font-size: 10px; font-weight: 500;
+  border-radius: 10px; transition: background .15s;
+}
+.nav-tab:active { background: var(--bg3); }
+.nav-tab.active { color: var(--blue); }
+.nav-tab svg { width: 22px; height: 22px; }
+
+/* ── Settings drawer ── */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: #000a; backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+.drawer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 201;
+  background: var(--bg2); border-top: 1px solid var(--bd);
+  border-radius: 20px 20px 0 0;
+  max-height: 88vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.32,0,.67,0);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.drawer.open { transform: translateY(0); }
+
+.drawer-handle { width: 36px; height: 4px; background: var(--bd2); border-radius: 2px; margin: 12px auto 16px; }
+.drawer-title { font-size: 15px; font-weight: 600; padding: 0 18px 14px; border-bottom: 1px solid var(--bd); }
+
+.dsec { padding: 14px 18px; border-bottom: 1px solid var(--bd); }
+.dsec-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--tx3); margin-bottom: 12px; }
+.drow { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+.drow-name { font-size: 14px; color: var(--tx2); display: flex; align-items: center; gap: 8px; }
+.drow-name svg { flex-shrink: 0; }
+
+.mkt-seg { display: flex; gap: 4px; }
+.seg-btn { flex: 1; padding: 8px 0; font-size: 13px; font-weight: 500; text-align: center; border: 1px solid var(--bd); border-radius: 8px; background: var(--bg3); color: var(--tx3); cursor: pointer; font-family: var(--sans); transition: all .15s; }
+.seg-btn.active { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+
+.push-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.ptab { flex: 1; padding: 7px 0; font-size: 12px; font-weight: 500; text-align: center; border: 1px solid var(--bd); border-radius: 8px; background: transparent; color: var(--tx3); cursor: pointer; font-family: var(--sans); transition: all .15s; }
+.ptab.active { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+.pbody { display: none; }
+.pbody.active { display: block; }
+
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 11px; color: var(--tx3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+.field input { width: 100%; padding: 10px 12px; font-size: 14px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 10px; background: var(--bg3); color: var(--tx); outline: none; transition: border-color .15s; }
+.field input:focus { border-color: var(--blue); }
+
+.big-btn { width: 100%; padding: 12px; font-size: 14px; font-family: var(--sans); font-weight: 500; border: none; border-radius: 10px; background: var(--blue-d); color: #60a5fa; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: background .15s; margin-top: 4px; }
+.big-btn:active { background: #1e3a6e; }
+
+.smsg { font-size: 12px; padding: 8px 10px; border-radius: 8px; margin-top: 8px; display: none; font-family: var(--mono); }
+.smsg.ok { background: var(--gd); color: var(--green); display: block; }
+.smsg.err { background: var(--rd); color: var(--red); display: block; }
+.smsg.loading { background: var(--bg3); color: var(--tx3); display: block; }
+
+.help-text { font-size: 12px; color: var(--tx3); line-height: 1.9; }
+.help-text b { color: var(--tx2); }
+.cm { background: var(--bg3); padding: 1px 6px; border-radius: 4px; font-family: var(--mono); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ico-tg" viewBox="0 0 24 24"><path fill="#60a5fa" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.93 6.79-1.68 7.93c-.12.55-.46.68-.93.42l-2.58-1.9-1.24 1.2c-.14.14-.25.25-.5.25l.18-2.57 4.65-4.2c.2-.18-.04-.28-.32-.1L8.18 14.6l-2.52-.79c-.55-.17-.56-.55.12-.81l9.85-3.8c.46-.17.86.11.3.59z"/></symbol>
+  <symbol id="ico-wx" viewBox="0 0 24 24"><path fill="#22c55e" d="M9.5 4C5.36 4 2 6.91 2 10.5c0 2.04 1.06 3.86 2.73 5.05L4 18l2.5-1.25C7.25 17 8.35 17.25 9.5 17.25c.34 0 .68-.02 1.01-.06A5.98 5.98 0 0 1 10 15c0-3.31 3.13-6 7-6 .35 0 .69.02 1.03.06C17.4 6.6 13.78 4 9.5 4zm-2 4.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM17 11c-2.76 0-5 1.79-5 4s2.24 4 5 4c.62 0 1.22-.1 1.76-.28L21 20l-.6-2.1A3.87 3.87 0 0 0 22 15c0-2.21-2.24-4-5-4zm-1.5 2.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm3 0a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5z"/></symbol>
+  <symbol id="ico-chart" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3v18h18v-2H5V3H3zm4 11 3-3.5 2.5 2 3.5-4.5 2 2.5V17H7v-3z"/></symbol>
+  <symbol id="ico-log" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></symbol>
+  <symbol id="ico-settings" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+</svg>
+
+<!-- Top Nav -->
+<nav class="topnav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">📡</div>
+    <span class="nav-title">Bitget 价格播报</span>
+  </div>
+  <div class="nav-right">
+    <div class="ws-pill connecting" id="wsPill">
+      <div class="dot warn" id="wsDot"></div>
+      <span id="wsText">连接中</span>
+    </div>
+    <button class="nav-settings-btn" onclick="openDrawer()" aria-label="设置">⚙️</button>
+  </div>
+</nav>
+
+<!-- Scroll area -->
+<div class="scroll-area" id="scrollArea">
+  <!-- Market type bar -->
+  <div class="mkt-bar">
+    <button class="mkt-btn" id="mktSpot" onclick="switchMkt('SPOT')">📈 现货</button>
+    <button class="mkt-btn active" id="mktFutures" onclick="switchMkt('USDT-FUTURES')">📊 永续合约</button>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards" id="cardsWrap"></div>
+
+  <!-- Log -->
+  <div class="log-panel" id="logPanel" style="display:none">
+    <div class="log-head">
+      <span class="log-title">播报记录</span>
+      <button class="log-clr" onclick="logs.length=0;renderLog()">清空</button>
+    </div>
+    <div class="log-list" id="logList"><div class="log-empty">等待价格触发…</div></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="tab-market" onclick="switchTab('market')">
+    <svg viewBox="0 0 24 24"><use href="#ico-chart"/></svg>
+    行情
+  </button>
+  <button class="nav-tab" id="tab-log" onclick="switchTab('log')">
+    <svg viewBox="0 0 24 24"><use href="#ico-log"/></svg>
+    播报记录
+  </button>
+  <button class="nav-tab" id="tab-settings" onclick="openDrawer()">
+    <svg viewBox="0 0 24 24"><use href="#ico-settings"/></svg>
+    设置
+  </button>
+</nav>
+
+<!-- Settings Drawer -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">系统设置</div>
+
+  <!-- Market type -->
+  <div class="dsec">
+    <div class="dsec-lbl">行情类型</div>
+    <div class="mkt-seg">
+      <button class="seg-btn" id="segSpot" onclick="switchMkt('SPOT');updateSegBtns()">📈 现货</button>
+      <button class="seg-btn active" id="segFutures" onclick="switchMkt('USDT-FUTURES');updateSegBtns()">📊 永续合约</button>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="dsec">
+    <div class="dsec-lbl">播报控制</div>
+    <div class="drow"><span class="drow-name">🔊 声音提示</span><button class="tgl on" id="togSound" onclick="togCtrl('sound')"></button></div>
+    <div class="drow"><span class="drow-name">🎙 中文语音播报</span><button class="tgl" id="togVoice" onclick="togCtrl('voice')"></button></div>
+    <div class="drow">
+      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>Telegram 推送</span>
+      <button class="tgl on" id="togTg" onclick="togCtrl('tg')"></button>
+    </div>
+    <div class="drow">
+      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>微信推送</span>
+      <button class="tgl on" id="togWx" onclick="togCtrl('wx')"></button>
+    </div>
+    <div class="drow"><span class="drow-name">⏸ 暂停监控</span><button class="tgl" id="togPause" onclick="togPause()"></button></div>
+  </div>
+
+  <!-- Push config -->
+  <div class="dsec">
+    <div class="dsec-lbl">推送渠道配置</div>
+    <div class="push-tabs">
+      <button class="ptab active" onclick="pushTab(this,'tg')">Telegram</button>
+      <button class="ptab" onclick="pushTab(this,'wx')">微信</button>
+    </div>
+    <div class="pbody active" id="pb-tg">
+      <div class="field"><label>Bot Token</label><input type="password" id="tgToken" placeholder="123456:ABCdef..." oninput="cfg.tgToken=this.value" autocomplete="off"></div>
+      <div class="field"><label>Chat ID</label><input type="text" id="tgChatId" placeholder="123456789" oninput="cfg.tgChatId=this.value" inputmode="numeric"></div>
+      <button class="big-btn" onclick="testTg()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>发送测试消息</button>
+      <div id="tgMsg" class="smsg"></div>
+    </div>
+    <div class="pbody" id="pb-wx">
+      <div class="field"><label>AppToken</label><input type="password" id="wxToken" placeholder="AT_xxx..." oninput="cfg.wxToken=this.value" autocomplete="off"></div>
+      <div class="field"><label>UID（多人用逗号分隔）</label><input type="text" id="wxUid" placeholder="UID_xxx..." oninput="cfg.wxUid=this.value"></div>
+      <button class="big-btn" onclick="testWx()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>发送测试消息</button>
+      <div id="wxMsg" class="smsg"></div>
+    </div>
+  </div>
+
+  <!-- Help -->
+  <div class="dsec">
+    <div class="dsec-lbl">配置说明</div>
+    <div class="help-text">
+      <b>Telegram Bot</b><br>
+      1. 搜索 <span class="cm">@BotFather</span> → 发送 <span class="cm">/newbot</span><br>
+      2. 搜索 <span class="cm">@userinfobot</span> 获取 Chat ID<br>
+      3. 先给 bot 发 <span class="cm">/start</span><br><br>
+      <b>微信 WxPusher</b><br>
+      1. 访问 <span class="cm">wxpusher.zjiecode.com</span><br>
+      2. 微信扫码登录 → 新建应用<br>
+      3. 关注公众号获取 UID
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 币种配置 ─────────────────────────────────────────────────────
+const COINS = [
+  { id:'BTC',  name:'Bitcoin',  sym:'BTCUSDT',  color:'#f7931a', bg:'#1a1208', presets:[100,200,500,1000], defStep:500,  defTarget:105000, defFarStep:500,  defNearStep:100,  defNearDist:1000 },
+  { id:'ETH',  name:'Ethereum', sym:'ETHUSDT',  color:'#627eea', bg:'#0e1020', presets:[5,10,20,50],       defStep:20,   defTarget:2600,   defFarStep:20,   defNearStep:5,    defNearDist:50   },
+  { id:'SOL',  name:'Solana',   sym:'SOLUSDT',  color:'#9945ff', bg:'#130d1a', presets:[0.5,1,2,5],        defStep:1,    defTarget:175,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'NVDA', name:'NVDA',     sym:'NVDAUSDT', color:'#76b900', bg:'#0e1408', presets:[0.25,0.5,1,2],     defStep:0.5,  defTarget:138,    defFarStep:0.5,  defNearStep:0.1,  defNearDist:2    }
+];
+
+const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:false };
+const mkt = {};
+const state = {};
+let paused = false;
+let mktType = 'USDT-FUTURES';
+const logs = [];
+const lastFired = {};
+let ws = null, wsAlive = false, pingTimer = null, reconnTimer = null;
+
+COINS.forEach(c => {
+  mkt[c.id]   = { price:0, prevPrice:0, change24h:0, high24h:0, low24h:0, open24h:0, loaded:false };
+  state[c.id] = { enabled:true, mode:'fixed', fixedStep:c.defStep, lastFixedLevel:0,
+                  target:c.defTarget, farStep:c.defFarStep, nearStep:c.defNearStep, nearDist:c.defNearDist };
+});
+
+// ── 连接模式：ws = WebSocket实时，rest = REST轮询降级 ─────────────
+let connMode = 'ws';       // 'ws' | 'rest'
+let wsFailCount = 0;
+let restTimer = null;
+
+function startConnection() {
+  setWS('connecting');
+  wsFailCount = 0;
+  connMode = 'ws';
+  connectWS();
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────
+function connectWS() {
+  try { ws = new WebSocket('wss://ws.bitget.com/v2/ws/public'); }
+  catch(e) { onWSFail(); return; }
+
+  // 5秒内没连上就降级
+  const timeout = setTimeout(() => {
+    if(!wsAlive) { try{ws.close();}catch(_){} onWSFail(); }
+  }, 5000);
+
+  ws.onopen = () => {
+    clearTimeout(timeout);
+    wsAlive = true; wsFailCount = 0;
+    setWS('connected');
+    const args = COINS.map(c => ({ instType: mktType, channel:'ticker', instId: c.sym }));
+    ws.send(JSON.stringify({ op:'subscribe', args }));
+    clearInterval(pingTimer);
+    pingTimer = setInterval(() => { try{ if(ws.readyState===1) ws.send('ping'); }catch(e){} }, 20000);
+  };
+  ws.onmessage = e => {
+    if(e.data==='pong') return;
+    try {
+      const msg = JSON.parse(e.data);
+      if(!msg.data||!msg.arg||msg.arg.channel!=='ticker') return;
+      msg.data.forEach(d => handleTick(msg.arg.instId, d));
+    } catch(_) {}
+  };
+  ws.onerror = () => { clearTimeout(timeout); wsAlive=false; onWSFail(); };
+  ws.onclose = () => {
+    clearTimeout(timeout);
+    if(wsAlive){ wsAlive=false; setWS('connecting'); schedReconn(); }
+    else onWSFail();
+  };
+}
+
+function onWSFail() {
+  wsFailCount++;
+  if(wsFailCount >= 2) {
+    // 连续2次失败，切换到REST轮询
+    connMode = 'rest';
+    setWS('rest');
+    startREST();
+  } else {
+    schedReconn();
+  }
+}
+
+function schedReconn() {
+  clearTimeout(reconnTimer);
+  reconnTimer = setTimeout(() => { if(!wsAlive && connMode==='ws') connectWS(); }, 3000);
+}
+
+// ── REST 轮询降级（每3秒请求一次） ──────────────────────────────
+const REST_BASE = 'https://api.bitget.com';
+
+async function fetchRESTTickers() {
+  if(paused) return;
+  try {
+    const productType = mktType === 'USDT-FUTURES' ? 'USDT-FUTURES' : 'SPOT';
+    const url = mktType === 'SPOT'
+      ? `${REST_BASE}/api/v2/spot/market/tickers`
+      : `${REST_BASE}/api/v2/mix/market/tickers?productType=${productType}`;
+    const r = await fetch(url);
+    const json = await r.json();
+    if(json.code !== '00000') return;
+    const list = json.data || [];
+    list.forEach(d => {
+      const sym = d.symbol || d.instId;
+      handleTick(sym, {
+        lastPr: d.lastPr || d.last || d.close,
+        open24h: d.open24h || d.openUtc0 || d.open,
+        high24h: d.high24h || d.high,
+        low24h:  d.low24h  || d.low,
+      });
+    });
+    setWS('rest');
+  } catch(e) {
+    setWS('error');
+  }
+}
+
+function startREST() {
+  clearTimeout(restTimer);
+  fetchRESTTickers();
+  restTimer = setInterval(fetchRESTTickers, 3000);
+  // 同时尝试恢复WS（每30秒试一次）
+  setInterval(() => {
+    if(connMode==='rest' && !wsAlive) {
+      wsFailCount = 0;
+      connectWS();
+    }
+  }, 30000);
+}
+
+function setWS(s) {
+  const p=document.getElementById('wsPill'), d=document.getElementById('wsDot'), t=document.getElementById('wsText');
+  if(s==='connected'){ p.className='ws-pill connected'; d.className='dot'; t.textContent='WS 实时'; }
+  else if(s==='rest'){  p.className='ws-pill connected'; d.className='dot'; t.textContent='REST 轮询'; }
+  else if(s==='connecting'){ p.className='ws-pill connecting'; d.className='dot warn'; t.textContent='连接中…'; }
+  else { p.className='ws-pill error'; d.className='dot off'; t.textContent='断开'; }
+}
+
+// ── Tick ──────────────────────────────────────────────────────────
+function handleTick(sym, d) {
+  if(paused) return;
+  const coin = COINS.find(c => c.sym===sym); if(!coin) return;
+  const m = mkt[coin.id], s = state[coin.id];
+  const price = parseFloat(d.lastPr||d.last||0); if(!price) return;
+  const open  = parseFloat(d.open24h||0);
+  const high  = parseFloat(d.high24h||0);
+  const low   = parseFloat(d.low24h||0);
+  const prev  = m.loaded ? m.price : price;
+  m.prevPrice=prev; m.price=price;
+  if(open) m.open24h=open; if(high) m.high24h=high; if(low) m.low24h=low;
+  m.change24h = m.open24h ? (price-m.open24h)/m.open24h*100 : 0;
+  if(!m.loaded){ m.loaded=true; s.lastFixedLevel=Math.round(price/s.fixedStep)*s.fixedStep; }
+  updateCardUI(coin.id, prev, price);
+  if(s.enabled) checkAlert(coin.id, prev, price);
+}
+
+function checkAlert(id, prev, cur) {
+  const s = state[id];
+  if(s.mode==='fixed'){
+    const step=s.fixedStep;
+    const ln=Math.floor(cur/step)*step, lp=Math.floor(prev/step)*step;
+    if(ln!==lp) fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'fixed');
+  } else {
+    const sc=isNear(id,cur)?s.nearStep:s.farStep;
+    const sp=isNear(id,prev)?s.nearStep:s.farStep;
+    if(Math.floor(cur/sc)!==Math.floor(prev/sp)){
+      const ln=Math.floor(cur/sc)*sc, lp=Math.floor(prev/sp)*sp;
+      fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'target');
+    }
+    if((prev<s.target&&cur>=s.target)||(prev>s.target&&cur<=s.target))
+      fireAlert(id, cur, cur>prev, s.target, 'target');
+  }
+}
+
+// ── Card UI ───────────────────────────────────────────────────────
+function updateCardUI(id, prev, cur) {
+  const m = mkt[id], s = state[id];
+  const pv=document.getElementById('pv-'+id);
+  const ct=document.getElementById('ct-'+id);
+  const hi=document.getElementById('hi-'+id);
+  const lo=document.getElementById('lo-'+id);
+  const rf=document.getElementById('rf-'+id);
+  if(pv){
+    pv.textContent='$'+fmt(id,cur);
+    pv.className='price-val '+(cur>=prev?'tick-up':'tick-down');
+    clearTimeout(pv._t); pv._t=setTimeout(()=>pv.className='price-val',600);
+  }
+  if(ct){ const ch=m.change24h; ct.textContent=(ch>=0?'+':'')+ch.toFixed(2)+'%'; ct.className='change-tag '+(ch>=0?'up':'down'); }
+  if(hi&&m.high24h) hi.textContent='H:$'+fmt(id,m.high24h);
+  if(lo&&m.low24h)  lo.textContent='L:$'+fmt(id,m.low24h);
+  if(rf&&m.high24h>m.low24h) rf.style.left=((cur-m.low24h)/(m.high24h-m.low24h)*100).toFixed(1)+'%';
+  if(s.mode==='target') updateZone(id); else updateNextLvls(id);
+  const card=document.getElementById('card-'+id);
+  if(card&&s.mode==='target'&&!card.className.includes('flash'))
+    card.className='card'+(isNear(id,cur)?' near-target':'');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function isNear(id,p){ const s=state[id]; return Math.abs(p-s.target)<=s.nearDist; }
+
+function fmt(id,v){
+  if(!v&&v!==0) return '—';
+  if(v>=10000) return v.toLocaleString('en-US',{maximumFractionDigits:0});
+  if(v>=1000)  return v.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+  if(v>=100)   return v.toFixed(2);
+  if(v>=10)    return v.toFixed(3);
+  return v.toFixed(4);
+}
+
+function updateNextLvls(id){
+  const el=document.getElementById('nl-'+id); if(!el) return;
+  const price=mkt[id].price; if(!price){el.innerHTML='';return;}
+  const step=state[id].fixedStep, base=Math.round(price/step)*step;
+  el.innerHTML=[-2,-1,1,2].map(i=>`<span class="lvlp ${i>0?'above':'below'}">$${fmt(id,base+i*step)}</span>`).join('');
+}
+
+function updateZone(id){
+  const el=document.getElementById('zi-'+id); if(!el) return;
+  const s=state[id], price=mkt[id].price;
+  if(!price){el.innerHTML='等待行情…';return;}
+  const near=isNear(id,price), dist=Math.abs(price-s.target);
+  const distStr=dist>=10?dist.toFixed(0):dist.toFixed(2);
+  const step=near?s.nearStep:s.farStep;
+  const range=s.nearDist*5,lo=s.target-range,hi=s.target+range;
+  const pct=Math.max(0,Math.min(100,(price-lo)/(hi-lo)*100));
+  const nearLo=Math.max(0,(s.target-s.nearDist-lo)/(hi-lo)*100);
+  const nearW=Math.min(100,s.nearDist*2/(hi-lo)*100);
+  const tgtPct=(s.target-lo)/(hi-lo)*100;
+  el.innerHTML=`<b>目标</b> $${fmt(id,s.target)} · 距离 <b>$${distStr}</b><br>步进 <b>$${step}</b>${near?' <span class="amb">⚠ 临近区加密播报</span>':''}
+<div class="zone-bar"><div class="zone-near-bg" style="left:${nearLo}%;width:${nearW}%"></div><div class="zone-cur-fill" style="width:${pct}%;background:${near?'var(--amber)':'var(--blue)'}"></div><div class="zone-tgt-mark" style="left:calc(${tgtPct}% - 1px)"></div></div>`;
+}
+
+// ── Build cards ───────────────────────────────────────────────────
+function buildCards(){
+  const typeLabel = mktType==='USDT-FUTURES' ? '永续合约' : '现货';
+  document.getElementById('cardsWrap').innerHTML = COINS.map(c=>{
+    const s=state[c.id];
+    return`<div class="card" id="card-${c.id}">
+  <div class="card-top">
+    <div class="coin-left">
+      <div class="cicon" style="background:${c.bg};color:${c.color}">${c.id.slice(0,2)}</div>
+      <div>
+        <div class="coin-name">${c.id}/USDT</div>
+        <div class="coin-sub" id="csub-${c.id}">${c.name} · ${typeLabel}</div>
+      </div>
+    </div>
+    <div class="card-right">
+      <div class="ch-icons">
+        <div class="chi tg on" id="ci-tg-${c.id}"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#ico-tg"/></svg></div>
+        <div class="chi wx on" id="ci-wx-${c.id}"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#ico-wx"/></svg></div>
+      </div>
+      <button class="tgl on" id="ctog-${c.id}" onclick="togCoin('${c.id}')" aria-label="开关"></button>
+    </div>
+  </div>
+  <div class="card-price">
+    <div class="price-main">
+      <div class="price-val" id="pv-${c.id}">—</div>
+      <span class="change-tag up" id="ct-${c.id}">+0.00%</span>
+    </div>
+    <div class="price-meta">
+      <span class="price-hl" id="hi-${c.id}">H:—</span>
+      <span class="price-hl" id="lo-${c.id}">L:—</span>
+      <span class="last-fire" id="lf-${c.id}"></span>
+    </div>
+  </div>
+  <div class="range-wrap">
+    <div class="range-labels"><span>低</span><span>24H 区间</span><span>高</span></div>
+    <div class="range-bar"><div class="range-fill"></div><div class="range-cur" id="rf-${c.id}" style="left:50%"></div></div>
+  </div>
+  <button class="card-expand-btn" id="expbtn-${c.id}" onclick="togExpand('${c.id}')">
+    <span id="expbtn-label-${c.id}">▾ 展开设置</span>
+  </button>
+  <div class="card-settings" id="cs-${c.id}">
+    <div class="mode-tabs">
+      <button class="mtab active" id="mt-fixed-${c.id}"  onclick="setMode('${c.id}','fixed')">📏 固定梯度</button>
+      <button class="mtab"        id="mt-target-${c.id}" onclick="setMode('${c.id}','target')">🎯 目标价</button>
+    </div>
+    <div class="mbody active" id="mb-fixed-${c.id}">
+      <div class="presets" id="ps-${c.id}">
+        ${c.presets.map(p=>`<button class="preset${p===c.defStep?' sel':''}" onclick="setFixed('${c.id}',${p})">${p}</button>`).join('')}
+        <button class="preset" onclick="document.getElementById('si-${c.id}').focus()">自定义</button>
+      </div>
+      <div class="step-row">
+        <input class="step-inp" type="number" id="si-${c.id}" value="${c.defStep}" min="0.01" inputmode="decimal" onchange="setFixed('${c.id}',parseFloat(this.value))">
+        <span class="step-unit">USDT / 次</span>
+      </div>
+      <div class="next-lvls" id="nl-${c.id}"></div>
+    </div>
+    <div class="mbody" id="mb-target-${c.id}">
+      <div class="tgt-grid">
+        <div class="tgt-field"><label>目标价</label><input type="number" id="tp-${c.id}"  value="${s.target}"   inputmode="decimal" onchange="setTP('${c.id}','target',parseFloat(this.value))"></div>
+        <div class="tgt-field"><label>远端步进</label><input type="number" id="tfs-${c.id}" value="${s.farStep}"  inputmode="decimal" onchange="setTP('${c.id}','farStep',parseFloat(this.value))"></div>
+        <div class="tgt-field"><label>临近范围</label><input type="number" id="tnd-${c.id}" value="${s.nearDist}" inputmode="decimal" onchange="setTP('${c.id}','nearDist',parseFloat(this.value))"></div>
+        <div class="tgt-field"><label>临近步进</label><input type="number" id="tns-${c.id}" value="${s.nearStep}" inputmode="decimal" onchange="setTP('${c.id}','nearStep',parseFloat(this.value))"></div>
+      </div>
+      <div class="zone-info" id="zi-${c.id}">等待行情…</div>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+function togExpand(id){
+  const cs=document.getElementById('cs-'+id);
+  const lbl=document.getElementById('expbtn-label-'+id);
+  const open=cs.classList.toggle('open');
+  lbl.textContent=open?'▴ 收起设置':'▾ 展开设置';
+  if(open){ updateNextLvls(id); updateZone(id); }
+}
+
+function setMode(id,mode){
+  state[id].mode=mode;
+  ['fixed','target'].forEach(m=>{
+    document.getElementById('mb-'+m+'-'+id).className='mbody'+(m===mode?' active':'');
+    document.getElementById('mt-'+m+'-'+id).className='mtab'+(m===mode?' active':'');
+  });
+  updateZone(id);
+}
+function setFixed(id,v){
+  if(isNaN(v)||v<=0) return;
+  state[id].fixedStep=v;
+  state[id].lastFixedLevel=Math.round((mkt[id].price||0)/v)*v;
+  const inp=document.getElementById('si-'+id); if(inp) inp.value=v;
+  document.querySelectorAll(`#ps-${id} .preset`).forEach(b=>b.className='preset'+(parseFloat(b.textContent)===v?' sel':''));
+  updateNextLvls(id);
+}
+function setTP(id,key,v){ if(!isNaN(v)&&v>0){state[id][key]=v; updateZone(id);} }
+
+// ── Alert fire ────────────────────────────────────────────────────
+async function fireAlert(id, price, isUp, level, mode){
+  const key=`${id}_${Math.round(level*1000)}_${mode}`;
+  const now=Date.now();
+  if(lastFired[key]&&now-lastFired[key]<4000) return;
+  lastFired[key]=now;
+  const s=state[id];
+  const near=mode==='target'&&isNear(id,price);
+  const timeStr=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const lfe=document.getElementById('lf-'+id);
+  if(lfe) lfe.textContent=`${isUp?'↑':'↓'}$${fmt(id,level)} ${timeStr}`;
+  const card=document.getElementById('card-'+id);
+  if(card){
+    card.className='card flash-'+(isUp?'up':'down')+(near?' near-target':'');
+    setTimeout(()=>card.className='card'+(near?' near-target':''),2500);
+  }
+  const chs=[];
+  if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }
+  if(cfg.voiceOn){
+    const name=id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
+    const nearTxt=near?`，距目标仅${Math.abs(price-s.target).toFixed(price<100?2:0)}美元`:'';
+    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}美元${nearTxt}`);
+  }
+  const [tr,wr]=await Promise.all([
+    cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
+    cfg.wxOn?sendWx(id,price,isUp,level,near):Promise.resolve('skip')
+  ]);
+  if(tr==='ok') chs.push('tg'); else if(String(tr).startsWith('err')) chs.push('err');
+  if(wr==='ok') chs.push('wx'); else if(String(wr).startsWith('err')&&!chs.includes('err')) chs.push('err');
+  logs.unshift({t:timeStr,id,price,isUp,level,mode:near?'target':'fixed',chs});
+  if(logs.length>80) logs.pop();
+  renderLog();
+  // badge on log tab
+  const logTab=document.getElementById('tab-log');
+  if(logTab&&!logTab.className.includes('active')){
+    logTab.style.color='var(--amber)';
+    setTimeout(()=>{ if(!logTab.className.includes('active')) logTab.style.color=''; },3000);
+  }
+}
+
+// ── Audio ─────────────────────────────────────────────────────────
+function playBeep(up){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[up?660:440,0],[up?880:330,.13]].forEach(([f,d])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type='sine';
+      const t=ctx.currentTime+d;
+      g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);
+      o.start(t);o.stop(t+.35);
+    });
+  }catch(_){}
+}
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=1.1;
+  window.speechSynthesis.speak(u);
+}
+
+// ── Push ──────────────────────────────────────────────────────────
+async function sendTg(id,price,isUp,level,near){
+  if(!cfg.tgToken||!cfg.tgChatId) return 'skip';
+  const s=state[id],sym=isUp?'📈':'📉',dist=Math.abs(price-s.target);
+  const extra=near?`\n🎯 目标 \`$${fmt(id,s.target)}\` · 距离 \`$${dist>=10?dist.toFixed(0):dist.toFixed(2)}\``:'';
+  const text=`${sym} *${id}/USDT* ${isUp?'上穿':'下穿'} \`$${fmt(id,level)}\`\n当前：\`$${fmt(id,price)}\`${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
+  try{
+    const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text,parse_mode:'Markdown'})});
+    const d=await r.json();return d.ok?'ok':'err:'+d.description;
+  }catch(e){return 'err:'+e.message;}
+}
+async function sendWx(id,price,isUp,level,near){
+  if(!cfg.wxToken||!cfg.wxUid) return 'skip';
+  const s=state[id],dist=Math.abs(price-s.target);
+  const content=`${isUp?'📈':'📉'} ${id}/USDT ${isUp?'上穿':'下穿'} $${fmt(id,level)}\n当前：$${fmt(id,price)}${near?`\n⚠️ 临近目标 $${fmt(id,s.target)}，距 $${dist>=10?dist.toFixed(0):dist.toFixed(2)}`:''}`;
+  const uids=cfg.wxUid.split(',').map(u=>u.trim()).filter(Boolean);
+  try{
+    const r=await fetch('https://wxpusher.zjiecode.com/api/send/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({appToken:cfg.wxToken,content,contentType:1,uids,summary:`${id} ${isUp?'↑':'↓'} $${fmt(id,level)}`})});
+    const d=await r.json();return d.success?'ok':'err:'+d.msg;
+  }catch(e){return 'err:'+e.message;}
+}
+async function testTg(){
+  if(!cfg.tgToken||!cfg.tgChatId){showMsg('tgMsg','err','请填写 Token 和 Chat ID');return;}
+  showMsg('tgMsg','loading','发送中…');
+  const r=await sendTg('BTC',103200,true,103000,false);
+  showMsg('tgMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查 Telegram':'❌ '+r);
+}
+async function testWx(){
+  if(!cfg.wxToken||!cfg.wxUid){showMsg('wxMsg','err','请填写 AppToken 和 UID');return;}
+  showMsg('wxMsg','loading','发送中…');
+  const r=await sendWx('BTC',103200,true,103000,false);
+  showMsg('wxMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查微信':'❌ '+r);
+}
+function showMsg(id,type,text){const e=document.getElementById(id);e.className='smsg '+type;e.textContent=text;}
+
+// ── Log ───────────────────────────────────────────────────────────
+function renderLog(){
+  const el=document.getElementById('logList');
+  if(!logs.length){el.innerHTML='<div class="log-empty">等待价格触发播报…</div>';return;}
+  el.innerHTML=logs.map(l=>`
+    <div class="log-row">
+      <span class="lt">${l.t}</span>
+      <span class="lc">${l.id}</span>
+      <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
+      <span class="lp">$${fmt(l.id,l.level)}→$${fmt(l.id,l.price)}</span>
+      <span class="lm ${l.mode}">${l.mode==='target'?'🎯':'固定'}</span>
+      <div class="lchs">${l.chs.map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':'ERR'}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+// ── Nav / Drawer ──────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.nav-tab').forEach(b=>{ b.className='nav-tab'; b.style.color=''; });
+  document.getElementById('tab-'+tab).className='nav-tab active';
+  const sa=document.getElementById('scrollArea');
+  if(tab==='market'){
+    document.getElementById('cardsWrap').style.display='flex';
+    document.getElementById('logPanel').style.display='none';
+    document.querySelector('.mkt-bar').style.display='flex';
+  } else if(tab==='log'){
+    document.getElementById('cardsWrap').style.display='none';
+    document.getElementById('logPanel').style.display='block';
+    document.querySelector('.mkt-bar').style.display='none';
+    renderLog();
+  }
+}
+
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+// swipe down to close drawer
+let touchStartY=0;
+document.getElementById('drawer').addEventListener('touchstart',e=>touchStartY=e.touches[0].clientY,{passive:true});
+document.getElementById('drawer').addEventListener('touchmove',e=>{
+  if(e.touches[0].clientY-touchStartY>60) closeDrawer();
+},{passive:true});
+
+function pushTab(btn,id){
+  document.querySelectorAll('.push-tabs .ptab').forEach(b=>b.className='ptab');
+  document.querySelectorAll('.pbody').forEach(b=>b.className='pbody');
+  btn.className='ptab active';
+  document.getElementById('pb-'+id).className='pbody active';
+}
+
+// ── Market switch ─────────────────────────────────────────────────
+function switchMkt(type){
+  if(mktType===type) return;
+  mktType=type;
+  // update bar buttons
+  document.getElementById('mktSpot').className    = 'mkt-btn'+(type==='SPOT'?' active':'');
+  document.getElementById('mktFutures').className = 'mkt-btn'+(type==='USDT-FUTURES'?' active':'');
+  updateSegBtns();
+  // update card subtitles
+  const label=type==='USDT-FUTURES'?'永续合约':'现货';
+  COINS.forEach(c=>{
+    const el=document.getElementById('csub-'+c.id);
+    if(el) el.textContent=c.name+' · '+label;
+    mkt[c.id]={price:0,prevPrice:0,change24h:0,high24h:0,low24h:0,open24h:0,loaded:false};
+    const pv=document.getElementById('pv-'+c.id); if(pv) pv.textContent='—';
+    const ct=document.getElementById('ct-'+c.id); if(ct){ct.textContent='+0.00%';ct.className='change-tag up';}
+    const hi=document.getElementById('hi-'+c.id); if(hi) hi.textContent='H:—';
+    const lo=document.getElementById('lo-'+c.id); if(lo) lo.textContent='L:—';
+    const lf=document.getElementById('lf-'+c.id); if(lf) lf.textContent='';
+  });
+  wsAlive=false; connMode='ws'; wsFailCount=0;
+  clearInterval(pingTimer); clearTimeout(reconnTimer); clearInterval(restTimer);
+  try{if(ws) ws.close();}catch(_){}
+  setTimeout(startConnection, 400);
+}
+function updateSegBtns(){
+  document.getElementById('segSpot').className    = 'seg-btn'+(mktType==='SPOT'?' active':'');
+  document.getElementById('segFutures').className = 'seg-btn'+(mktType==='USDT-FUTURES'?' active':'');
+}
+
+// ── Controls ─────────────────────────────────────────────────────
+function togCoin(id){state[id].enabled=!state[id].enabled;document.getElementById('ctog-'+id).className='tgl'+(state[id].enabled?' on':'');}
+function togCtrl(t){
+  if(t==='sound'){cfg.soundOn=!cfg.soundOn;document.getElementById('togSound').className='tgl'+(cfg.soundOn?' on':'');}
+  if(t==='voice'){cfg.voiceOn=!cfg.voiceOn;document.getElementById('togVoice').className='tgl'+(cfg.voiceOn?' on':'');}
+  if(t==='tg'){cfg.tgOn=!cfg.tgOn;document.getElementById('togTg').className='tgl'+(cfg.tgOn?' on':'');updIcons();}
+  if(t==='wx'){cfg.wxOn=!cfg.wxOn;document.getElementById('togWx').className='tgl'+(cfg.wxOn?' on':'');updIcons();}
+}
+function updIcons(){COINS.forEach(c=>{document.getElementById('ci-tg-'+c.id).className='chi tg'+(cfg.tgOn?' on':'');document.getElementById('ci-wx-'+c.id).className='chi wx'+(cfg.wxOn?' on':'');});}
+function togPause(){
+  paused=!paused;
+  document.getElementById('togPause').className='tgl'+(paused?' on':'');
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+buildCards();
+startConnection();
+</script>
+</body>
+</html>

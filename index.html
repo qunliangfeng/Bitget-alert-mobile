@@ -380,6 +380,13 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
     <div class="dsec-lbl">播报控制</div>
     <div class="drow"><span class="drow-name">🔊 声音提示</span><button class="tgl on" id="togSound" onclick="togCtrl('sound')"></button></div>
     <div class="drow"><span class="drow-name">🎙 中文语音播报</span><button class="tgl" id="togVoice" onclick="togCtrl('voice')"></button></div>
+    <div class="drow" style="flex-direction:column;align-items:stretch;gap:6px">
+      <div style="display:flex;gap:6px">
+        <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testSound()">🔊 测试声音</button>
+        <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testVoice()">🎙 测试语音</button>
+      </div>
+      <div id="audioTestMsg" style="font-size:11px;color:var(--tx3);text-align:center;display:none"></div>
+    </div>
     <div class="drow">
       <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>Telegram 推送</span>
       <button class="tgl on" id="togTg" onclick="togCtrl('tg')"></button>
@@ -399,14 +406,14 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <button class="ptab" onclick="pushTab(this,'wx')">微信</button>
     </div>
     <div class="pbody active" id="pb-tg">
-      <div class="field"><label>Bot Token</label><input type="password" id="tgToken" placeholder="123456:ABCdef..." oninput="cfg.tgToken=this.value" autocomplete="off"></div>
-      <div class="field"><label>Chat ID</label><input type="text" id="tgChatId" placeholder="123456789" oninput="cfg.tgChatId=this.value" inputmode="numeric"></div>
+      <div class="field"><label>Bot Token</label><input type="password" id="tgToken" placeholder="123456:ABCdef..." oninput="cfg.tgToken=this.value;saveSettings()" autocomplete="off"></div>
+      <div class="field"><label>Chat ID</label><input type="text" id="tgChatId" placeholder="123456789" oninput="cfg.tgChatId=this.value;saveSettings()" inputmode="numeric"></div>
       <button class="big-btn" onclick="testTg()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>发送测试消息</button>
       <div id="tgMsg" class="smsg"></div>
     </div>
     <div class="pbody" id="pb-wx">
-      <div class="field"><label>AppToken</label><input type="password" id="wxToken" placeholder="AT_xxx..." oninput="cfg.wxToken=this.value" autocomplete="off"></div>
-      <div class="field"><label>UID（多人用逗号分隔）</label><input type="text" id="wxUid" placeholder="UID_xxx..." oninput="cfg.wxUid=this.value"></div>
+      <div class="field"><label>AppToken</label><input type="password" id="wxToken" placeholder="AT_xxx..." oninput="cfg.wxToken=this.value;saveSettings()" autocomplete="off"></div>
+      <div class="field"><label>UID（多人用逗号分隔）</label><input type="text" id="wxUid" placeholder="UID_xxx..." oninput="cfg.wxUid=this.value;saveSettings()"></div>
       <button class="big-btn" onclick="testWx()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>发送测试消息</button>
       <div id="wxMsg" class="smsg"></div>
     </div>
@@ -451,6 +458,93 @@ COINS.forEach(c => {
   state[c.id] = { enabled:true, mode:'fixed', fixedStep:c.defStep, lastFixedLevel:0,
                   target:c.defTarget, farStep:c.defFarStep, nearStep:c.defNearStep, nearDist:c.defNearDist };
 });
+
+// ── 本地存储：保存 / 读取设置 ────────────────────────────────────
+const STORAGE_KEY = 'bitget_alert_settings_v1';
+
+function saveSettings() {
+  try {
+    const data = {
+      cfg: { ...cfg },
+      mktType,
+      paused,
+      coinStates: {}
+    };
+    COINS.forEach(c => {
+      data.coinStates[c.id] = { ...state[c.id] };
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(_) {}
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+
+    // 恢复 cfg
+    if (data.cfg) {
+      Object.assign(cfg, data.cfg);
+      // 填入输入框
+      if (cfg.tgToken)  { const el=document.getElementById('tgToken');  if(el) el.value=cfg.tgToken; }
+      if (cfg.tgChatId) { const el=document.getElementById('tgChatId'); if(el) el.value=cfg.tgChatId; }
+      if (cfg.wxToken)  { const el=document.getElementById('wxToken');  if(el) el.value=cfg.wxToken; }
+      if (cfg.wxUid)    { const el=document.getElementById('wxUid');    if(el) el.value=cfg.wxUid; }
+      // 恢复开关状态
+      document.getElementById('togSound').className = 'tgl'+(cfg.soundOn?' on':'');
+      document.getElementById('togVoice').className = 'tgl'+(cfg.voiceOn?' on':'');
+      document.getElementById('togTg').className    = 'tgl'+(cfg.tgOn?' on':'');
+      document.getElementById('togWx').className    = 'tgl'+(cfg.wxOn?' on':'');
+      updIcons();
+    }
+
+    // 恢复行情类型
+    if (data.mktType) {
+      mktType = data.mktType;
+      document.getElementById('mktSpot').className     = 'mkt-btn'+(mktType==='SPOT'?' active':'');
+      document.getElementById('mktFutures').className  = 'mkt-btn'+(mktType==='USDT-FUTURES'?' active':'');
+      document.getElementById('segSpot').className     = 'seg-btn'+(mktType==='SPOT'?' active':'');
+      document.getElementById('segFutures').className  = 'seg-btn'+(mktType==='USDT-FUTURES'?' active':'');
+      const label = mktType==='USDT-FUTURES' ? '永续合约' : '现货';
+      COINS.forEach(c => {
+        const el = document.getElementById('csub-'+c.id);
+        if (el) el.textContent = c.name+' · '+label;
+      });
+    }
+
+    // 恢复暂停状态
+    if (data.paused) {
+      paused = true;
+      document.getElementById('togPause').className = 'tgl on';
+    }
+
+    // 恢复每个币种设置
+    if (data.coinStates) {
+      COINS.forEach(c => {
+        const saved = data.coinStates[c.id];
+        if (!saved) return;
+        Object.assign(state[c.id], saved);
+        // 恢复模式 tab
+        setMode(c.id, saved.mode);
+        // 恢复固定步进
+        const si = document.getElementById('si-'+c.id);
+        if (si) si.value = saved.fixedStep;
+        document.querySelectorAll(`#ps-${c.id} .preset`).forEach(b =>
+          b.className='preset'+(parseFloat(b.textContent)===saved.fixedStep?' sel':'')
+        );
+        // 恢复目标价参数
+        const tp  = document.getElementById('tp-'+c.id);  if(tp)  tp.value  = saved.target;
+        const tfs = document.getElementById('tfs-'+c.id); if(tfs) tfs.value = saved.farStep;
+        const tnd = document.getElementById('tnd-'+c.id); if(tnd) tnd.value = saved.nearDist;
+        const tns = document.getElementById('tns-'+c.id); if(tns) tns.value = saved.nearStep;
+        // 恢复开关
+        const ctog = document.getElementById('ctog-'+c.id);
+        if (ctog) ctog.className = 'tgl'+(saved.enabled?' on':'');
+      });
+    }
+  } catch(_) {}
+}
 
 // ── 连接模式：ws = WebSocket实时，rest = REST轮询降级 ─────────────
 let connMode = 'ws';       // 'ws' | 'rest'
@@ -745,6 +839,7 @@ function setMode(id,mode){
     document.getElementById('mt-'+m+'-'+id).className='mtab'+(m===mode?' active':'');
   });
   updateZone(id);
+  saveSettings();
 }
 function setFixed(id,v){
   if(isNaN(v)||v<=0) return;
@@ -753,8 +848,9 @@ function setFixed(id,v){
   const inp=document.getElementById('si-'+id); if(inp) inp.value=v;
   document.querySelectorAll(`#ps-${id} .preset`).forEach(b=>b.className='preset'+(parseFloat(b.textContent)===v?' sel':''));
   updateNextLvls(id);
+  saveSettings();
 }
-function setTP(id,key,v){ if(!isNaN(v)&&v>0){state[id][key]=v; updateZone(id);} }
+function setTP(id,key,v){ if(!isNaN(v)&&v>0){ state[id][key]=v; updateZone(id); saveSettings(); } }
 
 // ── Alert fire ────────────────────────────────────────────────────
 async function fireAlert(id, price, isUp, level, mode){
@@ -797,22 +893,89 @@ async function fireAlert(id, price, isUp, level, mode){
 }
 
 // ── Audio ─────────────────────────────────────────────────────────
-function playBeep(up){
-  try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    [[up?660:440,0],[up?880:330,.13]].forEach(([f,d])=>{
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type='sine';
-      const t=ctx.currentTime+d;
-      g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);
-      o.start(t);o.stop(t+.35);
-    });
-  }catch(_){}
+// iOS 需要用户交互后才能播放音频，用一个无声节点提前解锁
+let audioCtxUnlocked = false;
+function unlockAudio() {
+  if (audioCtxUnlocked) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    audioCtxUnlocked = true;
+  } catch(_) {}
 }
-function speak(text){
-  if(!('speechSynthesis' in window)) return;
-  const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=1.1;
+// 页面任意点击时解锁
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('click', unlockAudio, { once: true });
+
+function playBeep(up) {
+  unlockAudio();
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[up?660:440,0],[up?880:330,.13]].forEach(([f,d]) => {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=f; o.type='sine';
+      const t=ctx.currentTime+d;
+      g.gain.setValueAtTime(.25,t);
+      g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.start(t); o.stop(t+.4);
+    });
+  } catch(_) {}
+}
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  // iOS: 取消队列中的语音，防止堆积
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = 1.0;
+  u.volume = 1.0;
+  // 尝试选中文语音
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+  if (zhVoice) u.voice = zhVoice;
   window.speechSynthesis.speak(u);
+}
+
+function testSound() {
+  unlockAudio();
+  playBeep(true);
+  const msg = document.getElementById('audioTestMsg');
+  msg.style.display = 'block';
+  msg.style.color = 'var(--green)';
+  msg.textContent = '✅ 声音正常（听到两声提示音）';
+  setTimeout(() => msg.style.display='none', 3000);
+}
+
+function testVoice() {
+  unlockAudio();
+  const msg = document.getElementById('audioTestMsg');
+  msg.style.display = 'block';
+  msg.style.color = 'var(--tx3)';
+  msg.textContent = '正在播报…';
+  // 等待语音列表加载（iOS 首次加载可能为空）
+  function doSpeak() {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance('比特币上穿一千美元，请注意');
+    u.lang = 'zh-CN'; u.rate = 1.0; u.volume = 1.0;
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+    if (zhVoice) { u.voice = zhVoice; }
+    u.onstart  = () => { msg.style.color='var(--green)'; msg.textContent='🎙 语音播报中…'; };
+    u.onend    = () => { msg.style.color='var(--green)'; msg.textContent='✅ 语音正常'; setTimeout(()=>msg.style.display='none',2000); };
+    u.onerror  = (e) => { msg.style.color='var(--red)'; msg.textContent='❌ 语音失败：'+e.error+' — 请检查静音开关和辅助功能→朗读内容→中文语音包'; };
+    window.speechSynthesis.speak(u);
+  }
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged=null; doSpeak(); };
+    // 部分 iOS 不触发 onvoiceschanged，延迟兜底
+    setTimeout(() => { if(msg.textContent==='正在播报…') doSpeak(); }, 500);
+  } else {
+    doSpeak();
+  }
 }
 
 // ── Push ──────────────────────────────────────────────────────────
@@ -928,6 +1091,7 @@ function switchMkt(type){
   wsAlive=false; connMode='ws'; wsFailCount=0;
   clearInterval(pingTimer); clearTimeout(reconnTimer); clearInterval(restTimer);
   try{if(ws) ws.close();}catch(_){}
+  saveSettings();
   setTimeout(startConnection, 400);
 }
 function updateSegBtns(){
@@ -936,22 +1100,44 @@ function updateSegBtns(){
 }
 
 // ── Controls ─────────────────────────────────────────────────────
-function togCoin(id){state[id].enabled=!state[id].enabled;document.getElementById('ctog-'+id).className='tgl'+(state[id].enabled?' on':'');}
+function togCoin(id){
+  state[id].enabled=!state[id].enabled;
+  document.getElementById('ctog-'+id).className='tgl'+(state[id].enabled?' on':'');
+  saveSettings();
+}
 function togCtrl(t){
   if(t==='sound'){cfg.soundOn=!cfg.soundOn;document.getElementById('togSound').className='tgl'+(cfg.soundOn?' on':'');}
   if(t==='voice'){cfg.voiceOn=!cfg.voiceOn;document.getElementById('togVoice').className='tgl'+(cfg.voiceOn?' on':'');}
   if(t==='tg'){cfg.tgOn=!cfg.tgOn;document.getElementById('togTg').className='tgl'+(cfg.tgOn?' on':'');updIcons();}
   if(t==='wx'){cfg.wxOn=!cfg.wxOn;document.getElementById('togWx').className='tgl'+(cfg.wxOn?' on':'');updIcons();}
+  saveSettings();
 }
 function updIcons(){COINS.forEach(c=>{document.getElementById('ci-tg-'+c.id).className='chi tg'+(cfg.tgOn?' on':'');document.getElementById('ci-wx-'+c.id).className='chi wx'+(cfg.wxOn?' on':'');});}
 function togPause(){
   paused=!paused;
   document.getElementById('togPause').className='tgl'+(paused?' on':'');
+  saveSettings();
 }
 
 // ── Init ──────────────────────────────────────────────────────────
 buildCards();
-startConnection();
+loadSettings(); // 读取上次保存的设置
+
+// 检测是否在 file:// 协议下运行（iPhone Safari 会阻止所有网络请求）
+if (location.protocol === 'file:') {
+  // 显示提示 banner
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:56px;left:0;right:0;z-index:99;background:#2d1f06;border-bottom:1px solid #f59e0b44;padding:10px 16px;font-size:12px;color:#f59e0b;line-height:1.6;display:flex;align-items:flex-start;gap:10px';
+  banner.innerHTML = `<span style="font-size:16px;flex-shrink:0">⚠️</span><div><b>iPhone 需要通过 HTTPS 访问</b><br>本地文件无法连接网络。请将文件上传到 GitHub Pages 后用 Safari 打开链接。<button onclick="this.parentElement.parentElement.parentElement.remove()" style="margin-left:8px;background:#f59e0b22;border:1px solid #f59e0b55;color:#f59e0b;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:var(--sans)">知道了</button></div>`;
+  document.body.appendChild(banner);
+  // 调整 scroll-area top 避免被 banner 遮挡
+  document.getElementById('scrollArea').style.top = '106px';
+  // file:// 下不尝试连接，直接提示
+  setWS('error');
+  document.getElementById('wsText').textContent = '需要HTTPS';
+} else {
+  startConnection();
+}
 </script>
 </body>
 </html>

@@ -388,6 +388,13 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <div id="audioTestMsg" style="font-size:11px;color:var(--tx3);text-align:center;display:none"></div>
     </div>
     <div class="drow">
+      <div>
+        <div class="drow-name">☀️ 屏幕常亮</div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:2px">防止锁屏，保持声音播报</div>
+      </div>
+      <button class="tgl" id="togWakeLock" onclick="togCtrl('wakeLock')"></button>
+    </div>
+    <div class="drow">
       <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>Telegram 推送</span>
       <button class="tgl on" id="togTg" onclick="togCtrl('tg')"></button>
     </div>
@@ -444,7 +451,7 @@ const COINS = [
   { id:'NVDA', name:'NVDA',     sym:'NVDAUSDT', color:'#76b900', bg:'#0e1408', presets:[0.25,0.5,1,2],     defStep:0.5,  defTarget:138,    defFarStep:0.5,  defNearStep:0.1,  defNearDist:2    }
 ];
 
-const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:false };
+const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:false, wakeLock:false };
 const mkt = {};
 const state = {};
 let paused = false;
@@ -455,7 +462,8 @@ let ws = null, wsAlive = false, pingTimer = null, reconnTimer = null;
 
 COINS.forEach(c => {
   mkt[c.id]   = { price:0, prevPrice:0, change24h:0, high24h:0, low24h:0, open24h:0, loaded:false };
-  state[c.id] = { enabled:true, mode:'fixed', fixedStep:c.defStep, lastFixedLevel:0,
+  state[c.id] = { enabled:true, fixedOn:true, targetOn:true,
+                  fixedStep:c.defStep, lastFixedLevel:0,
                   target:c.defTarget, farStep:c.defFarStep, nearStep:c.defNearStep, nearDist:c.defNearDist };
 });
 
@@ -496,6 +504,10 @@ function loadSettings() {
       document.getElementById('togVoice').className = 'tgl'+(cfg.voiceOn?' on':'');
       document.getElementById('togTg').className    = 'tgl'+(cfg.tgOn?' on':'');
       document.getElementById('togWx').className    = 'tgl'+(cfg.wxOn?' on':'');
+      if (cfg.wakeLock) {
+        document.getElementById('togWakeLock').className = 'tgl on';
+        requestWakeLock().then(ok => { if(!ok) enableVideoWakeLock(); });
+      }
       updIcons();
     }
 
@@ -525,8 +537,15 @@ function loadSettings() {
         const saved = data.coinStates[c.id];
         if (!saved) return;
         Object.assign(state[c.id], saved);
-        // 恢复模式 tab
-        setMode(c.id, saved.mode);
+        // 恢复两个模式开关
+        const tfEl = document.getElementById('tog-fixed-'+c.id);
+        const ttEl = document.getElementById('tog-target-'+c.id);
+        if (tfEl) tfEl.className = 'tgl'+(state[c.id].fixedOn!==false?' on':'');
+        if (ttEl) ttEl.className = 'tgl'+(state[c.id].targetOn!==false?' on':'');
+        const fp = document.getElementById('mb-fixed-'+c.id);
+        const tp2 = document.getElementById('mb-target-'+c.id);
+        if (fp)  fp.style.opacity  = state[c.id].fixedOn!==false  ? '1' : '0.4';
+        if (tp2) tp2.style.opacity = state[c.id].targetOn!==false ? '1' : '0.4';
         // 恢复固定步进
         const si = document.getElementById('si-'+c.id);
         if (si) si.value = saved.fixedStep;
@@ -680,18 +699,28 @@ function handleTick(sym, d) {
 
 function checkAlert(id, prev, cur) {
   const s = state[id];
-  if(s.mode==='fixed'){
-    const step=s.fixedStep;
-    const ln=Math.floor(cur/step)*step, lp=Math.floor(prev/step)*step;
-    if(ln!==lp) fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'fixed');
-  } else {
-    const sc=isNear(id,cur)?s.nearStep:s.farStep;
-    const sp=isNear(id,prev)?s.nearStep:s.farStep;
-    if(Math.floor(cur/sc)!==Math.floor(prev/sp)){
-      const ln=Math.floor(cur/sc)*sc, lp=Math.floor(prev/sp)*sp;
-      fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'target');
+
+  // ── 固定梯度（常规关口播报）────────────────────────────────────
+  if (s.fixedOn) {
+    const step = s.fixedStep;
+    const ln = Math.floor(cur/step)*step, lp = Math.floor(prev/step)*step;
+    if (ln !== lp) fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'fixed');
+  }
+
+  // ── 目标价临近播报（同时运行）────────────────────────────────
+  if (s.targetOn) {
+    const sc = isNear(id,cur)  ? s.nearStep : s.farStep;
+    const sp = isNear(id,prev) ? s.nearStep : s.farStep;
+    if (Math.floor(cur/sc) !== Math.floor(prev/sp)) {
+      const ln = Math.floor(cur/sc)*sc, lp = Math.floor(prev/sp)*sp;
+      // 避免与固定梯度在同一关口重复触发
+      const level = ln>lp?ln:lp;
+      const fixedStep = s.fixedStep;
+      const alreadyFiredByFixed = s.fixedOn && (Math.abs(level % fixedStep) < 0.001 || Math.abs(level % fixedStep - fixedStep) < 0.001);
+      if (!alreadyFiredByFixed) fireAlert(id, cur, cur>prev, level, 'target');
     }
-    if((prev<s.target&&cur>=s.target)||(prev>s.target&&cur<=s.target))
+    // 精确穿越目标价
+    if ((prev < s.target && cur >= s.target) || (prev > s.target && cur <= s.target))
       fireAlert(id, cur, cur>prev, s.target, 'target');
   }
 }
@@ -713,9 +742,11 @@ function updateCardUI(id, prev, cur) {
   if(hi&&m.high24h) hi.textContent='H:$'+fmt(id,m.high24h);
   if(lo&&m.low24h)  lo.textContent='L:$'+fmt(id,m.low24h);
   if(rf&&m.high24h>m.low24h) rf.style.left=((cur-m.low24h)/(m.high24h-m.low24h)*100).toFixed(1)+'%';
-  if(s.mode==='target') updateZone(id); else updateNextLvls(id);
+  // 两个面板同时更新
+  updateNextLvls(id);
+  updateZone(id);
   const card=document.getElementById('card-'+id);
-  if(card&&s.mode==='target'&&!card.className.includes('flash'))
+  if(card&&s.targetOn&&!card.className.includes('flash'))
     card.className='card'+(isNear(id,cur)?' near-target':'');
 }
 
@@ -795,11 +826,13 @@ function buildCards(){
     <span id="expbtn-label-${c.id}">▾ 展开设置</span>
   </button>
   <div class="card-settings" id="cs-${c.id}">
-    <div class="mode-tabs">
-      <button class="mtab active" id="mt-fixed-${c.id}"  onclick="setMode('${c.id}','fixed')">📏 固定梯度</button>
-      <button class="mtab"        id="mt-target-${c.id}" onclick="setMode('${c.id}','target')">🎯 目标价</button>
+
+    <!-- 固定梯度 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">📏 固定梯度播报</span>
+      <button class="tgl on" id="tog-fixed-${c.id}" onclick="togAlertMode('${c.id}','fixed')" aria-label="固定梯度开关"></button>
     </div>
-    <div class="mbody active" id="mb-fixed-${c.id}">
+    <div id="mb-fixed-${c.id}" style="margin-bottom:14px">
       <div class="presets" id="ps-${c.id}">
         ${c.presets.map(p=>`<button class="preset${p===c.defStep?' sel':''}" onclick="setFixed('${c.id}',${p})">${p}</button>`).join('')}
         <button class="preset" onclick="document.getElementById('si-${c.id}').focus()">自定义</button>
@@ -810,7 +843,15 @@ function buildCards(){
       </div>
       <div class="next-lvls" id="nl-${c.id}"></div>
     </div>
-    <div class="mbody" id="mb-target-${c.id}">
+
+    <div style="height:1px;background:var(--bd);margin-bottom:12px"></div>
+
+    <!-- 目标价 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">🎯 目标价临近播报</span>
+      <button class="tgl on" id="tog-target-${c.id}" onclick="togAlertMode('${c.id}','target')" aria-label="目标价开关"></button>
+    </div>
+    <div id="mb-target-${c.id}">
       <div class="tgt-grid">
         <div class="tgt-field"><label>目标价</label><input type="number" id="tp-${c.id}"  value="${s.target}"   inputmode="decimal" onchange="setTP('${c.id}','target',parseFloat(this.value))"></div>
         <div class="tgt-field"><label>远端步进</label><input type="number" id="tfs-${c.id}" value="${s.farStep}"  inputmode="decimal" onchange="setTP('${c.id}','farStep',parseFloat(this.value))"></div>
@@ -819,6 +860,7 @@ function buildCards(){
       </div>
       <div class="zone-info" id="zi-${c.id}">等待行情…</div>
     </div>
+
   </div>
 </div>`;
   }).join('');
@@ -832,14 +874,31 @@ function togExpand(id){
   if(open){ updateNextLvls(id); updateZone(id); }
 }
 
-function setMode(id,mode){
-  state[id].mode=mode;
-  ['fixed','target'].forEach(m=>{
-    document.getElementById('mb-'+m+'-'+id).className='mbody'+(m===mode?' active':'');
-    document.getElementById('mt-'+m+'-'+id).className='mtab'+(m===mode?' active':'');
-  });
-  updateZone(id);
+function togAlertMode(id, type) {
+  const s = state[id];
+  if (type === 'fixed') {
+    s.fixedOn = !s.fixedOn;
+    document.getElementById('tog-fixed-'+id).className = 'tgl'+(s.fixedOn?' on':'');
+    const panel = document.getElementById('mb-fixed-'+id);
+    if (panel) panel.style.opacity = s.fixedOn ? '1' : '0.4';
+  } else {
+    s.targetOn = !s.targetOn;
+    document.getElementById('tog-target-'+id).className = 'tgl'+(s.targetOn?' on':'');
+    const panel = document.getElementById('mb-target-'+id);
+    if (panel) panel.style.opacity = s.targetOn ? '1' : '0.4';
+  }
   saveSettings();
+}
+
+// 保留 setMode 兼容旧存档
+function setMode(id, mode) {
+  // 旧版存档迁移：固定=只开fixed，目标=两个都开
+  if (mode === 'fixed') { state[id].fixedOn=true; state[id].targetOn=false; }
+  else { state[id].fixedOn=true; state[id].targetOn=true; }
+  const tfEl = document.getElementById('tog-fixed-'+id);
+  const ttEl = document.getElementById('tog-target-'+id);
+  if (tfEl) tfEl.className = 'tgl'+(state[id].fixedOn?' on':'');
+  if (ttEl) ttEl.className = 'tgl'+(state[id].targetOn?' on':'');
 }
 function setFixed(id,v){
   if(isNaN(v)||v<=0) return;
@@ -1100,6 +1159,30 @@ function updateSegBtns(){
 }
 
 // ── Controls ─────────────────────────────────────────────────────
+// ── Screen Wake Lock（防锁屏）────────────────────────────────────
+let wakeLockSentinel = null;
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return false;
+  try {
+    wakeLockSentinel = await navigator.wakeLock.request('screen');
+    wakeLockSentinel.addEventListener('release', () => {
+      // 页面重新可见时自动重新申请
+      if (cfg.wakeLock) requestWakeLock();
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+function releaseWakeLock() {
+  if (wakeLockSentinel) { wakeLockSentinel.release(); wakeLockSentinel = null; }
+}
+
+// 页面从后台切回来时，若开启了常亮则重新申请
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && cfg.wakeLock) requestWakeLock();
+});
+
 function togCoin(id){
   state[id].enabled=!state[id].enabled;
   document.getElementById('ctog-'+id).className='tgl'+(state[id].enabled?' on':'');
@@ -1110,6 +1193,22 @@ function togCtrl(t){
   if(t==='voice'){cfg.voiceOn=!cfg.voiceOn;document.getElementById('togVoice').className='tgl'+(cfg.voiceOn?' on':'');}
   if(t==='tg'){cfg.tgOn=!cfg.tgOn;document.getElementById('togTg').className='tgl'+(cfg.tgOn?' on':'');updIcons();}
   if(t==='wx'){cfg.wxOn=!cfg.wxOn;document.getElementById('togWx').className='tgl'+(cfg.wxOn?' on':'');updIcons();}
+  if(t==='wakeLock'){
+    cfg.wakeLock=!cfg.wakeLock;
+    const btn=document.getElementById('togWakeLock');
+    btn.className='tgl'+(cfg.wakeLock?' on':'');
+    if(cfg.wakeLock){
+      requestWakeLock().then(ok=>{
+        if(!ok){
+          // 不支持 Wake Lock API，用视频兜底
+          enableVideoWakeLock();
+        }
+      });
+    } else {
+      releaseWakeLock();
+      disableVideoWakeLock();
+    }
+  }
   saveSettings();
 }
 function updIcons(){COINS.forEach(c=>{document.getElementById('ci-tg-'+c.id).className='chi tg'+(cfg.tgOn?' on':'');document.getElementById('ci-wx-'+c.id).className='chi wx'+(cfg.wxOn?' on':'');});}
@@ -1117,6 +1216,24 @@ function togPause(){
   paused=!paused;
   document.getElementById('togPause').className='tgl'+(paused?' on':'');
   saveSettings();
+}
+
+// ── 视频兜底方案（兼容不支持 Wake Lock API 的旧版 Safari）────────
+let videoEl = null;
+function enableVideoWakeLock() {
+  if (videoEl) return;
+  videoEl = document.createElement('video');
+  videoEl.setAttribute('playsinline', '');
+  videoEl.setAttribute('muted', '');
+  videoEl.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;top:0;left:0;pointer-events:none';
+  // 1x1 透明 mp4（base64，极小）
+  videoEl.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAGm1kYXQAAAGzABAHAAABthADAowdbb9/AAAC6W1vb3YAAABsbXZoZAAAAAB8JbCAfCWwgAAAA+gAAAAAAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAIVdHJhawAAAFx0a2hkAAAAD3wlsIB8JbCAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAIAAAACAAAAAABsW1kaWEAAAAgbWRoZAAAAAB8JbCAfCWwgAAAA+gAAAAAAABVxAAAAAAAAC1oZGxyAAAAAAAAAAB2aWRlAAAAAAAAAAAAAAAAVmlkZW9IYW5kbGVyAAAAAVxtaW5mAAAAFHZtaGQAAAABAAAAAAAAAAAAAAAkZGluZgAAABxkcmVmAAAAAAAAAAEAAAAMdXJsIAAAAAEAAAEcc3RibAAAALhzdHNkAAAAAAAAAAEAAACobXA0dgAAAAAAAAABAAAAAAAAAAAAAgAIAAAAAsgAAAAAAAMgZXNkcwAAAAADgICAIgACAARggICAFEAVBTAAAO0AAADtAgUEggICABaAgIABAgAAABhzdHRzAAAAAAAAAAEAAAAEAAAD6AAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAAEAAAAAQAAABRzdHN6AAAAAAAAAtAAAAQAAAATc3RjbwAAAAAAAAABAAAALAAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTUuMzMuMTAw';
+  videoEl.loop = true;
+  document.body.appendChild(videoEl);
+  videoEl.play().catch(()=>{});
+}
+function disableVideoWakeLock() {
+  if (videoEl) { videoEl.pause(); videoEl.remove(); videoEl = null; }
 }
 
 // ── Init ──────────────────────────────────────────────────────────

@@ -1761,18 +1761,17 @@ async function checkLicense() {
 
   // 7天内到期提醒
   const daysLeft = Math.ceil((lic.expiresAt - now) / 86400000);
-  if (daysLeft <= 7) {
-    showExpireWarning(daysLeft);
-  }
+  if (daysLeft <= 7) showExpireWarning(daysLeft);
 
-  // 每隔24小时才联网验证一次（节省请求）
+  // ✅ 本地缓存有效，立即放行启动行情，后台再验证
+  licenseValid = true;
+  startConnection();
+
+  // 每隔24小时才联网验证一次
   const lastCheck = parseInt(localStorage.getItem('lic_last_check') || '0');
-  if (now - lastCheck < 24 * 3600 * 1000) {
-    licenseValid = true;
-    return; // 本地缓存有效，跳过联网验证
-  }
+  if (now - lastCheck < 24 * 3600 * 1000) return;
 
-  // 联网验证
+  // 后台联网验证（不阻塞行情）
   try {
     const res = await fetch(WORKER_URL + '/verify', {
       method: 'POST',
@@ -1781,19 +1780,22 @@ async function checkLicense() {
     });
     const data = await res.json();
     if (data.valid) {
-      // 更新本地缓存
       lic.expiresAt = data.expiresAt;
       localStorage.setItem(LIC_KEY, JSON.stringify({ ...lic, verifiedAt: now }));
       localStorage.setItem('lic_last_check', now.toString());
-      licenseValid = true;
       if (data.warning) showExpireWarning(data.daysLeft);
     } else {
+      // 验证失败才中断
       localStorage.removeItem(LIC_KEY);
+      licenseValid = false;
+      wsAlive = false;
+      clearInterval(pingTimer);
+      clearInterval(restTimer);
+      try { if(ws) ws.close(); } catch(_) {}
       showLicenseScreen();
     }
   } catch(e) {
-    // 网络失败，宽松处理：本地缓存未过期则放行
-    licenseValid = true;
+    // 网络失败宽松处理，已经在跑了不中断
   }
 }
 
@@ -1921,10 +1923,8 @@ if (location.protocol === 'file:') {
   licenseValid = true; // file:// 调试时跳过验证
   startConnection();
 } else {
-  // 先验证授权，通过后再启动行情
-  checkLicense().then(() => {
-    if (licenseValid) startConnection();
-  });
+  // 先验证授权，checkLicense 内部会调用 startConnection
+  checkLicense();
 }
 
 </script>

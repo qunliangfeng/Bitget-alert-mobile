@@ -213,7 +213,8 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 .lp { font-family: var(--mono); flex: 1; color: var(--tx2); font-size: 11px; }
 .lm { font-size: 10px; padding: 1px 6px; border-radius: 99px; white-space: nowrap; }
 .lm.target { background: var(--ad); color: var(--amber); }
-.lm.fixed { background: var(--bg3); color: var(--tx3); }
+.lm.fixed  { background: var(--bg3); color: var(--tx3); }
+.lm.timer  { background: #0e1a2d; color: #60a5fa; }
 .lchs { display: flex; gap: 3px; }
 .lch { font-size: 10px; padding: 1px 6px; border-radius: 99px; font-family: var(--mono); }
 .lch.tg { background: #0d2137; color: #60a5fa; }
@@ -640,7 +641,7 @@ function saveActiveCoins() {
 function initCoinState(c) {
   if (!mkt[c.id]) mkt[c.id] = { price:0, prevPrice:0, change24h:0, high24h:0, low24h:0, open24h:0, loaded:false };
   if (!state[c.id]) state[c.id] = {
-    enabled:true, fixedOn:true, targetOn:true,
+    enabled:true, fixedOn:true, targetOn:true, timerOn:false, timerMin:5,
     fixedStep: c.defStep, lastFixedLevel:0,
     target: c.defTarget, farStep: c.defFarStep,
     nearStep: c.defNearStep, nearDist: c.defNearDist
@@ -739,8 +740,17 @@ function loadSettings() {
         const saved = data.coinStates[c.id];
         if (!saved) return;
         Object.assign(state[c.id], saved);
-        // 恢复两个模式开关
-        const tfEl = document.getElementById('tog-fixed-'+c.id);
+        // 恢复定时器
+        if (state[c.id].timerOn) {
+          const togEl = document.getElementById('tog-timer-'+c.id);
+          if (togEl) togEl.className = 'tgl on';
+          const panEl = document.getElementById('mb-timer-'+c.id);
+          if (panEl) panEl.style.opacity = '1';
+          const tiEl = document.getElementById('ti-'+c.id);
+          if (tiEl) tiEl.value = state[c.id].timerMin||5;
+          startTimer(c.id);
+          updateTimerStatus(c.id);
+        }
         const ttEl = document.getElementById('tog-target-'+c.id);
         if (tfEl) tfEl.className = 'tgl'+(state[c.id].fixedOn!==false?' on':'');
         if (ttEl) ttEl.className = 'tgl'+(state[c.id].targetOn!==false?' on':'');
@@ -1201,6 +1211,31 @@ function buildCards(){
       <div class="zone-info" id="zi-${c.id}">等待行情…</div>
     </div>
 
+    <div style="height:1px;background:var(--bd);margin-bottom:12px;margin-top:12px"></div>
+
+    <!-- 定时播报 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">⏱ 定时播报</span>
+      <button class="tgl" id="tog-timer-${c.id}" onclick="togAlertMode('${c.id}','timer')" aria-label="定时播报开关"></button>
+    </div>
+    <div id="mb-timer-${c.id}" style="opacity:0.4">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:7px">每隔固定时间自动播报当前价格</div>
+      <div class="presets" id="tp-presets-${c.id}">
+        <button class="preset" onclick="setTimer('${c.id}',1)">1分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',5)">5分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',15)">15分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',30)">30分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',60)">1小时</button>
+        <button class="preset" onclick="document.getElementById('ti-${c.id}').focus()">自定义</button>
+      </div>
+      <div class="step-row" style="margin-top:7px">
+        <input class="step-inp" type="number" id="ti-${c.id}" value="5" min="1" inputmode="numeric"
+          onchange="setTimer('${c.id}',parseInt(this.value))">
+        <span class="step-unit">分钟 / 次</span>
+      </div>
+      <div id="timer-status-${c.id}" style="font-size:11px;color:var(--tx3);margin-top:6px"></div>
+    </div>
+
   </div>
 </div>`;
   }).join('');
@@ -1214,6 +1249,9 @@ function togExpand(id){
   if(open){ updateNextLvls(id); updateZone(id); }
 }
 
+// 定时器实例存储
+const timerIntervals = {};
+
 function togAlertMode(id, type) {
   const s = state[id];
   if (type === 'fixed') {
@@ -1221,13 +1259,117 @@ function togAlertMode(id, type) {
     document.getElementById('tog-fixed-'+id).className = 'tgl'+(s.fixedOn?' on':'');
     const panel = document.getElementById('mb-fixed-'+id);
     if (panel) panel.style.opacity = s.fixedOn ? '1' : '0.4';
-  } else {
+  } else if (type === 'target') {
     s.targetOn = !s.targetOn;
     document.getElementById('tog-target-'+id).className = 'tgl'+(s.targetOn?' on':'');
     const panel = document.getElementById('mb-target-'+id);
     if (panel) panel.style.opacity = s.targetOn ? '1' : '0.4';
+  } else if (type === 'timer') {
+    s.timerOn = !s.timerOn;
+    document.getElementById('tog-timer-'+id).className = 'tgl'+(s.timerOn?' on':'');
+    const panel = document.getElementById('mb-timer-'+id);
+    if (panel) panel.style.opacity = s.timerOn ? '1' : '0.4';
+    if (s.timerOn) startTimer(id);
+    else stopTimer(id);
   }
   saveSettings();
+}
+
+function setTimer(id, minutes) {
+  if (isNaN(minutes)||minutes<1) return;
+  const s = state[id];
+  s.timerMin = minutes;
+  // 更新输入框
+  const inp = document.getElementById('ti-'+id);
+  if (inp) inp.value = minutes;
+  // 更新预设按钮高亮
+  const presets = document.querySelectorAll(`#tp-presets-${id} .preset`);
+  const labelMap = {1:'1分钟',5:'5分钟',15:'15分钟',30:'30分钟',60:'1小时'};
+  presets.forEach(b => {
+    b.className = 'preset' + (b.textContent===labelMap[minutes]?' sel':'');
+  });
+  // 重启定时器
+  if (s.timerOn) { stopTimer(id); startTimer(id); }
+  saveSettings();
+}
+
+function startTimer(id) {
+  stopTimer(id);
+  const s = state[id];
+  const ms = s.timerMin * 60 * 1000;
+  updateTimerStatus(id);
+  timerIntervals[id] = setInterval(() => {
+    if (!paused && s.timerOn && s.enabled) {
+      fireTimerAlert(id);
+    }
+  }, ms);
+}
+
+function stopTimer(id) {
+  if (timerIntervals[id]) {
+    clearInterval(timerIntervals[id]);
+    delete timerIntervals[id];
+  }
+  const el = document.getElementById('timer-status-'+id);
+  if (el) el.textContent = '';
+}
+
+function updateTimerStatus(id) {
+  const s = state[id];
+  const el = document.getElementById('timer-status-'+id);
+  if (!el) return;
+  if (s.timerOn) {
+    const label = s.timerMin >= 60 ? `${s.timerMin/60}小时` : `${s.timerMin}分钟`;
+    el.textContent = `⏱ 每 ${label} 播报一次`;
+    el.style.color = 'var(--green)';
+  } else {
+    el.textContent = '';
+  }
+}
+
+async function fireTimerAlert(id) {
+  const price = mkt[id]?.price;
+  if (!price) return;
+  const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const coin = id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
+  const s = state[id];
+  const label = s.timerMin>=60?`${s.timerMin/60}小时`:`${s.timerMin}分钟`;
+
+  // 更新最后播报
+  const lfe = document.getElementById('lf-'+id);
+  if (lfe) lfe.textContent = `⏱ ${fmt(id,price)} ${timeStr}`;
+
+  // 声音/语音
+  if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
+  if (cfg.voiceOn) speak(`${coin}当前价格${fmt(id,price)}美元`);
+
+  // 推送（频率限制：同一币种定时推送最少间隔1分钟）
+  const key = `timer_${id}`;
+  const now = Date.now();
+  if (lastFired[key] && now-lastFired[key] < 60000) return;
+  lastFired[key] = now;
+
+  const chs = [];
+  if (cfg.soundOn) chs.push('snd');
+
+  const tgMsg = `⏱ *${id}/USDT* 定时播报\n当前价：\`$${fmt(id,price)}\`\n24H涨跌：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
+  const wxMsg = `⏱ ${id}/USDT 定时播报\n当前：$${fmt(id,price)}\n24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n${timeStr}`;
+
+  const [tr, wr] = await Promise.all([
+    cfg.tgOn && cfg.tgToken && cfg.tgChatId
+      ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
+      : Promise.resolve('skip'),
+    cfg.wxOn && cfg.wxToken && cfg.wxUid
+      ? fetch('https://wxpusher.zjiecode.com/api/send/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({appToken:cfg.wxToken,content:wxMsg,contentType:1,uids:cfg.wxUid.split(',').map(u=>u.trim()).filter(Boolean),summary:`${id} 定时 $${fmt(id,price)}`})}).then(r=>r.json()).then(d=>d.success?'ok':'err')
+      : Promise.resolve('skip')
+  ]);
+
+  if (tr==='ok') chs.push('tg');
+  if (wr==='ok') chs.push('wx');
+
+  logs.unshift({t:timeStr, id, price, isUp:mkt[id].change24h>=0, level:price, mode:'timer', chs});
+  if (logs.length>80) logs.pop();
+  renderLog();
 }
 
 // 保留 setMode 兼容旧存档
@@ -1422,7 +1564,7 @@ function renderLog(){
       <span class="lc">${l.id}</span>
       <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
       <span class="lp">$${fmt(l.id,l.level)}→$${fmt(l.id,l.price)}</span>
-      <span class="lm ${l.mode}">${l.mode==='target'?'🎯':'固定'}</span>
+      <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':'固定'}</span>
       <div class="lchs">${l.chs.map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':'ERR'}</span>`).join('')}</div>
     </div>`).join('');
 }
@@ -1738,6 +1880,13 @@ function updIcons(){COINS.forEach(c=>{document.getElementById('ci-tg-'+c.id).cla
 function togPause(){
   paused=!paused;
   document.getElementById('togPause').className='tgl'+(paused?' on':'');
+  if (paused) {
+    // 暂停所有定时器
+    COINS.forEach(c => { if(state[c.id]?.timerOn) stopTimer(c.id); });
+  } else {
+    // 恢复所有定时器
+    COINS.forEach(c => { if(state[c.id]?.timerOn) startTimer(c.id); });
+  }
   saveSettings();
 }
 

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>西本聪 · 加密币智能播报机器人</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:   #0a1628;
+  --navy2:  #0f1f3d;
+  --navy3:  #152744;
+  --blue:   #1a6496;
+  --blue2:  #2980b9;
+  --gold:   #f39c12;
+  --gold2:  #e67e22;
+  --green:  #27ae60;
+  --red:    #e74c3c;
+  --white:  #f0f4f8;
+  --gray:   #8899aa;
+  --light:  #d4e5f7;
+  --serif:  'Noto Serif SC', serif;
+  --sans:   'Inter', sans-serif;
+  --mono:   'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Stars bg ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 45%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 20%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 20% 75%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 85%, rgba(255,255,255,.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 90%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 85% 85%, rgba(243,156,18,.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 15% 50%, rgba(243,156,18,.3) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+/* ── Hero ── */
+.hero {
+  text-align: center;
+  padding: 60px 20px 50px;
+  position: relative;
+}
+
+.hero-logo {
+  width: 140px; height: 140px;
+  border-radius: 32px;
+  overflow: hidden;
+  margin: 0 auto 28px;
+  border: 3px solid var(--blue);
+  box-shadow: 0 0 0 6px rgba(26,100,150,.25), 0 20px 60px rgba(0,0,0,.5);
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.hero-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+.brand-en {
+  font-size: 12px; letter-spacing: .25em; text-transform: uppercase;
+  color: var(--blue2); margin-bottom: 12px; font-weight: 500;
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(36px, 8vw, 64px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 16px;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(26,100,150,.5);
+}
+.hero-title .gold { color: var(--gold); }
+.hero-title .blue { color: #5dade2; }
+
+.hero-sub {
+  font-size: 16px; color: var(--light); line-height: 1.8;
+  max-width: 520px; margin: 0 auto 32px;
+  font-weight: 300;
+}
+
+.badge-row {
+  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 36px;
+}
+.badge {
+  padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 500;
+  border: 1px solid; display: inline-flex; align-items: center; gap: 5px;
+}
+.b-blue  { background: rgba(41,128,185,.15); color: #5dade2; border-color: rgba(41,128,185,.4); }
+.b-green { background: rgba(39,174,96,.15);  color: #58d68d; border-color: rgba(39,174,96,.4); }
+.b-gold  { background: rgba(243,156,18,.15); color: var(--gold); border-color: rgba(243,156,18,.4); }
+
+.cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.btn-buy {
+  padding: 14px 36px; background: var(--gold); color: var(--navy);
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: var(--sans);
+  box-shadow: 0 4px 20px rgba(243,156,18,.4);
+  transition: transform .15s, box-shadow .15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-buy:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(243,156,18,.5); }
+.btn-trial {
+  padding: 14px 28px; background: transparent; color: var(--light);
+  border: 1px solid rgba(255,255,255,.2); border-radius: 12px; font-size: 15px;
+  cursor: pointer; font-family: var(--sans); transition: border-color .15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-trial:hover { border-color: rgba(255,255,255,.5); }
+
+.hero-note { font-size: 12px; color: var(--gray); }
+
+/* ── Divider ── */
+.divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(26,100,150,.4), transparent); margin: 10px 0; }
+
+/* ── Phone + Features ── */
+.split-section {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+  align-items: center; padding: 50px 0;
+}
+@media(max-width:600px){ .split-section{grid-template-columns:1fr} }
+
+.phone-wrap {
+  display: flex; justify-content: center;
+}
+.phone {
+  width: 200px;
+  background: #0d0f14;
+  border-radius: 28px;
+  border: 2px solid #1e2840;
+  box-shadow: 0 0 0 6px #111827, 0 30px 60px rgba(0,0,0,.6);
+  overflow: hidden;
+  position: relative;
+}
+.phone-notch {
+  width: 80px; height: 8px; background: #1e2840;
+  border-radius: 99px; margin: 10px auto 0;
+}
+.phone-head {
+  padding: 10px 14px 6px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.phone-brand { font-size: 9px; font-weight: 600; color: #e8eaf0; letter-spacing: .05em; }
+.phone-status {
+  font-size: 8px; color: #22c55e; background: rgba(34,197,94,.1);
+  padding: 2px 7px; border-radius: 99px;
+  display: flex; align-items: center; gap: 3px;
+}
+.sdot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+
+.pc {
+  margin: 4px 10px;
+  background: #13161d; border: 1px solid #252a38; border-radius: 10px; padding: 8px 10px;
+}
+.pc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+.pc-coin { display: flex; align-items: center; gap: 5px; }
+.pc-icon { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; }
+.pc-name { font-size: 9px; font-weight: 600; color: #e8eaf0; }
+.pc-tag { font-size: 7px; padding: 1px 5px; border-radius: 99px; }
+.up   { background: rgba(34,197,94,.15); color: #22c55e; }
+.dn   { background: rgba(239,68,68,.15); color: #ef4444; }
+.pc-price { font-size: 14px; font-weight: 600; color: #e8eaf0; font-family: var(--mono); letter-spacing: -.5px; }
+.pc-bar { height: 2px; border-radius: 1px; background: #1a1e28; margin-top: 3px; overflow: hidden; }
+.pc-fill { height: 100%; border-radius: 1px; background: linear-gradient(90deg,#ef4444,#22c55e); }
+
+.phone-alert {
+  margin: 4px 10px; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25);
+  border-radius: 7px; padding: 5px 8px; font-size: 8px; color: #22c55e;
+}
+.phone-nav {
+  display: flex; justify-content: space-around; padding: 6px 0 8px;
+  border-top: 1px solid #1e2840; margin-top: 6px;
+}
+.pn { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 7px; color: #555e72; }
+.pn.active { color: #3b82f6; }
+.pnd { width: 14px; height: 14px; border-radius: 3px; background: currentColor; opacity: .5; }
+
+.feats-side h2 {
+  font-family: var(--serif); font-size: 26px; font-weight: 700;
+  margin-bottom: 8px; line-height: 1.25;
+}
+.feats-side p { font-size: 14px; color: var(--light); margin-bottom: 24px; line-height: 1.7; }
+.feat-list { display: flex; flex-direction: column; gap: 12px; }
+.feat-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px; padding: 12px;
+}
+.feat-emoji { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.feat-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.feat-desc { font-size: 12px; color: var(--gray); }
+
+/* ── Modes ── */
+.modes-section { padding: 50px 0; }
+.section-head { text-align: center; margin-bottom: 36px; }
+.section-head h2 {
+  font-family: var(--serif); font-size: 32px; font-weight: 700; margin-bottom: 8px;
+}
+.section-head p { color: var(--light); font-size: 14px; font-weight: 300; }
+.label {
+  display: inline-block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--blue2); margin-bottom: 10px; font-weight: 500;
+}
+
+.modes-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+@media(max-width:600px){ .modes-grid{grid-template-columns:1fr} }
+.mode-card {
+  background: var(--navy2); border: 1px solid rgba(26,100,150,.3);
+  border-radius: 14px; padding: 20px;
+  transition: border-color .2s, transform .2s;
+}
+.mode-card:hover { border-color: var(--blue2); transform: translateY(-3px); }
+.mode-icon { font-size: 28px; margin-bottom: 12px; }
+.mode-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.mode-desc { font-size: 13px; color: var(--gray); line-height: 1.7; }
+
+/* ── Exchanges ── */
+.ex-section { padding: 40px 0; text-align: center; }
+.ex-grid { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+.ex-card {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--navy2); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px; padding: 12px 20px;
+  font-size: 15px; font-weight: 500; color: #fff;
+  transition: border-color .15s;
+}
+.ex-card:hover { border-color: rgba(255,255,255,.2); }
+.ex-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ── Pricing ── */
+.pricing-section { padding: 50px 0; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 36px; }
+@media(max-width:600px){ .pricing-grid{grid-template-columns:1fr} }
+.price-card {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px; padding: 24px 20px; text-align: center; position: relative;
+  transition: transform .2s;
+}
+.price-card:hover { transform: translateY(-3px); }
+.price-card.hot {
+  border: 2px solid var(--gold); background: rgba(243,156,18,.08);
+  box-shadow: 0 0 30px rgba(243,156,18,.15);
+}
+.hot-tag {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--gold); color: var(--navy); font-size: 11px; font-weight: 700;
+  padding: 3px 14px; border-radius: 99px; white-space: nowrap; letter-spacing: .05em;
+}
+.price-plan { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--gray); margin-bottom: 12px; }
+.price-amount { font-family: var(--mono); font-size: 36px; font-weight: 600; color: #fff; line-height: 1; }
+.price-amount sup { font-size: 18px; vertical-align: super; }
+.price-amount sub { font-size: 14px; color: var(--gray); font-family: var(--sans); }
+.price-cny { font-size: 13px; color: var(--gray); margin: 6px 0 16px; }
+.price-list { font-size: 13px; color: var(--light); line-height: 2.1; text-align: left; }
+.price-list span { color: var(--green); margin-right: 6px; }
+
+/* ── Referral ── */
+.ref-section {
+  padding: 40px 0;
+}
+.ref-box {
+  background: linear-gradient(135deg, rgba(26,100,150,.2), rgba(243,156,18,.1));
+  border: 1px solid rgba(243,156,18,.3);
+  border-radius: 20px; padding: 32px;
+  display: flex; gap: 24px; align-items: center;
+}
+@media(max-width:600px){ .ref-box{flex-direction:column;text-align:center} }
+.ref-tiger { font-size: 56px; flex-shrink: 0; }
+.ref-content h3 { font-family: var(--serif); font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.ref-content p { font-size: 14px; color: var(--light); line-height: 1.8; }
+.ref-amounts { display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; }
+.ref-amt { background: rgba(255,255,255,.07); border-radius: 8px; padding: 8px 16px; text-align: center; }
+.ref-amt .num { font-family: var(--mono); font-size: 18px; font-weight: 600; color: var(--gold); }
+.ref-amt .lbl { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+/* ── Stats ── */
+.stats-section { padding: 40px 0; }
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+@media(max-width:600px){ .stats-grid{grid-template-columns:repeat(2,1fr)} }
+.stat-box {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px; padding: 20px 14px; text-align: center;
+}
+.stat-num { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--gold); }
+.stat-lbl { font-size: 12px; color: var(--gray); margin-top: 4px; }
+
+/* ── CTA Bottom ── */
+.cta-section {
+  text-align: center; padding: 50px 0 40px;
+  background: radial-gradient(ellipse at center, rgba(26,100,150,.15) 0%, transparent 70%);
+}
+.cta-section h2 { font-family: var(--serif); font-size: 30px; font-weight: 700; margin-bottom: 10px; }
+.cta-section p { color: var(--light); font-size: 14px; margin-bottom: 28px; font-weight: 300; }
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 28px 20px; text-align: center;
+}
+.lang-row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.lang { font-size: 11px; color: var(--gray); padding: 3px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 99px; }
+footer p { font-size: 12px; color: #445566; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="hero-logo">
+      <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" alt="西本聪">
+    </div>
+    <div class="brand-en">XiBenCong · 西本聪</div>
+    <h1 class="hero-title">
+      <span class="gold">西本聪</span><br>
+      <span class="blue">加密币智能播报</span><br>机器人
+    </h1>
+    <p class="hero-sub">实时监控主流币种价格，穿越关口自动语音播报，Telegram 和微信同步推送。接入 Bitget、Binance、OKX、Bybit，无需安装，手机即用。</p>
+    <div class="badge-row">
+      <span class="badge b-blue">📡 实时行情</span>
+      <span class="badge b-green">🔊 中文语音</span>
+      <span class="badge b-gold">📲 双渠道推送</span>
+    </div>
+    <div class="cta-row">
+      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/crypto-universal-alert-mobile.html">
+        <button class="btn-buy">🚀 立即购买</button>
+      </a>
+      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/">
+        <button class="btn-trial">🎁 免费试用 7 天</button>
+      </a>
+    </div>
+    <p class="hero-note">无需安装 · 手机 / 电脑均可使用 · 数据直连交易所官方 API</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Phone + Features ── -->
+  <section class="split-section">
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-head">
+          <span class="phone-brand">西本聪播报</span>
+          <span class="phone-status"><span class="sdot"></span>Bitget 实时</span>
+        </div>
+        <div class="pc">
+          <div class="pc-row">
+            <div class="pc-coin">
+              <div class="pc-icon" style="background:#1a1208;color:#f7931a">BT</div>
+              <span class="pc-name">BTC/USDT</span>
+            </div>
+            <span class="pc-tag up">+2.31%</span>
+          </div>
+          <div class="pc-price">$103,450</div>
+          <div class="pc-bar"><div class="pc-fill" style="width:65%"></div></div>
+        </div>
+        <div class="pc">
+          <div class="pc-row">
+            <div class="pc-coin">
+              <div class="pc-icon" style="background:#0e1020;color:#627eea">ET</div>
+              <span class="pc-name">ETH/USDT</span>
+            </div>
+            <span class="pc-tag dn">-0.89%</span>
+          </div>
+          <div class="pc-price">$2,261</div>
+          <div class="pc-bar"><div class="pc-fill" style="width:40%"></div></div>
+        </div>
+        <div class="pc">
+          <div class="pc-row">
+            <div class="pc-coin">
+              <div class="pc-icon" style="background:#130d1a;color:#9945ff">SO</div>
+              <span class="pc-name">SOL/USDT</span>
+            </div>
+            <span class="pc-tag up">+1.54%</span>
+          </div>
+          <div class="pc-price">$168.4</div>
+          <div class="pc-bar"><div class="pc-fill" style="width:55%"></div></div>
+        </div>
+        <div class="phone-alert">🔔 BTC 上穿 $103,000 ↑ 播报中</div>
+        <div class="phone-nav">
+          <div class="pn active"><div class="pnd"></div>行情</div>
+          <div class="pn"><div class="pnd"></div>记录</div>
+          <div class="pn"><div class="pnd"></div>推荐</div>
+          <div class="pn"><div class="pnd"></div>设置</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feats-side">
+      <h2>盯盘更轻松<br>关键价位不错过</h2>
+      <p>价格穿越关口，自动语音播报「比特币上穿十万美元」，手机不用一直盯着屏幕。</p>
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-emoji">⏱</div>
+          <div><div class="feat-name">定时每 5 分钟播报</div><div class="feat-desc">支持自定义到秒级，保持节奏感知</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-emoji">🎯</div>
+          <div><div class="feat-name">临近平仓价加密播报</div><div class="feat-desc">接近目标价自动提高播报频率</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-emoji">☀️</div>
+          <div><div class="feat-name">屏幕常亮模式</div><div class="feat-desc">防止锁屏，持续保持语音播报</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-emoji">🔗</div>
+          <div><div class="feat-name">自由配对任意币对</div><div class="feat-desc">BTC/ETH、ETH/BNB，30+ 种组合</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Modes ── -->
+  <section class="modes-section">
+    <div class="section-head">
+      <div class="label">播报模式</div>
+      <h2>三种模式，全场景覆盖</h2>
+      <p>可同时开启，互不干扰</p>
+    </div>
+    <div class="modes-grid">
+      <div class="mode-card">
+        <div class="mode-icon">📏</div>
+        <div class="mode-title">固定梯度播报</div>
+        <div class="mode-desc">每穿越固定金额播报一次。BTC 每 500 USDT，SOL 每 1 USDT，步进完全自定义。</div>
+      </div>
+      <div class="mode-card">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-title">目标价临近播报</div>
+        <div class="mode-desc">设置平仓目标价，进入临近区后自动切换为更小步进，加密播报直到穿越。</div>
+      </div>
+      <div class="mode-card">
+        <div class="mode-icon">⏱</div>
+        <div class="mode-title">定时播报</div>
+        <div class="mode-desc">每隔 1 分钟 / 5 分钟 / 自定义秒数，定时播报当前价格，保持价格感知。</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Exchanges ── -->
+  <section class="ex-section">
+    <div class="label">数据来源</div>
+    <h2 style="font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px">四大交易所官方实时行情</h2>
+    <p style="color:var(--light);font-size:14px;font-weight:300">WebSocket 直连，延迟低于 200ms，断线自动重连</p>
+    <div class="ex-grid">
+      <div class="ex-card"><div class="ex-dot" style="background:#f7931a"></div>Bitget</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#f0b90b"></div>Binance</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#aaa"></div>OKX</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#ff6b35"></div>Bybit</div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Pricing ── -->
+  <section class="pricing-section">
+    <div class="section-head">
+      <div class="label">定价</div>
+      <h2>简单透明，随时取消</h2>
+      <p>所有套餐包含全部功能，无隐藏收费</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-plan">免费试用</div>
+        <div class="price-amount"><sup>$</sup>0</div>
+        <div class="price-cny">7 天全功能体验</div>
+        <div class="price-list">
+          <span>✓</span>全部播报功能<br>
+          <span>✓</span>4 个币种监控<br>
+          <span>✓</span>无需信用卡
+        </div>
+      </div>
+      <div class="price-card hot">
+        <div class="hot-tag">⭐ 最受欢迎</div>
+        <div class="price-plan">月付</div>
+        <div class="price-amount"><sup>$</sup>9<sub>/月</sub></div>
+        <div class="price-cny">¥29 / 月</div>
+        <div class="price-list">
+          <span>✓</span>无限币种监控<br>
+          <span>✓</span>全部播报模式<br>
+          <span>✓</span>专属推荐码返佣
+        </div>
+      </div>
+      <div class="price-card">
+        <div class="price-plan">年付</div>
+        <div class="price-amount"><sup>$</sup>59<sub>/年</sub></div>
+        <div class="price-cny">¥199 / 年，省 40%</div>
+        <div class="price-list">
+          <span>✓</span>无限币种监控<br>
+          <span>✓</span>优先客服支持<br>
+          <span>✓</span>专属推荐码返佣
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Referral ── -->
+  <section class="ref-section">
+    <div class="ref-box">
+      <div class="ref-tiger">🐯</div>
+      <div class="ref-content">
+        <h3>推荐好友，永久返佣 30%</h3>
+        <p>购买后自动获得专属推荐码，每带一位付费用户，永久获得其订阅金额的 30%，无上限，随时提现。</p>
+        <div class="ref-amounts">
+          <div class="ref-amt"><div class="num">$2.7</div><div class="lbl">月付每人每月</div></div>
+          <div class="ref-amt"><div class="num">$17.7</div><div class="lbl">年付每人</div></div>
+          <div class="ref-amt"><div class="num">∞</div><div class="lbl">无上限</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats ── -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num">4</div><div class="stat-lbl">接入交易所</div></div>
+      <div class="stat-box"><div class="stat-num">20+</div><div class="stat-lbl">预设币种</div></div>
+      <div class="stat-box"><div class="stat-num">3</div><div class="stat-lbl">播报模式</div></div>
+      <div class="stat-box"><div class="stat-num">9</div><div class="stat-lbl">支持语言</div></div>
+    </div>
+  </section>
+
+  <!-- ── CTA Bottom ── -->
+  <section class="cta-section">
+    <h2>现在开始，永不错过关键价位</h2>
+    <p>7 天免费试用，随时取消，无任何风险</p>
+    <div class="cta-row">
+      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/crypto-universal-alert-mobile.html">
+        <button class="btn-buy" style="font-size:16px;padding:16px 40px">🚀 立即开始使用</button>
+      </a>
+    </div>
+    <p style="font-size:12px;color:#556677;margin-top:12px">推荐好友可获 30% 永久返佣 · 手机 / 电脑均可使用</p>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="lang-row">
+      <span class="lang">中文</span>
+      <span class="lang">English</span>
+      <span class="lang">한국어</span>
+      <span class="lang">Tiếng Việt</span>
+      <span class="lang">Türkçe</span>
+      <span class="lang">Русский</span>
+      <span class="lang">Español</span>
+      <span class="lang">Français</span>
+      <span class="lang">Deutsch</span>
+    </div>
+    <p>© 2025 西本聪 XiBenCong · 加密币智能播报机器人</p>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -389,8 +389,8 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <button class="ex-btn"        data-ex="bybit"   onclick="switchExchange('bybit')">🟠 Bybit</button>
     </div>
     <!-- 更多交易所下拉 -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-      <span style="font-size:12px;color:var(--tx3);flex-shrink:0">更多交易所：</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--tx3);flex-shrink:0">更多：</span>
       <select id="exMoreSelect" onchange="onMoreExSelect(this.value)"
         style="flex:1;padding:8px 10px;font-size:13px;border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none">
         <option value="">— 选择其他交易所 —</option>
@@ -422,11 +422,6 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
           <option value="bithumb">Bithumb（韩国）</option>
         </optgroup>
       </select>
-    </div>
-    <div class="dsec-lbl">行情类型</div>
-    <div class="mkt-seg">
-      <button class="seg-btn" id="segSpot" onclick="switchMkt('SPOT');updateSegBtns()">📈 现货</button>
-      <button class="seg-btn active" id="segFutures" onclick="switchMkt('USDT-FUTURES');updateSegBtns()">📊 永续合约</button>
     </div>
   </div>
 
@@ -1683,9 +1678,10 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }
   if(cfg.voiceOn){
     const name=id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
+    // 距离用和价格相同的小数位格式
     const dist=Math.abs(price-s.target);
-    const nearTxt=near?`，距目标仅${fmtSpeak(id,dist)}美元`:'';
-    speak(`${name}${isUp?'上穿':'下穿'}${fmtSpeak(id,level)}美元${nearTxt}`);
+    const nearTxt=near?`，距目标还有${fmt(id,dist)}美元`:'';
+    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}美元${nearTxt}`);
   }
   const [tr,wr]=await Promise.all([
     cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
@@ -1744,19 +1740,12 @@ function speak(text) {
   u.lang = 'zh-CN';
   u.rate = 1.0;
   u.volume = 1.0;
+  // 用音调区分男女声（不依赖语音库名称，兼容所有设备）
+  u.pitch = cfg.voiceGender === 'male' ? 0.6 : 1.2;
+  // 尝试选中文语音
   const voices = window.speechSynthesis.getVoices();
-  const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
-  if (zhVoices.length > 0) {
-    if (cfg.voiceGender === 'male') {
-      // 优先选男声
-      const male = zhVoices.find(v => /male|man|男/i.test(v.name)) || zhVoices[zhVoices.length-1];
-      u.voice = male;
-    } else {
-      // 优先选女声
-      const female = zhVoices.find(v => /female|woman|女/i.test(v.name)) || zhVoices[0];
-      u.voice = female;
-    }
-  }
+  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+  if (zhVoice) u.voice = zhVoice;
   window.speechSynthesis.speak(u);
 }
 

@@ -1425,7 +1425,8 @@ function buildCards(){
         <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
           <input type="number" id="pp-${c.id}-${i}" placeholder="价格 ${i}" inputmode="decimal"
             style="padding:7px 8px;font-size:12px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none"
-            oninput="savePointPrice('${c.id}',${i},parseFloat(this.value))">
+            onblur="savePointPrice('${c.id}',${i},parseFloat(this.value))"
+            onchange="savePointPrice('${c.id}',${i},parseFloat(this.value))">
           <div style="display:flex;align-items:center;gap:3px">
             <span style="font-size:11px;color:var(--tx3)">重复</span>
             <input type="number" id="pr-${c.id}-${i}" value="3" min="1" max="10" inputmode="numeric"
@@ -1459,6 +1460,13 @@ function savePointPrice(id, idx, val) {
   if (!state[id].points) state[id].points = [{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3}];
   state[id].points[idx-1].price = isNaN(val) ? 0 : val;
   saveSettings();
+  // 显示已保存确认
+  const st = document.getElementById('point-status-'+id);
+  if (st && val > 0) {
+    const active = state[id].points.filter(p=>p.price>0);
+    st.style.color = 'var(--tx3)';
+    st.textContent = `已设定 ${active.length} 个定点价格`;
+  }
 }
 
 function savePointRepeat(id, idx, val) {
@@ -1481,7 +1489,14 @@ async function firePointAlert(id, price, pointPrice, repeat) {
 
   // 更新状态栏
   const st = document.getElementById('point-status-'+id);
-  if (st) { st.style.color='var(--amber)'; st.textContent=`📌 触发定点 $${fmt(id,pointPrice)}，播报 ${repeat} 次`; }
+  if (st) { st.style.color='var(--amber)'; st.textContent=`⚡ 已触发 $${fmt(id,pointPrice)}，正在播报 ${repeat} 次`; }
+  setTimeout(()=>{ 
+    if(st) { 
+      const active = state[id].points?.filter(p=>p.price>0)||[];
+      st.style.color='var(--tx3)'; 
+      st.textContent=active.length>0?`已设定 ${active.length} 个定点价格`:'';
+    }
+  }, repeat*1500+2000);
 
   // 重复播报
   for (let i=0; i<repeat; i++) {

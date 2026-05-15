@@ -319,8 +319,10 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 <!-- Top Nav -->
 <nav class="topnav">
   <div class="nav-logo">
-    <div class="nav-logo-icon">📡</div>
-    <span class="nav-title">Bitget 价格播报</span>
+    <div class="nav-logo-icon" style="background:none;padding:0;overflow:hidden">
+      <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" style="width:100%;height:100%;object-fit:cover;border-radius:6px">
+    </div>
+    <span class="nav-title">西本聪机器人</span>
   </div>
   <div class="nav-right">
     <div class="ws-pill connecting" id="wsPill">
@@ -804,6 +806,21 @@ function loadSettings() {
           if (tiEl) tiEl.value = state[c.id].timerMin||5;
           startTimer(c.id);
           updateTimerStatus(c.id);
+        }
+        // 恢复定点价格
+        if (state[c.id].pointOn) {
+          const togEl = document.getElementById('tog-point-'+c.id);
+          if (togEl) togEl.className = 'tgl on';
+          const panEl = document.getElementById('mb-point-'+c.id);
+          if (panEl) panEl.style.opacity = '1';
+        }
+        if (state[c.id].points) {
+          state[c.id].points.forEach((pt, idx) => {
+            const ppEl = document.getElementById(`pp-${c.id}-${idx+1}`);
+            const prEl = document.getElementById(`pr-${c.id}-${idx+1}`);
+            if (ppEl && pt.price > 0) ppEl.value = pt.price;
+            if (prEl) prEl.value = pt.repeat || 3;
+          });
         }
         const ttEl = document.getElementById('tog-target-'+c.id);
         if (tfEl) tfEl.className = 'tgl'+(state[c.id].fixedOn!==false?' on':'');
@@ -1408,7 +1425,7 @@ function buildCards(){
         <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
           <input type="number" id="pp-${c.id}-${i}" placeholder="价格 ${i}" inputmode="decimal"
             style="padding:7px 8px;font-size:12px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none"
-            onchange="savePointPrice('${c.id}',${i},parseFloat(this.value))">
+            oninput="savePointPrice('${c.id}',${i},parseFloat(this.value))">
           <div style="display:flex;align-items:center;gap:3px">
             <span style="font-size:11px;color:var(--tx3)">重复</span>
             <input type="number" id="pr-${c.id}-${i}" value="3" min="1" max="10" inputmode="numeric"

@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>价格播报 · Bitget</title>
+<meta name="apple-mobile-web-app-title" content="西本聪播报">
+<meta name="application-name" content="西本聪播报">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png">
+<link rel="icon" href="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png">
+<title>西本聪播报机器人</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -488,9 +492,9 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <div id="tgMsg" class="smsg"></div>
     </div>
     <div class="pbody" id="pb-wx">
-      <div class="field"><label>Server酱 SendKey</label><input type="text" id="wxToken" placeholder="SCTxxxxxxxxxxxxxxxx" oninput="cfg.wxToken=this.value;saveSettings()" autocomplete="off"></div>
+      <div class="field"><label>企业微信机器人 Webhook</label><input type="text" id="wxToken" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." oninput="cfg.wxToken=this.value;saveSettings()" autocomplete="off"></div>
       <div style="font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.6">
-        访问 sct.ftqq.com 微信扫码登录 → 获取 SendKey 填入上方
+        企业微信群 → 添加机器人 → 复制 Webhook 地址粘贴到上方
       </div>
       <button class="big-btn" onclick="testWx()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>发送测试消息</button>
       <div id="wxMsg" class="smsg"></div>
@@ -505,11 +509,11 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       1. 搜索 <span class="cm">@BotFather</span> → 发送 <span class="cm">/newbot</span><br>
       2. 搜索 <span class="cm">@userinfobot</span> 获取 Chat ID<br>
       3. 先给 bot 发 <span class="cm">/start</span><br><br>
-      <b>微信推送（Server酱）</b><br>
-      1. 手机微信打开 <span class="cm">sct.ftqq.com</span><br>
-      2. 微信扫码登录<br>
-      3. 复制 SendKey 填入上方<br>
-      4. 消息推送到微信服务号
+      <b>企业微信机器人</b><br>
+      1. 下载企业微信，注册企业（免费）<br>
+      2. 建群 → 添加机器人 → 新建机器人<br>
+      3. 复制 Webhook 地址填入上方<br>
+      4. 消息发到企业微信群，免费无限制
     </div>
   </div>
 </div><!-- /drawer -->
@@ -1526,7 +1530,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
       ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})})
       : Promise.resolve(),
     cfg.wxOn && cfg.wxToken
-      ? fetch(`https://sctapi.ftqq.com/${cfg.wxToken}.send`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`title=${encodeURIComponent(wxTitle)}&desp=${encodeURIComponent(wxDesp)}`})
+      ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`}})})
       : Promise.resolve()
   ]);
 
@@ -1663,7 +1667,7 @@ async function fireTimerAlert(id) {
       ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
       : Promise.resolve('skip'),
     cfg.wxOn && cfg.wxToken
-      ? fetch(`https://sctapi.ftqq.com/${cfg.wxToken}.send`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`title=${encodeURIComponent(wxTitle)}&desp=${encodeURIComponent(wxDesp)}`}).then(r=>r.json()).then(d=>d.code===0?'ok':'err')
+      ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT 定时播报**\n> 当前：$${fmt(id,price)}\n> 24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
       : Promise.resolve('skip')
   ]);
 
@@ -1866,16 +1870,11 @@ async function sendTg(id,price,isUp,level,near){
 async function sendWx(id,price,isUp,level,near){
   if(!cfg.wxToken) return 'skip';
   const s=state[id], dist=Math.abs(price-s.target);
-  const title=`${id}/USDT ${isUp?'📈 上穿':'📉 下穿'} $${fmt(id,level)}`;
-  const desp=`**当前价：$${fmt(id,price)}**${near?`\n\n> ⚠️ 临近目标 $${fmt(id,s.target)}`:''}`;
+  const content=`${isUp?'📈':'📉'} **${id}/USDT** ${isUp?'上穿':'下穿'} **$${fmt(id,level)}**\n> 当前价：$${fmt(id,price)}${near?`\n> ⚠️ 临近目标 $${fmt(id,s.target)}`:''}
+> ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
-    const r=await fetch(`https://sctapi.ftqq.com/${cfg.wxToken}.send`,{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:`title=${encodeURIComponent(title)}&desp=${encodeURIComponent(desp)}`
-    });
-    const d=await r.json();
-    return d.code===0?'ok':'err:'+d.message;
+    const r=await fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content}})});
+    const d=await r.json();return d.errcode===0?'ok':'err:'+d.errmsg;
   }catch(e){return 'err:'+e.message;}
 }
 async function testTg(){
@@ -1885,17 +1884,10 @@ async function testTg(){
   showMsg('tgMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查 Telegram':'❌ '+r);
 }
 async function testWx(){
-  if(!cfg.wxToken){showMsg('wxMsg','err','请填写 Server酱 SendKey');return;}
+  if(!cfg.wxToken){showMsg('wxMsg','err','请填写企业微信机器人 Webhook 地址');return;}
   showMsg('wxMsg','loading','发送中…');
-  try{
-    const r=await fetch(`https://sctapi.ftqq.com/${cfg.wxToken}.send`,{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:`title=${encodeURIComponent('西本聪播报测试')}&desp=${encodeURIComponent('✅ 微信推送测试成功！\n\n西本聪机器人已连接。')}`
-    });
-    const d=await r.json();
-    showMsg('wxMsg',d.code===0?'ok':'err',d.code===0?'✅ 发送成功，请检查微信':'❌ '+d.message);
-  }catch(e){showMsg('wxMsg','err','❌ '+e.message);}
+  const r=await sendWx('BTC',103200,true,103000,false);
+  showMsg('wxMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查企业微信':'❌ '+r);
 }
 function showMsg(id,type,text){const e=document.getElementById(id);e.className='smsg '+type;e.textContent=text;}
 

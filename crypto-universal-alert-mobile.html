@@ -1503,7 +1503,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
     if (cfg.soundOn) playBeep(price >= pointPrice);
     if (cfg.voiceOn) {
       await new Promise(r=>setTimeout(r, i===0?0:1500));
-      speak(`${coin}到达定点价格${fmtSpeak(id,pointPrice)}美元，第${i+1}次提醒`);
+      speak(`${coin}到达定点价格${fmt(id,pointPrice)}美元，第${i+1}次提醒`);
     } else {
       await new Promise(r=>setTimeout(r, 800));
     }
@@ -1638,7 +1638,7 @@ async function fireTimerAlert(id) {
 
   // 声音/语音
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
-  if (cfg.voiceOn) speak(`${coin}当前价格${fmtSpeak(id,price)}美元`);
+  if (cfg.voiceOn) speak(`${coin}当前价格${fmt(id,price)}美元`);
 
   // 推送（频率限制：同一币种定时推送最少间隔1分钟）
   const key = `timer_${id}`;

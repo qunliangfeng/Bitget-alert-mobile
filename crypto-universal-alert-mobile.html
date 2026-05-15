@@ -1487,6 +1487,9 @@ async function firePointAlert(id, price, pointPrice, repeat) {
   const coin = id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
   const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
+  console.log('[定点播报] 触发', id, pointPrice, '重复', repeat, '次');
+  console.log('[定点播报] soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
+
   // 更新状态栏
   const st = document.getElementById('point-status-'+id);
   if (st) { st.style.color='var(--amber)'; st.textContent=`⚡ 已触发 $${fmt(id,pointPrice)}，正在播报 ${repeat} 次`; }
@@ -1500,10 +1503,13 @@ async function firePointAlert(id, price, pointPrice, repeat) {
 
   // 重复播报
   for (let i=0; i<repeat; i++) {
-    if (cfg.soundOn) playBeep(price >= pointPrice);
+    console.log('[定点播报] 第', i+1, '次，soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
+    if (cfg.soundOn) { console.log('[定点播报] 播放beep'); playBeep(price >= pointPrice); }
     if (cfg.voiceOn) {
-      await new Promise(r=>setTimeout(r, i===0?0:1500));
-      speak(`${coin}到达定点价格${fmt(id,pointPrice)}美元，第${i+1}次提醒`);
+      if (i > 0) await new Promise(r=>setTimeout(r, 1500));
+      const txt = `${coin}到达定点价格${fmt(id,pointPrice)}美元，第${i+1}次提醒`;
+      console.log('[定点播报] 语音:', txt);
+      speak(txt);
     } else {
       await new Promise(r=>setTimeout(r, 800));
     }

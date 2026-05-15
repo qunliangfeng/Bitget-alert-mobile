@@ -1499,14 +1499,14 @@ async function firePointAlert(id, price, pointPrice, repeat) {
       st.style.color='var(--tx3)'; 
       st.textContent=active.length>0?`已设定 ${active.length} 个定点价格`:'';
     }
-  }, repeat*1500+2000);
+  }, repeat*3000+2000);
 
   // 重复播报
   for (let i=0; i<repeat; i++) {
     console.log('[定点播报] 第', i+1, '次，soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
     if (cfg.soundOn) { console.log('[定点播报] 播放beep'); playBeep(price >= pointPrice); }
     if (cfg.voiceOn) {
-      if (i > 0) await new Promise(r=>setTimeout(r, 1500));
+      if (i > 0) await new Promise(r=>setTimeout(r, 3000));
       const txt = `${coin}到达定点价格${fmt(id,pointPrice)}美元，第${i+1}次提醒`;
       console.log('[定点播报] 语音:', txt);
       speak(txt);

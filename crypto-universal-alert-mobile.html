@@ -1454,6 +1454,7 @@ function togExpand(id){
 }
 
 // 定点播报相关
+const timerIntervals = {}; // 定时器实例
 const pointFired = {}; // 记录已触发的定点，防止重复
 
 function savePointPrice(id, idx, val) {
@@ -1596,12 +1597,15 @@ function startTimer(id) {
   stopTimer(id);
   const s = state[id];
   const ms = s.timerMin * 60 * 1000;
+  console.log('[定时器] 启动', id, '间隔', ms, 'ms =', s.timerMin, '分钟');
   updateTimerStatus(id);
   timerIntervals[id] = setInterval(() => {
+    console.log('[定时器] 触发', id, 'paused=', paused, 'timerOn=', s.timerOn, 'enabled=', s.enabled);
     if (!paused && s.timerOn && s.enabled) {
       fireTimerAlert(id);
     }
   }, ms);
+  console.log('[定时器] interval ID=', timerIntervals[id]);
 }
 
 function stopTimer(id) {

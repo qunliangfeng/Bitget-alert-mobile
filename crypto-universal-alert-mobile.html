@@ -765,6 +765,12 @@ function loadSettings() {
       document.querySelectorAll('.ex-btn').forEach(b => {
         b.className = 'ex-btn' + (b.dataset.ex===currentExchange?' active':'');
       });
+      // 如果是非快捷按钮的交易所，更新下拉菜单
+      const quickEx = ['bitget','binance','okx','bybit'];
+      if (!quickEx.includes(currentExchange)) {
+        const sel = document.getElementById('exMoreSelect');
+        if (sel) sel.value = currentExchange;
+      }
     }
 
     // 恢复行情类型
@@ -1048,7 +1054,12 @@ function startConnection() {
 
 function connectWS() {
   const ex = EXCHANGES[currentExchange];
-  const wsUrl = ex.getWsUrl ? ex.getWsUrl(COINS, mktType) : ex.wsUrl;
+  if (!ex) { console.error('Unknown exchange:', currentExchange); onWSFail(); return; }
+  if (!COINS || COINS.length === 0) { console.error('No coins loaded'); onWSFail(); return; }
+  let wsUrl;
+  try { wsUrl = ex.getWsUrl ? ex.getWsUrl(COINS, mktType) : ex.wsUrl; }
+  catch(e) { console.error('getWsUrl error:', e); onWSFail(); return; }
+  if (!wsUrl) { console.error('No wsUrl, falling back to REST'); onWSFail(); return; }
   try { ws = new WebSocket(wsUrl); }
   catch(e) { onWSFail(); return; }
 

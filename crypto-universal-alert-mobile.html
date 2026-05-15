@@ -1429,30 +1429,6 @@ function buildCards(){
 
   </div>
 </div>`;
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <span style="font-size:12px;font-weight:600;color:var(--tx2)">⏱ 定时播报</span>
-      <button class="tgl" id="tog-timer-${c.id}" onclick="togAlertMode('${c.id}','timer')" aria-label="定时播报开关"></button>
-    </div>
-    <div id="mb-timer-${c.id}" style="opacity:0.4">
-      <div style="font-size:11px;color:var(--tx3);margin-bottom:7px">每隔固定时间自动播报当前价格</div>
-      <div class="presets" id="tp-presets-${c.id}">
-        <button class="preset" onclick="setTimer('${c.id}',1)">1分钟</button>
-        <button class="preset" onclick="setTimer('${c.id}',5)">5分钟</button>
-        <button class="preset" onclick="setTimer('${c.id}',15)">15分钟</button>
-        <button class="preset" onclick="setTimer('${c.id}',30)">30分钟</button>
-        <button class="preset" onclick="setTimer('${c.id}',60)">1小时</button>
-        <button class="preset" onclick="document.getElementById('ti-${c.id}').focus()">自定义</button>
-      </div>
-      <div class="step-row" style="margin-top:7px">
-        <input class="step-inp" type="number" id="ti-${c.id}" value="5" min="0.1" step="0.1" inputmode="decimal"
-          onchange="setTimer('${c.id}',parseFloat(this.value))">
-        <span class="step-unit" id="ti-unit-${c.id}">分钟 / 次</span>
-      </div>
-      <div id="timer-status-${c.id}" style="font-size:11px;color:var(--tx3);margin-top:6px"></div>
-    </div>
-
-  </div>
-</div>`;
   }).join('');
 }
 
@@ -1553,6 +1529,10 @@ function togAlertMode(id, type) {
       if (st) st.textContent = '';
     }
   }
+  saveSettings();
+}
+
+function setTimer(id, minutes) {
   if (isNaN(minutes)||minutes<0.1) return;
   // 保留1位小数
   minutes = Math.round(minutes * 10) / 10;
@@ -2090,6 +2070,8 @@ function onMoreExSelect(exId) {
 function fmtSpeak(id, v) {
   return fmt(id, v); // 直接用界面显示的格式
 }
+
+function resubscribeWS(){
   if(!wsAlive||!ws||ws.readyState!==1) return;
   const ex = EXCHANGES[currentExchange];
   const subMsg = ex.subscribe(COINS, mktType);

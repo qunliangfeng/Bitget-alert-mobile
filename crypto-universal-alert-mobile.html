@@ -1637,22 +1637,16 @@ async function fireTimerAlert(id) {
   const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const coin = getCoinVoiceName(id);
   const s = state[id];
-  const label = s.timerMin>=60?`${s.timerMin/60}小时`:`${s.timerMin}分钟`;
 
   // 更新最后播报
   const lfe = document.getElementById('lf-'+id);
   if (lfe) lfe.textContent = `⏱ ${fmt(id,price)} ${timeStr}`;
 
-  // 声音/语音
+  // 声音/语音 — 每次都播
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
   if (cfg.voiceOn) speak(`${coin}当前价格${fmt(id,price)}美元`);
 
-  // 推送（频率限制：同一币种定时推送最少间隔1分钟）
-  const key = `timer_${id}`;
-  const now = Date.now();
-  if (lastFired[key] && now-lastFired[key] < 60000) return;
-  lastFired[key] = now;
-
+  // 推送 — 跟随定时器间隔，不额外限制
   const chs = [];
   if (cfg.soundOn) chs.push('snd');
 

@@ -1281,8 +1281,8 @@ function updateZone(id){
   const s=state[id], price=mkt[id].price;
   if(!price){el.innerHTML='等待行情…';return;}
   const near=isNear(id,price), dist=Math.abs(price-s.target);
-  // 用 fmt 函数保持与行情显示相同的小数位
-  const distStr=fmt(id,dist);
+  // 距离用价格的小数位，而不是距离本身的大小
+  const distStr=fmtDist(id, dist, price);
   const step=near?s.nearStep:s.farStep;
   const range=s.nearDist*5,lo=s.target-range,hi=s.target+range;
   const pct=Math.max(0,Math.min(100,(price-lo)/(hi-lo)*100));
@@ -1678,9 +1678,8 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }
   if(cfg.voiceOn){
     const name=id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
-    // 距离用和价格相同的小数位格式
     const dist=Math.abs(price-s.target);
-    const nearTxt=near?`，距目标还有${fmt(id,dist)}美元`:'';
+    const nearTxt=near?`，距目标还有${fmtDist(id,dist,price)}美元`:'';
     speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}美元${nearTxt}`);
   }
   const [tr,wr]=await Promise.all([
@@ -1740,9 +1739,8 @@ function speak(text) {
   u.lang = 'zh-CN';
   u.rate = 1.0;
   u.volume = 1.0;
-  // 用音调区分男女声（不依赖语音库名称，兼容所有设备）
-  u.pitch = cfg.voiceGender === 'male' ? 0.6 : 1.2;
-  // 尝试选中文语音
+  // 男声用低音调，女声用默认
+  if (cfg.voiceGender === 'male') u.pitch = 0.5;
   const voices = window.speechSynthesis.getVoices();
   const zhVoice = voices.find(v => v.lang.startsWith('zh'));
   if (zhVoice) u.voice = zhVoice;
@@ -2055,9 +2053,15 @@ function onMoreExSelect(exId) {
   switchExchange('binance');
 }
 
-// 语音朗读数字 — 与界面显示完全一致的小数位
-function fmtSpeak(id, v) {
-  return fmt(id, v); // 直接用界面显示的格式
+// 用价格的小数位格式化距离（距离比价格小，不能用距离本身决定小数位）
+function fmtDist(id, dist, price) {
+  if (!dist && dist !== 0) return '—';
+  // 根据当前价格大小决定小数位，和界面显示一致
+  if (price >= 10000) return Math.round(dist).toLocaleString('en-US');
+  if (price >= 1000)  return dist.toFixed(1);
+  if (price >= 100)   return dist.toFixed(2);
+  if (price >= 10)    return dist.toFixed(3);
+  return dist.toFixed(4);
 }
 
 function resubscribeWS(){

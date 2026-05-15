@@ -1500,19 +1500,19 @@ async function firePointAlert(id, price, pointPrice, repeat) {
       st.style.color='var(--tx3)'; 
       st.textContent=active.length>0?`已设定 ${active.length} 个定点价格`:'';
     }
-  }, repeat*3000+2000);
+  }, repeat*5000+2000);
 
-  // 重复播报
+  // 重复播报 — 等每次语音说完再播下一次
   for (let i=0; i<repeat; i++) {
     console.log('[定点播报] 第', i+1, '次，soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
     if (cfg.soundOn) { console.log('[定点播报] 播放beep'); playBeep(price >= pointPrice); }
     if (cfg.voiceOn) {
-      if (i > 0) await new Promise(r=>setTimeout(r, 3000));
       const txt = `${coin}到达定点价格${fmt(id,pointPrice)}美元，第${i+1}次提醒`;
       console.log('[定点播报] 语音:', txt);
-      speak(txt);
+      await speakAndWait(txt);
+      await new Promise(r=>setTimeout(r, 2000)); // 说完后再等2秒
     } else {
-      await new Promise(r=>setTimeout(r, 800));
+      await new Promise(r=>setTimeout(r, 1500));
     }
   }
 
@@ -1777,12 +1777,32 @@ function speak(text) {
   u.lang = 'zh-CN';
   u.rate = 1.0;
   u.volume = 1.0;
-  // 男声用低音调，女声用默认
   if (cfg.voiceGender === 'male') u.pitch = 0.5;
   const voices = window.speechSynthesis.getVoices();
   const zhVoice = voices.find(v => v.lang.startsWith('zh'));
   if (zhVoice) u.voice = zhVoice;
   window.speechSynthesis.speak(u);
+}
+
+// 说完才 resolve，用于定点重复播报
+function speakAndWait(text) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-CN';
+    u.rate = 1.0;
+    u.volume = 1.0;
+    if (cfg.voiceGender === 'male') u.pitch = 0.5;
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+    if (zhVoice) u.voice = zhVoice;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    // 保险：最多等10秒
+    setTimeout(resolve, 10000);
+    window.speechSynthesis.speak(u);
+  });
 }
 
 function setVoiceGender(gender) {

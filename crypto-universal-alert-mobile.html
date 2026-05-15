@@ -826,6 +826,7 @@ function loadSettings() {
             if (prEl) prEl.value = pt.repeat || 3;
           });
         }
+        const tfEl = document.getElementById('tog-fixed-'+c.id);
         const ttEl = document.getElementById('tog-target-'+c.id);
         if (tfEl) tfEl.className = 'tgl'+(state[c.id].fixedOn!==false?' on':'');
         if (ttEl) ttEl.className = 'tgl'+(state[c.id].targetOn!==false?' on':'');

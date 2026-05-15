@@ -1484,7 +1484,7 @@ function clearPointPrice(id, idx) {
 }
 
 async function firePointAlert(id, price, pointPrice, repeat) {
-  const coin = id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
+  const coin = getCoinVoiceName(id);
   const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
   console.log('[定点播报] 触发', id, pointPrice, '重复', repeat, '次');
@@ -1634,7 +1634,7 @@ async function fireTimerAlert(id) {
   const price = mkt[id]?.price;
   if (!price) return;
   const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const coin = id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
+  const coin = getCoinVoiceName(id);
   const s = state[id];
   const label = s.timerMin>=60?`${s.timerMin/60}小时`:`${s.timerMin}分钟`;
 
@@ -1715,7 +1715,7 @@ async function fireAlert(id, price, isUp, level, mode){
   const chs=[];
   if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }
   if(cfg.voiceOn){
-    const name=id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
+    const name=getCoinVoiceName(id);
     const dist=Math.abs(price-s.target);
     const nearTxt=near?`，距目标还有${fmtDist(id,dist,price)}美元`:'';
     speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}美元${nearTxt}`);
@@ -2074,7 +2074,18 @@ function rebuildAllCards(){
   updateCoinCountLabel(); buildCards(); loadSettings();
 }
 
-// 更多交易所下拉选择
+// 语音朗读币种名称映射 — 用中文拼音/名称让TTS更准确
+const COIN_VOICE_NAME = {
+  BTC:'比特币', ETH:'以太币', SOL:'索拉纳', BNB:'币安币', XRP:'瑞波币',
+  DOGE:'狗狗币', ADA:'卡尔达诺', AVAX:'雪崩币', DOT:'波卡币', MATIC:'马蹄币',
+  LINK:'链链币', UNI:'优尼币', LTC:'莱特币', BCH:'比特现金', ATOM:'科斯莫斯',
+  NEAR:'近端币', FTM:'幻影币', SAND:'沙盒币', MANA:'曼纳币', APE:'猿猴币',
+  OP:'乐观币', ARB:'阿比币', SUI:'水币', SEI:'塞币', TIA:'天体币',
+  NVDA:'英伟达', TSLA:'特斯拉', AAPL:'苹果', MSFT:'微软',
+};
+function getCoinVoiceName(id) {
+  return COIN_VOICE_NAME[id] || id.split('').join(' '); // 未知币种逐字母读
+}
 function onMoreExSelect(exId) {
   if (!exId) return;
   // 如果已有适配就直接切换

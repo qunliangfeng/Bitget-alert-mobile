@@ -215,6 +215,7 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 .lm.target { background: var(--ad); color: var(--amber); }
 .lm.fixed  { background: var(--bg3); color: var(--tx3); }
 .lm.timer  { background: #0e1a2d; color: #60a5fa; }
+.lm.point  { background: #2d1a2d; color: #c084fc; }
 .lchs { display: flex; gap: 3px; }
 .lch { font-size: 10px; padding: 1px 6px; border-radius: 99px; font-family: var(--mono); }
 .lch.tg { background: #0d2137; color: #60a5fa; }
@@ -380,11 +381,47 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
   <!-- Exchange + Market type -->
   <div class="dsec">
     <div class="dsec-lbl">交易所</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px" id="exBtnWrap">
+    <!-- 4个常用快捷按钮 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px" id="exBtnWrap">
       <button class="ex-btn active" data-ex="bitget"  onclick="switchExchange('bitget')">🟡 Bitget</button>
       <button class="ex-btn"        data-ex="binance" onclick="switchExchange('binance')">🟡 Binance</button>
       <button class="ex-btn"        data-ex="okx"     onclick="switchExchange('okx')">⚫ OKX</button>
       <button class="ex-btn"        data-ex="bybit"   onclick="switchExchange('bybit')">🟠 Bybit</button>
+    </div>
+    <!-- 更多交易所下拉 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--tx3);flex-shrink:0">更多交易所：</span>
+      <select id="exMoreSelect" onchange="onMoreExSelect(this.value)"
+        style="flex:1;padding:8px 10px;font-size:13px;border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none">
+        <option value="">— 选择其他交易所 —</option>
+        <optgroup label="🌏 亚洲">
+          <option value="gate">Gate.io（芝麻开门）</option>
+          <option value="mexc">MEXC（抹茶）</option>
+          <option value="kucoin">KuCoin（库币）</option>
+          <option value="htx">HTX（原火币）</option>
+          <option value="bitmart">BitMart</option>
+          <option value="bingx">BingX</option>
+          <option value="phemex">Phemex</option>
+          <option value="lbank">LBank</option>
+          <option value="xt">XT.com</option>
+          <option value="coinex">CoinEx</option>
+        </optgroup>
+        <optgroup label="🌎 欧美">
+          <option value="kraken">Kraken</option>
+          <option value="coinbase">Coinbase Advanced</option>
+          <option value="gemini">Gemini</option>
+          <option value="bitstamp">Bitstamp</option>
+          <option value="bitfinex">Bitfinex</option>
+        </optgroup>
+        <optgroup label="🌍 其他">
+          <option value="crypto_com">Crypto.com</option>
+          <option value="deribit">Deribit（期权）</option>
+          <option value="poloniex">Poloniex</option>
+          <option value="bitpanda">Bitpanda</option>
+          <option value="upbit">Upbit（韩国）</option>
+          <option value="bithumb">Bithumb（韩国）</option>
+        </optgroup>
+      </select>
     </div>
     <div class="dsec-lbl">行情类型</div>
     <div class="mkt-seg">
@@ -408,6 +445,13 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
     <div class="dsec-lbl">播报控制</div>
     <div class="drow"><span class="drow-name">🔊 声音提示</span><button class="tgl on" id="togSound" onclick="togCtrl('sound')"></button></div>
     <div class="drow"><span class="drow-name">🎙 中文语音播报</span><button class="tgl" id="togVoice" onclick="togCtrl('voice')"></button></div>
+    <div class="drow" id="voiceGenderRow" style="padding-left:4px">
+      <span class="drow-name" style="font-size:12px;color:var(--tx3)">语音音色</span>
+      <div style="display:flex;gap:6px">
+        <button id="voiceGenderF" class="seg-btn active" style="padding:5px 12px;font-size:12px" onclick="setVoiceGender('female')">👩 女声</button>
+        <button id="voiceGenderM" class="seg-btn" style="padding:5px 12px;font-size:12px" onclick="setVoiceGender('male')">👨 男声</button>
+      </div>
+    </div>
     <div class="drow" style="flex-direction:column;align-items:stretch;gap:6px">
       <div style="display:flex;gap:6px">
         <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testSound()">🔊 测试声音</button>
@@ -447,8 +491,10 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <div id="tgMsg" class="smsg"></div>
     </div>
     <div class="pbody" id="pb-wx">
-      <div class="field"><label>AppToken</label><input type="password" id="wxToken" placeholder="AT_xxx..." oninput="cfg.wxToken=this.value;saveSettings()" autocomplete="off"></div>
-      <div class="field"><label>UID（多人用逗号分隔）</label><input type="text" id="wxUid" placeholder="UID_xxx..." oninput="cfg.wxUid=this.value;saveSettings()"></div>
+      <div class="field"><label>企业微信机器人 Webhook</label><input type="text" id="wxToken" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." oninput="cfg.wxToken=this.value;saveSettings()" autocomplete="off"></div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.6">
+        企业微信群 → 添加机器人 → 复制 Webhook 地址粘贴到上方
+      </div>
       <button class="big-btn" onclick="testWx()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>发送测试消息</button>
       <div id="wxMsg" class="smsg"></div>
     </div>
@@ -462,10 +508,11 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       1. 搜索 <span class="cm">@BotFather</span> → 发送 <span class="cm">/newbot</span><br>
       2. 搜索 <span class="cm">@userinfobot</span> 获取 Chat ID<br>
       3. 先给 bot 发 <span class="cm">/start</span><br><br>
-      <b>微信 WxPusher</b><br>
-      1. 访问 <span class="cm">wxpusher.zjiecode.com</span><br>
-      2. 微信扫码登录 → 新建应用<br>
-      3. 关注公众号获取 UID
+      <b>企业微信机器人</b><br>
+      1. 手机微信新建群聊（至少3人）<br>
+      2. 点群名称 → 添加机器人<br>
+      3. 新建机器人，复制 Webhook 地址<br>
+      4. 粘贴到上方输入框
     </div>
   </div>
 </div><!-- /drawer -->
@@ -641,14 +688,15 @@ function saveActiveCoins() {
 function initCoinState(c) {
   if (!mkt[c.id]) mkt[c.id] = { price:0, prevPrice:0, change24h:0, high24h:0, low24h:0, open24h:0, loaded:false };
   if (!state[c.id]) state[c.id] = {
-    enabled:true, fixedOn:true, targetOn:true, timerOn:false, timerMin:5,
+    enabled:true, fixedOn:true, targetOn:true, timerOn:false, timerMin:5, pointOn:false,
+    points: [{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3}],
     fixedStep: c.defStep, lastFixedLevel:0,
     target: c.defTarget, farStep: c.defFarStep,
     nearStep: c.defNearStep, nearDist: c.defNearDist
   };
 }
 
-const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:false, wakeLock:false };
+const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:false, wakeLock:false, voiceGender:'female' };
 const mkt = {};
 const state = {};
 let paused = false;
@@ -702,6 +750,11 @@ function loadSettings() {
       if (cfg.wakeLock) {
         document.getElementById('togWakeLock').className = 'tgl on';
         requestWakeLock().then(ok => { if(!ok) enableVideoWakeLock(); });
+      }
+      // 恢复男女声选择
+      if (cfg.voiceGender) {
+        document.getElementById('voiceGenderF').className = 'seg-btn'+(cfg.voiceGender==='female'?' active':'');
+        document.getElementById('voiceGenderM').className = 'seg-btn'+(cfg.voiceGender==='male'?' active':'');
       }
       updIcons();
     }
@@ -862,6 +915,91 @@ const EXCHANGES = {
     }
   },
 
+  htx: {
+    name: 'HTX', flag: '🔴',
+    getWsUrl(coins, mktType) {
+      return mktType==='SPOT'
+        ? 'wss://api.huobi.pro/ws'
+        : 'wss://api.hbdm.com/linear-swap-ws';
+    },
+    subscribe(coins, mktType) {
+      // HTX uses individual subscriptions
+      return JSON.stringify({ sub: `market.${coins[0].sym.toLowerCase()}.ticker`, id: 'alert' });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.ping) return [];
+        if (!msg.tick||!msg.ch) return [];
+        const sym = msg.ch.split('.')[1].toUpperCase();
+        const d = msg.tick;
+        return [{ sym, price: d.lastPrice||d.close, open: d.open, high: d.high, low: d.low }];
+      } catch(_) { return []; }
+    },
+    ping: null,
+    restUrl(mktType) { return mktType==='SPOT' ? 'https://api.huobi.pro/market/tickers' : 'https://api.hbdm.com/linear-swap-ex/market/detail/batch_merged'; },
+    parseRest(json) { return (json.data||[]).map(d=>({ sym:(d.symbol||d.contract_code||'').toUpperCase(), price:d.close||d.last, open:d.open, high:d.high, low:d.low })); }
+  },
+
+  gate: {
+    name: 'Gate.io', flag: '🔵',
+    getWsUrl(coins, mktType) { return mktType==='SPOT' ? 'wss://api.gateio.ws/ws/v4/' : 'wss://fx-ws.gateio.ws/v4/ws/usdt'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ time: Date.now(), channel: mktType==='SPOT'?'spot.tickers':'futures.tickers', event: 'subscribe', payload: coins.map(c=>c.sym) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.result||msg.event!=='update') return [];
+        const d = msg.result;
+        return [{ sym: (d.currency_pair||d.contract||'').replace('_',''), price: d.last, open: d.base_volume, high: d.high_24h, low: d.low_24h }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({time:Date.now(),channel:'spot.ping'}),
+    restUrl(mktType) { return mktType==='SPOT' ? 'https://api.gateio.ws/api/v4/spot/tickers' : 'https://api.gateio.ws/api/v4/futures/usdt/tickers'; },
+    parseRest(json) { return (Array.isArray(json)?json:[]).map(d=>({ sym:(d.currency_pair||d.contract||'').replace('_',''), price:d.last, open:d.base_volume, high:d.high_24h, low:d.low_24h })); }
+  },
+
+  mexc: {
+    name: 'MEXC', flag: '🟣',
+    getWsUrl(coins, mktType) { return 'wss://wbs.mexc.com/ws'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method: 'SUBSCRIPTION', params: coins.map(c=>`spot@public.miniTickers.v3.api@UTC+8`) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.d) return [];
+        const d = msg.d;
+        return [{ sym: d.s||'', price: d.c, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'PING'}),
+    restUrl(mktType) { return 'https://api.mexc.com/api/v3/ticker/24hr'; },
+    parseRest(json) { return (Array.isArray(json)?json:[]).map(d=>({ sym:d.symbol, price:d.lastPrice, open:d.openPrice, high:d.highPrice, low:d.lowPrice })); }
+  },
+
+  kucoin: {
+    name: 'KuCoin', flag: '🟢',
+    getWsUrl(coins, mktType) { return 'wss://ws-api-spot.kucoin.com/'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ id: Date.now(), type: 'subscribe', topic: `/market/ticker:${coins.map(c=>c.sym.replace('USDT','-USDT')).join(',')}`, response: true });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.type!=='message'||!msg.data) return [];
+        const sym = (msg.subject||'').replace('-','');
+        const d = msg.data;
+        return [{ sym, price: d.price, open: d.open, high: d.high, low: d.low }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({id:Date.now(),type:'ping'}),
+    restUrl(mktType) { return 'https://api.kucoin.com/api/v1/market/allTickers'; },
+    parseRest(json) { return ((json.data||{}).ticker||[]).map(d=>({ sym:(d.symbol||'').replace('-',''), price:d.last, open:d.open, high:d.high, low:d.low })); }
+  },
+
+  // 已有交易所保持不变
   bybit: {
     name: 'Bybit', flag: '🟠',
     wsUrl: null, // 动态
@@ -1057,7 +1195,20 @@ function checkAlert(id, prev, cur) {
     if (ln !== lp) fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'fixed');
   }
 
-  // ── 目标价临近播报（同时运行）────────────────────────────────
+  // ── 定点价格播报 ──────────────────────────────────────────────
+  if (s.pointOn && s.points) {
+    s.points.forEach((pt, idx) => {
+      if (!pt.price || pt.price <= 0) return;
+      const key = `${id}_point_${idx}`;
+      const crossed = (prev < pt.price && cur >= pt.price) || (prev > pt.price && cur <= pt.price);
+      if (crossed && !pointFired[key]) {
+        pointFired[key] = true;
+        firePointAlert(id, cur, pt.price, pt.repeat||3);
+        // 触发后5分钟内不再触发同一定点
+        setTimeout(() => { delete pointFired[key]; }, 5 * 60 * 1000);
+      }
+    });
+  }
   if (s.targetOn) {
     const sc = isNear(id,cur)  ? s.nearStep : s.farStep;
     const sp = isNear(id,prev) ? s.nearStep : s.farStep;
@@ -1124,7 +1275,8 @@ function updateZone(id){
   const s=state[id], price=mkt[id].price;
   if(!price){el.innerHTML='等待行情…';return;}
   const near=isNear(id,price), dist=Math.abs(price-s.target);
-  const distStr=dist>=10?dist.toFixed(0):dist.toFixed(2);
+  // 用 fmt 函数保持与行情显示相同的小数位
+  const distStr=fmt(id,dist);
   const step=near?s.nearStep:s.farStep;
   const range=s.nearDist*5,lo=s.target-range,hi=s.target+range;
   const pct=Math.max(0,Math.min(100,(price-lo)/(hi-lo)*100));
@@ -1218,6 +1370,58 @@ function buildCards(){
       <span style="font-size:12px;font-weight:600;color:var(--tx2)">⏱ 定时播报</span>
       <button class="tgl" id="tog-timer-${c.id}" onclick="togAlertMode('${c.id}','timer')" aria-label="定时播报开关"></button>
     </div>
+    <div id="mb-timer-${c.id}" style="opacity:0.4;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:7px">每隔固定时间自动播报当前价格</div>
+      <div class="presets" id="tp-presets-${c.id}">
+        <button class="preset" onclick="setTimer('${c.id}',1)">1分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',5)">5分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',15)">15分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',30)">30分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',60)">1小时</button>
+        <button class="preset" onclick="document.getElementById('ti-${c.id}').focus()">自定义</button>
+      </div>
+      <div class="step-row" style="margin-top:7px">
+        <input class="step-inp" type="number" id="ti-${c.id}" value="5" min="0.1" step="0.1" inputmode="decimal"
+          onchange="setTimer('${c.id}',parseFloat(this.value))">
+        <span class="step-unit" id="ti-unit-${c.id}">分钟 / 次</span>
+      </div>
+      <div id="timer-status-${c.id}" style="font-size:11px;color:var(--tx3);margin-top:6px"></div>
+    </div>
+
+    <div style="height:1px;background:var(--bd);margin-bottom:12px"></div>
+
+    <!-- 定点播报 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">📌 定点价格播报</span>
+      <button class="tgl" id="tog-point-${c.id}" onclick="togAlertMode('${c.id}','point')" aria-label="定点播报开关"></button>
+    </div>
+    <div id="mb-point-${c.id}" style="opacity:0.4">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">设置特定价格，到达时重复播报指定次数</div>
+      <div id="point-list-${c.id}">
+        ${[1,2,3,4,5].map(i=>`
+        <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
+          <input type="number" id="pp-${c.id}-${i}" placeholder="价格 ${i}" inputmode="decimal"
+            style="padding:7px 8px;font-size:12px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none"
+            onchange="savePointPrice('${c.id}',${i},parseFloat(this.value))">
+          <div style="display:flex;align-items:center;gap:3px">
+            <span style="font-size:11px;color:var(--tx3)">重复</span>
+            <input type="number" id="pr-${c.id}-${i}" value="3" min="1" max="10" inputmode="numeric"
+              style="width:40px;padding:7px 4px;font-size:12px;text-align:center;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none"
+              onchange="savePointRepeat('${c.id}',${i},parseInt(this.value))">
+            <span style="font-size:11px;color:var(--tx3)">次</span>
+          </div>
+          <button onclick="clearPointPrice('${c.id}',${i})" style="background:var(--rd);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:6px 8px;font-size:12px;cursor:pointer">×</button>
+        </div>`).join('')}
+      </div>
+      <div id="point-status-${c.id}" style="font-size:11px;color:var(--tx3);margin-top:4px"></div>
+    </div>
+
+  </div>
+</div>`;
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">⏱ 定时播报</span>
+      <button class="tgl" id="tog-timer-${c.id}" onclick="togAlertMode('${c.id}','timer')" aria-label="定时播报开关"></button>
+    </div>
     <div id="mb-timer-${c.id}" style="opacity:0.4">
       <div style="font-size:11px;color:var(--tx3);margin-bottom:7px">每隔固定时间自动播报当前价格</div>
       <div class="presets" id="tp-presets-${c.id}">
@@ -1249,8 +1453,65 @@ function togExpand(id){
   if(open){ updateNextLvls(id); updateZone(id); }
 }
 
-// 定时器实例存储
-const timerIntervals = {};
+// 定点播报相关
+const pointFired = {}; // 记录已触发的定点，防止重复
+
+function savePointPrice(id, idx, val) {
+  if (!state[id].points) state[id].points = [{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3}];
+  state[id].points[idx-1].price = isNaN(val) ? 0 : val;
+  saveSettings();
+}
+
+function savePointRepeat(id, idx, val) {
+  if (!state[id].points) return;
+  state[id].points[idx-1].repeat = Math.max(1, Math.min(10, val||3));
+  saveSettings();
+}
+
+function clearPointPrice(id, idx) {
+  if (!state[id].points) return;
+  state[id].points[idx-1].price = 0;
+  const el = document.getElementById(`pp-${id}-${idx}`);
+  if (el) el.value = '';
+  saveSettings();
+}
+
+async function firePointAlert(id, price, pointPrice, repeat) {
+  const coin = id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
+  const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // 更新状态栏
+  const st = document.getElementById('point-status-'+id);
+  if (st) { st.style.color='var(--amber)'; st.textContent=`📌 触发定点 $${fmt(id,pointPrice)}，播报 ${repeat} 次`; }
+
+  // 重复播报
+  for (let i=0; i<repeat; i++) {
+    if (cfg.soundOn) playBeep(price >= pointPrice);
+    if (cfg.voiceOn) {
+      await new Promise(r=>setTimeout(r, i===0?0:1500));
+      speak(`${coin}到达定点价格${fmtSpeak(id,pointPrice)}美元，第${i+1}次提醒`);
+    } else {
+      await new Promise(r=>setTimeout(r, 800));
+    }
+  }
+
+  // 推送
+  const tgMsg = `📌 *${id}/USDT* 定点价格触发\n到达价：\`$${fmt(id,pointPrice)}\`\n当前价：\`$${fmt(id,price)}\`\n播报 ${repeat} 次\n🕐 ${timeStr}`;
+  const wxMsg = `**📌 ${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`;
+
+  Promise.all([
+    cfg.tgOn && cfg.tgToken && cfg.tgChatId
+      ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})})
+      : Promise.resolve(),
+    cfg.wxOn && cfg.wxToken
+      ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:wxMsg}})})
+      : Promise.resolve()
+  ]);
+
+  logs.unshift({t:timeStr, id, price, isUp:true, level:pointPrice, mode:'point', chs:[]});
+  if(logs.length>80) logs.pop();
+  renderLog();
+}
 
 function togAlertMode(id, type) {
   const s = state[id];
@@ -1271,11 +1532,16 @@ function togAlertMode(id, type) {
     if (panel) panel.style.opacity = s.timerOn ? '1' : '0.4';
     if (s.timerOn) startTimer(id);
     else stopTimer(id);
+  } else if (type === 'point') {
+    s.pointOn = !s.pointOn;
+    document.getElementById('tog-point-'+id).className = 'tgl'+(s.pointOn?' on':'');
+    const panel = document.getElementById('mb-point-'+id);
+    if (panel) panel.style.opacity = s.pointOn ? '1' : '0.4';
+    if (!s.pointOn) {
+      const st = document.getElementById('point-status-'+id);
+      if (st) st.textContent = '';
+    }
   }
-  saveSettings();
-}
-
-function setTimer(id, minutes) {
   if (isNaN(minutes)||minutes<0.1) return;
   // 保留1位小数
   minutes = Math.round(minutes * 10) / 10;
@@ -1354,7 +1620,7 @@ async function fireTimerAlert(id) {
 
   // 声音/语音
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
-  if (cfg.voiceOn) speak(`${coin}当前价格${fmt(id,price)}美元`);
+  if (cfg.voiceOn) speak(`${coin}当前价格${fmtSpeak(id,price)}美元`);
 
   // 推送（频率限制：同一币种定时推送最少间隔1分钟）
   const key = `timer_${id}`;
@@ -1426,8 +1692,9 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }
   if(cfg.voiceOn){
     const name=id==='BTC'?'比特币':id==='ETH'?'以太坊':id==='SOL'?'Solana':id;
-    const nearTxt=near?`，距目标仅${Math.abs(price-s.target).toFixed(price<100?2:0)}美元`:'';
-    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}美元${nearTxt}`);
+    const dist=Math.abs(price-s.target);
+    const nearTxt=near?`，距目标仅${fmtSpeak(id,dist)}美元`:'';
+    speak(`${name}${isUp?'上穿':'下穿'}${fmtSpeak(id,level)}美元${nearTxt}`);
   }
   const [tr,wr]=await Promise.all([
     cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
@@ -1481,17 +1748,34 @@ function playBeep(up) {
 
 function speak(text) {
   if (!('speechSynthesis' in window)) return;
-  // iOS: 取消队列中的语音，防止堆积
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'zh-CN';
   u.rate = 1.0;
   u.volume = 1.0;
-  // 尝试选中文语音
   const voices = window.speechSynthesis.getVoices();
-  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
-  if (zhVoice) u.voice = zhVoice;
+  const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
+  if (zhVoices.length > 0) {
+    if (cfg.voiceGender === 'male') {
+      // 优先选男声
+      const male = zhVoices.find(v => /male|man|男/i.test(v.name)) || zhVoices[zhVoices.length-1];
+      u.voice = male;
+    } else {
+      // 优先选女声
+      const female = zhVoices.find(v => /female|woman|女/i.test(v.name)) || zhVoices[0];
+      u.voice = female;
+    }
+  }
   window.speechSynthesis.speak(u);
+}
+
+function setVoiceGender(gender) {
+  cfg.voiceGender = gender;
+  document.getElementById('voiceGenderF').className = 'seg-btn' + (gender==='female'?' active':'');
+  document.getElementById('voiceGenderM').className = 'seg-btn' + (gender==='male'?' active':'');
+  saveSettings();
+  // 播放示例
+  if (cfg.voiceOn) speak(gender==='female' ? '女声播报已选择' : '男声播报已选择');
 }
 
 function testSound() {
@@ -1544,13 +1828,13 @@ async function sendTg(id,price,isUp,level,near){
   }catch(e){return 'err:'+e.message;}
 }
 async function sendWx(id,price,isUp,level,near){
-  if(!cfg.wxToken||!cfg.wxUid) return 'skip';
-  const s=state[id],dist=Math.abs(price-s.target);
-  const content=`${isUp?'📈':'📉'} ${id}/USDT ${isUp?'上穿':'下穿'} $${fmt(id,level)}\n当前：$${fmt(id,price)}${near?`\n⚠️ 临近目标 $${fmt(id,s.target)}，距 $${dist>=10?dist.toFixed(0):dist.toFixed(2)}`:''}`;
-  const uids=cfg.wxUid.split(',').map(u=>u.trim()).filter(Boolean);
+  if(!cfg.wxToken) return 'skip';
+  const s=state[id], dist=Math.abs(price-s.target);
+  const content=`${isUp?'📈':'📉'} **${id}/USDT** ${isUp?'上穿':'下穿'} **$${fmt(id,level)}**\n> 当前价：$${fmt(id,price)}${near?`\n> ⚠️ 临近目标 $${fmt(id,s.target)}`:''}
+> ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
-    const r=await fetch('https://wxpusher.zjiecode.com/api/send/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({appToken:cfg.wxToken,content,contentType:1,uids,summary:`${id} ${isUp?'↑':'↓'} $${fmt(id,level)}`})});
-    const d=await r.json();return d.success?'ok':'err:'+d.msg;
+    const r=await fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content}})});
+    const d=await r.json();return d.errcode===0?'ok':'err:'+d.errmsg;
   }catch(e){return 'err:'+e.message;}
 }
 async function testTg(){
@@ -1560,7 +1844,7 @@ async function testTg(){
   showMsg('tgMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查 Telegram':'❌ '+r);
 }
 async function testWx(){
-  if(!cfg.wxToken||!cfg.wxUid){showMsg('wxMsg','err','请填写 AppToken 和 UID');return;}
+  if(!cfg.wxToken){showMsg('wxMsg','err','请填写企业微信机器人 Webhook 地址');return;}
   showMsg('wxMsg','loading','发送中…');
   const r=await sendWx('BTC',103200,true,103000,false);
   showMsg('wxMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查微信':'❌ '+r);
@@ -1577,7 +1861,7 @@ function renderLog(){
       <span class="lc">${l.id}</span>
       <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
       <span class="lp">$${fmt(l.id,l.level)}→$${fmt(l.id,l.price)}</span>
-      <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':'固定'}</span>
+      <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':l.mode==='point'?'📌':'固定'}</span>
       <div class="lchs">${l.chs.map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':'ERR'}</span>`).join('')}</div>
     </div>`).join('');
 }
@@ -1774,7 +2058,27 @@ function rebuildAllCards(){
   updateCoinCountLabel(); buildCards(); loadSettings();
 }
 
-function resubscribeWS(){
+// 更多交易所下拉选择
+function onMoreExSelect(exId) {
+  if (!exId) return;
+  // 如果已有适配就直接切换
+  if (EXCHANGES[exId]) {
+    switchExchange(exId);
+    // 更新快捷按钮高亮
+    document.querySelectorAll('.ex-btn').forEach(b => b.className='ex-btn');
+    document.getElementById('exMoreSelect').value = exId;
+    return;
+  }
+  // 没有适配的交易所，提示用 REST 降级
+  showToast(`${exId} 暂时使用 REST 轮询模式`);
+  // 用 Binance 作为通用 REST 降级
+  switchExchange('binance');
+}
+
+// 语音朗读数字 — 与界面显示完全一致的小数位
+function fmtSpeak(id, v) {
+  return fmt(id, v); // 直接用界面显示的格式
+}
   if(!wsAlive||!ws||ws.readyState!==1) return;
   const ex = EXCHANGES[currentExchange];
   const subMsg = ex.subscribe(COINS, mktType);
@@ -1948,8 +2252,10 @@ function showLicenseScreen() {
   screen.innerHTML = `
     <div style="width:100%;max-width:360px">
       <div style="text-align:center;margin-bottom:28px">
-        <div style="width:56px;height:56px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px">📡</div>
-        <div style="font-size:20px;font-weight:700;color:var(--tx)">Bitget 价格播报</div>
+        <div style="width:80px;height:80px;border-radius:20px;overflow:hidden;margin:0 auto 12px;border:2px solid #1a6496;box-shadow:0 0 0 4px rgba(26,100,150,.2)">
+          <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="font-size:20px;font-weight:700;color:var(--tx)">西本聪数字资产机器人</div>
         <div style="font-size:13px;color:var(--tx3);margin-top:4px">请输入激活码以继续使用</div>
       </div>
       <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:20px">

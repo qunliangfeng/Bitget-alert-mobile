@@ -1029,13 +1029,11 @@ const EXCHANGES = {
       try {
         const msg = JSON.parse(raw);
         if (!msg.data || !msg.arg || msg.arg.channel!=='ticker') return [];
-        // Bitget instId 可能带后缀如 NVDAUSDT，直接用 data 里的 instId 字段
-        return msg.data.map(d => {
-          const instId = d.instId || msg.arg.instId || '';
-          // 统一格式：去掉可能的连字符，保证和 COINS[].sym 一致
-          const sym = instId.replace(/-/g,'');
-          return { sym, price: d.lastPr||d.last, open: d.open24h, high: d.high24h, low: d.low24h };
-        });
+        // msg.arg.instId 是订阅的交易对，去掉连字符统一格式
+        const sym = (msg.arg.instId || '').replace(/-/g,'');
+        return msg.data.map(d => ({
+          sym, price: d.lastPr||d.last, open: d.open24h, high: d.high24h, low: d.low24h
+        }));
       } catch(_) { return []; }
     },
     ping: 'ping',
@@ -1481,8 +1479,10 @@ function startConnection() {
   wsFailCount = 0;
   connMode = 'ws';
   connectWS();
-  // 10秒后检查哪些币还没数据，用 REST 补充
-  setTimeout(fetchMissingStockTokens, 10000);
+  // 延迟补充美股代币（等 WS 先建立）
+  setTimeout(fetchMissingStockTokens, 8000);
+  // 非支持交易所持续轮询美股
+  setTimeout(startStockPoll, 3000);
 }
 
 function connectWS() {
@@ -1577,14 +1577,31 @@ async function fetchRESTTickers() {
   setTimeout(fetchMissingStockTokens, 8000);
 }
 
+let stockPollTimer = null;
+
 async function fetchMissingStockTokens() {
-  // 只补充真正没有数据的美股代币，有数据的不干预
-  const missing = COINS.filter(c => {
+  // 找出 COINS 里的美股代币
+  const stockCoins = COINS.filter(c => {
     const base = c.id.replace(/USDT$|USDC$/,'');
-    return STOCK_TOKENS.includes(base) && (!mkt[c.id] || !mkt[c.id].loaded);
+    return STOCK_TOKENS.includes(base);
   });
-  if (!missing.length) return;
-  for (const coin of missing) {
+  if (!stockCoins.length) { clearInterval(stockPollTimer); stockPollTimer=null; return; }
+
+  // 当前交易所是否支持美股代币（Bitget/OKX 支持，Binance 不支持）
+  const supportedExchanges = ['bitget','okx','mexc','gate'];
+  if (supportedExchanges.includes(currentExchange)) {
+    // 当前交易所支持，由主 WS 处理，只补充 loaded=false 的
+    const missing = stockCoins.filter(c => !mkt[c.id]?.loaded);
+    if (!missing.length) return;
+    await fetchStockFromBitget(missing);
+  } else {
+    // 当前交易所不支持美股（如 Binance），全部从 Bitget 持续补充
+    await fetchStockFromBitget(stockCoins);
+  }
+}
+
+async function fetchStockFromBitget(coins) {
+  for (const coin of coins) {
     try {
       const url = `https://api.bitget.com/api/v2/mix/market/ticker?symbol=${coin.sym}&productType=USDT-FUTURES`;
       const r = await fetch(url);
@@ -1594,6 +1611,18 @@ async function fetchMissingStockTokens() {
         if (t && t.lastPr) handleTick(coin.sym, { lastPr:t.lastPr, open24h:t.open24h, high24h:t.high24h, low24h:t.low24h });
       }
     } catch(_) {}
+  }
+}
+
+function startStockPoll() {
+  clearInterval(stockPollTimer);
+  const stockCoins = COINS.filter(c => STOCK_TOKENS.includes(c.id.replace(/USDT$|USDC$/, '')));
+  if (!stockCoins.length) return;
+  const supportedExchanges = ['bitget','okx','mexc','gate'];
+  // 非支持交易所才需要持续轮询
+  if (!supportedExchanges.includes(currentExchange)) {
+    fetchStockFromBitget(stockCoins);
+    stockPollTimer = setInterval(() => fetchStockFromBitget(stockCoins), 5000);
   }
 }
 
@@ -1655,6 +1684,7 @@ function switchExchange(exId) {
   // 重连
   wsAlive=false; connMode='ws'; wsFailCount=0;
   clearInterval(pingTimer); clearTimeout(reconnTimer); clearInterval(restTimer);
+  clearInterval(stockPollTimer); stockPollTimer=null;
   try{if(ws) ws.close();}catch(_){}
   setTimeout(startConnection, 400);
 }
@@ -1688,14 +1718,14 @@ function handleTick(sym, d) {
   if(s.enabled) checkAlert(coin.id, prev, price);
 }
 
-function checkAlert(id, prev, cur) {
+async function checkAlert(id, prev, cur) {
   const s = state[id];
 
   // ── 固定梯度（常规关口播报）────────────────────────────────────
   if (s.fixedOn) {
     const step = s.fixedStep;
     const ln = Math.floor(cur/step)*step, lp = Math.floor(prev/step)*step;
-    if (ln !== lp) fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'fixed');
+    if (ln !== lp) await fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'fixed');
   }
 
   // ── 定点价格播报 ──────────────────────────────────────────────
@@ -1721,11 +1751,11 @@ function checkAlert(id, prev, cur) {
       const level = ln>lp?ln:lp;
       const fixedStep = s.fixedStep;
       const alreadyFiredByFixed = s.fixedOn && (Math.abs(level % fixedStep) < 0.001 || Math.abs(level % fixedStep - fixedStep) < 0.001);
-      if (!alreadyFiredByFixed) fireAlert(id, cur, cur>prev, level, 'target');
+      if (!alreadyFiredByFixed) await fireAlert(id, cur, cur>prev, level, 'target');
     }
     // 精确穿越目标价
     if ((prev < s.target && cur >= s.target) || (prev > s.target && cur <= s.target))
-      fireAlert(id, cur, cur>prev, s.target, 'target');
+      await fireAlert(id, cur, cur>prev, s.target, 'target');
   }
 }
 

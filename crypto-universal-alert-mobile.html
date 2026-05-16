@@ -1103,7 +1103,7 @@ const EXCHANGES = {
 };
 
 // 当前交易所
-let currentExchange = 'bitget';
+let currentExchange = localStorage.getItem('current_exchange') || 'binance';
 
 // ── 连接模式 ──────────────────────────────────────────────────────
 let connMode = 'ws';
@@ -1804,8 +1804,25 @@ function unlockAudio() {
   } catch(_) {}
 }
 // 页面任意点击时解锁
-document.addEventListener('touchstart', unlockAudio, { once: true });
-document.addEventListener('click', unlockAudio, { once: true });
+function unlockAudioAndVoice() {
+  unlockAudio();
+  // 静默初始化语音合成，让后续播报无需先点测试
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+    // 预加载语音列表
+    window.speechSynthesis.getVoices();
+    if (window.speechSynthesis.onvoiceschanged === null) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }
+}
+document.addEventListener('touchstart', unlockAudioAndVoice, { once: true });
+document.addEventListener('click', unlockAudioAndVoice, { once: true });
 
 function playBeep(up) {
   unlockAudio();
@@ -2621,6 +2638,10 @@ function getRefCodeFromUrl() {
 // ── Init ──────────────────────────────────────────────────────────
 buildCards();
 updateCoinCountLabel();
+// 初始化交易所按钮高亮（与 currentExchange 保持一致）
+document.querySelectorAll('.ex-btn').forEach(b => {
+  b.className = 'ex-btn' + (b.dataset.ex === currentExchange ? ' active' : '');
+});
 loadSettings();
 
 // 包裹整个 app，方便激活界面覆盖

@@ -2283,7 +2283,8 @@ function testVoice() {
 async function sendTg(id,price,isUp,level,near){
   if(!cfg.tgToken||!cfg.tgChatId) return 'skip';
   const s=state[id],sym=isUp?'📈':'📉',dist=Math.abs(price-s.target);
-  const _eq=getCoinQuote(id);\n  const extra=near?`\n🎯 目标 \`${fmt(id,s.target)} ${_eq}\` · 距离 \`${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}\``:'';
+  const _eq=getCoinQuote(id);
+  const extra=near?`\n🎯 目标 \`${fmt(id,s.target)} ${_eq}\` · 距离 \`${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}\``:'';
   const text=`${sym} *${id}/USDT* ${isUp?'上穿':'下穿'} \`${fmt(id,level)}\`\n当前：\`${fmt(id,price)}\`${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
     const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text,parse_mode:'Markdown'})});

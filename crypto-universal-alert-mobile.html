@@ -712,6 +712,7 @@ COINS.forEach(initCoinState);
 
 // ── 本地存储：保存 / 读取设置 ────────────────────────────────────
 const STORAGE_KEY = 'bitget_alert_settings_v1';
+let cloudSaveTimer = null;
 
 function saveSettings() {
   try {
@@ -720,22 +721,69 @@ function saveSettings() {
       mktType,
       exchange: currentExchange,
       paused,
+      savedAt: Date.now(),
       coinStates: {}
     };
     COINS.forEach(c => {
       data.coinStates[c.id] = { ...state[c.id] };
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // 防抖：3秒后上传到云端（避免频繁请求）
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(() => syncSettingsToCloud(data), 3000);
   } catch(_) {}
 }
 
-function loadSettings() {
+// 上传设置到 Worker KV
+async function syncSettingsToCloud(data) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
+    const licenseCode = localStorage.getItem('license_code');
+    if (!licenseCode) return;
+    await fetch(`${WORKER_URL}/settings/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ licenseCode, settings: data }),
+    });
+  } catch(_) {}
+}
 
-    // 恢复 cfg
+// 从云端拉取设置
+async function loadSettingsFromCloud() {
+  try {
+    const licenseCode = localStorage.getItem('license_code');
+    if (!licenseCode) return null;
+    const res = await fetch(`${WORKER_URL}/settings/load`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ licenseCode }),
+    });
+    const data = await res.json();
+    if (data.success && data.settings) return data.settings;
+    return null;
+  } catch(_) { return null; }
+}
+
+async function loadSettings() {
+  try {
+    // 先用本地缓存快速启动
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) applySettings(JSON.parse(raw));
+
+    // 再从云端拉取最新设置（可能比本地更新）
+    const cloudData = await loadSettingsFromCloud();
+    if (cloudData && cloudData.savedAt) {
+      const localSavedAt = raw ? (JSON.parse(raw).savedAt || 0) : 0;
+      if (cloudData.savedAt > localSavedAt) {
+        // 云端更新，覆盖本地
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+        applySettings(cloudData);
+      }
+    }
+  } catch(_) {}
+}
+
+function applySettings(data) {
+  try {
     if (data.cfg) {
       Object.assign(cfg, data.cfg);
       // 填入输入框
@@ -2287,7 +2335,6 @@ function disableVideoWakeLock() {
 
 // ── Init ──────────────────────────────────────────────────────────
 // ── 授权验证系统 ──────────────────────────────────────────────────
-// ⚠️ 部署后把下面这行改成你的 Cloudflare Worker 地址
 const WORKER_URL = 'https://price-alert-worker.qunliang-feng.workers.dev';
 
 const LIC_KEY = 'bitget_license_v1';
@@ -2429,8 +2476,8 @@ async function checkLicense() {
       localStorage.setItem(LIC_KEY, JSON.stringify({ ...lic, verifiedAt: now }));
       localStorage.setItem('lic_last_check', now.toString());
       if (data.warning) showExpireWarning(data.daysLeft);
-    } else {
-      // 验证失败才中断
+    } else if (data.reason === 'revoked' || data.reason === 'not_found') {
+      // 只有明确被吊销或不存在才中断，过期继续用到本地过期时间
       localStorage.removeItem(LIC_KEY);
       licenseValid = false;
       wsAlive = false;
@@ -2438,6 +2485,9 @@ async function checkLicense() {
       clearInterval(restTimer);
       try { if(ws) ws.close(); } catch(_) {}
       showLicenseScreen();
+    } else {
+      // 其他情况（过期、网络问题等）宽松处理，更新检查时间避免频繁请求
+      localStorage.setItem('lic_last_check', now.toString());
     }
   } catch(e) {
     // 网络失败宽松处理，已经在跑了不中断

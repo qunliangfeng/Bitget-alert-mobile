@@ -718,7 +718,7 @@ async function createPayment() {
       headers:{ 'x-api-key': NOWPAY_KEY, 'Content-Type':'application/json' },
       body: JSON.stringify({
         price_amount: curPlan.price,
-        price_currency: 'usd',
+        price_currency: 'usdttrc20',
         pay_currency: 'usdttrc20',
         order_id: `xbc_${Date.now()}`,
         order_description: `西本聪 ${curPlan.name} | TG:${tg} | Email:${email}`,

@@ -263,15 +263,34 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
   background: var(--bg2); border-top: 1px solid var(--bd);
   border-radius: 20px 20px 0 0;
   max-height: 88vh;
-  overflow-y: auto;
+  display: flex; flex-direction: column;
   transform: translateY(100%);
   transition: transform .3s cubic-bezier(.32,0,.67,0);
   padding-bottom: env(safe-area-inset-bottom);
 }
 .drawer.open { transform: translateY(0); }
-
-.drawer-handle { width: 36px; height: 4px; background: var(--bd2); border-radius: 2px; margin: 12px auto 16px; }
-.drawer-title { font-size: 15px; font-weight: 600; padding: 0 18px 14px; border-bottom: 1px solid var(--bd); }
+.drawer-header {
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-radius: 20px 20px 0 0;
+  border-bottom: 1px solid var(--bd);
+  padding-bottom: 14px;
+}
+.drawer-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.drawer-handle { width: 36px; height: 4px; background: var(--bd2); border-radius: 2px; margin: 12px auto 10px; }
+.drawer-title {
+  font-size: 15px; font-weight: 600;
+  padding: 0 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.drawer-close-btn {
+  background: var(--bg3); border: 1px solid var(--bd); color: var(--tx2);
+  border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.drawer-close-btn:active { opacity: 0.7; }
 
 .dsec { padding: 14px 18px; border-bottom: 1px solid var(--bd); }
 .dsec-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--tx3); margin-bottom: 12px; }
@@ -381,8 +400,14 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 <!-- Settings Drawer -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
-  <div class="drawer-handle"></div>
-  <div class="drawer-title">系统设置</div>
+  <div class="drawer-header" id="drawerHeader">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">
+      <span>系统设置</span>
+      <button class="drawer-close-btn" onclick="closeDrawer()">✕ 关闭</button>
+    </div>
+  </div>
+  <div class="drawer-body">
 
   <!-- Exchange + Market type -->
   <div class="dsec">
@@ -400,32 +425,34 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <select id="exMoreSelect" onchange="onMoreExSelect(this.value)"
         style="flex:1;padding:8px 10px;font-size:13px;border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none">
         <option value="">— 选择其他交易所 —</option>
-        <optgroup label="🌏 亚洲">
+        <optgroup label="🌏 亚洲（已接入实时）">
           <option value="gate">Gate.io（芝麻开门）</option>
           <option value="mexc">MEXC（抹茶）</option>
           <option value="kucoin">KuCoin（库币）</option>
           <option value="htx">HTX（原火币）</option>
-          <option value="bitmart">BitMart</option>
           <option value="bingx">BingX</option>
-          <option value="phemex">Phemex</option>
-          <option value="lbank">LBank</option>
+          <option value="bitmart">BitMart</option>
           <option value="xt">XT.com</option>
           <option value="coinex">CoinEx</option>
-        </optgroup>
-        <optgroup label="🌎 欧美">
-          <option value="kraken">Kraken</option>
-          <option value="coinbase">Coinbase Advanced</option>
-          <option value="gemini">Gemini</option>
-          <option value="bitstamp">Bitstamp</option>
-          <option value="bitfinex">Bitfinex</option>
-        </optgroup>
-        <optgroup label="🌍 其他">
-          <option value="crypto_com">Crypto.com</option>
-          <option value="deribit">Deribit（期权）</option>
-          <option value="poloniex">Poloniex</option>
-          <option value="bitpanda">Bitpanda</option>
+          <option value="lbank">LBank</option>
+          <option value="phemex">Phemex</option>
           <option value="upbit">Upbit（韩国）</option>
           <option value="bithumb">Bithumb（韩国）</option>
+        </optgroup>
+        <optgroup label="🌎 欧美（已接入实时）">
+          <option value="kraken">Kraken</option>
+          <option value="coinbase">Coinbase Advanced</option>
+          <option value="bitstamp">Bitstamp</option>
+          <option value="bitfinex">Bitfinex</option>
+          <option value="gemini">Gemini</option>
+        </optgroup>
+        <optgroup label="🌍 其他（已接入实时）">
+          <option value="crypto_com">Crypto.com</option>
+          <option value="poloniex">Poloniex</option>
+          <option value="deribit">Deribit（期权）</option>
+          <option value="whitebit">WhiteBIT</option>
+          <option value="hashkey">HashKey</option>
+          <option value="backpack">Backpack</option>
         </optgroup>
       </select>
     </div>
@@ -516,14 +543,18 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       4. 消息发到企业微信群，免费无限制
     </div>
   </div>
+  </div><!-- /drawer-body -->
 </div><!-- /drawer -->
 
 <!-- 币种管理抽屉 -->
 <div class="drawer-overlay" id="coinOverlay" onclick="closeCoinManager()"></div>
 <div class="drawer" id="coinDrawer">
-  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <div class="drawer-handle"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px 14px;border-bottom:1px solid var(--bd)">
     <div style="font-size:15px;font-weight:600">⚙️ 管理监控币种</div>
+  </div><!-- /drawer-header -->
+  <div class="drawer-body">
     <button onclick="closeCoinManager()" style="background:none;border:none;color:var(--tx3);font-size:20px;cursor:pointer">✕</button>
   </div>
 
@@ -549,41 +580,124 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <div>
         <div style="font-size:10px;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">基础币</div>
         <select id="pairBase" style="width:100%;padding:9px 8px;font-size:13px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none">
-          <option value="BTC">BTC</option>
-          <option value="ETH">ETH</option>
-          <option value="SOL">SOL</option>
-          <option value="BNB">BNB</option>
-          <option value="XRP">XRP</option>
-          <option value="DOGE">DOGE</option>
-          <option value="ADA">ADA</option>
-          <option value="AVAX">AVAX</option>
-          <option value="DOT">DOT</option>
-          <option value="MATIC">MATIC</option>
-          <option value="SUI">SUI</option>
-          <option value="TIA">TIA</option>
-          <option value="WLD">WLD</option>
-          <option value="FET">FET</option>
-          <option value="TAO">TAO</option>
-          <option value="RENDER">RENDER</option>
-          <option value="PEPE">PEPE</option>
-          <option value="ORDI">ORDI</option>
-          <option value="LINK">LINK</option>
-          <option value="UNI">UNI</option>
-          <option value="LTC">LTC</option>
-          <option value="BCH">BCH</option>
-          <option value="ATOM">ATOM</option>
-          <option value="NEAR">NEAR</option>
-          <option value="APT">APT</option>
-          <option value="OP">OP</option>
-          <option value="ARB">ARB</option>
-          <option value="INJ">INJ</option>
+          <optgroup label="── 顶级主流 ──">
+          <option value="BTC">BTC · 比特币</option>
+          <option value="ETH">ETH · 以太坊</option>
+          <option value="SOL">SOL · 索拉纳</option>
+          <option value="BNB">BNB · 币安币</option>
+          <option value="XRP">XRP · 瑞波币</option>
+          <option value="DOGE">DOGE · 狗狗币</option>
+          <option value="ADA">ADA · 艾达币</option>
+          <option value="AVAX">AVAX · 雪崩</option>
+          <option value="TRX">TRX · 波场</option>
+          <option value="TON">TON · 通</option>
+          <option value="SHIB">SHIB · 柴犬</option>
+          <option value="LINK">LINK · 链接</option>
+          <option value="DOT">DOT · 波卡</option>
+          <option value="BCH">BCH · 比特现金</option>
+          <option value="LTC">LTC · 莱特币</option>
+          <option value="UNI">UNI · 优尼</option>
+          <option value="NEAR">NEAR · 尼尔</option>
+          <option value="ATOM">ATOM · 科斯莫斯</option>
+          <option value="XLM">XLM · 恒星币</option>
+          <option value="MATIC">MATIC · 马蹄</option>
+          </optgroup>
+          <optgroup label="── Layer2 / DeFi ──">
+          <option value="ARB">ARB · 阿比</option>
+          <option value="OP">OP · 乐观</option>
+          <option value="SUI">SUI · 穗</option>
+          <option value="APT">APT · 阿普托斯</option>
+          <option value="INJ">INJ · 注入</option>
           <option value="SEI">SEI</option>
-          <option value="JUP">JUP</option>
-          <option value="NVDA">NVDA</option>
-          <option value="TSLA">TSLA</option>
-          <option value="AAPL">AAPL</option>
-          <option value="COIN">COIN</option>
-          <option value="CUSTOM">自定义…</option>
+          <option value="JUP">JUP · 木星</option>
+          <option value="AAVE">AAVE · 阿维</option>
+          <option value="MKR">MKR · 制造者</option>
+          <option value="CRV">CRV · 曲线</option>
+          <option value="LDO">LDO · 利多</option>
+          <option value="RUNE">RUNE · 符文</option>
+          <option value="SNX">SNX · 合成</option>
+          <option value="COMP">COMP · 复合</option>
+          <option value="1INCH">1INCH</option>
+          <option value="BAL">BAL · 均衡</option>
+          <option value="ZRX">ZRX</option>
+          </optgroup>
+          <optgroup label="── AI / 新叙事 ──">
+          <option value="TAO">TAO · 比特张量</option>
+          <option value="FET">FET · 飞特</option>
+          <option value="RENDER">RENDER · 渲染</option>
+          <option value="WLD">WLD · 世界币</option>
+          <option value="AGIX">AGIX · 奇点</option>
+          <option value="OCEAN">OCEAN · 海洋</option>
+          <option value="ALT">ALT</option>
+          <option value="IO">IO</option>
+          <option value="ATH">ATH</option>
+          </optgroup>
+          <optgroup label="── Meme ──">
+          <option value="PEPE">PEPE · 佩佩</option>
+          <option value="FLOKI">FLOKI · 弗洛基</option>
+          <option value="BONK">BONK</option>
+          <option value="WIF">WIF</option>
+          <option value="MEME">MEME</option>
+          <option value="TURBO">TURBO</option>
+          <option value="BRETT">BRETT</option>
+          <option value="NEIRO">NEIRO</option>
+          <option value="MOG">MOG</option>
+          </optgroup>
+          <optgroup label="── BTC 生态 ──">
+          <option value="ORDI">ORDI</option>
+          <option value="SATS">SATS</option>
+          <option value="RATS">RATS</option>
+          <option value="BTCS">BTCS</option>
+          </optgroup>
+          <optgroup label="── 公链 ──">
+          <option value="TIA">TIA · 天体</option>
+          <option value="FTM">FTM · 幻影</option>
+          <option value="ALGO">ALGO · 阿尔格</option>
+          <option value="ICP">ICP · 互联网计算机</option>
+          <option value="FIL">FIL · 文件币</option>
+          <option value="ETC">ETC · 以太经典</option>
+          <option value="EOS">EOS</option>
+          <option value="XTZ">XTZ · 太泽</option>
+          <option value="HBAR">HBAR · 哈希图</option>
+          <option value="VET">VET · 唯链</option>
+          <option value="EGLD">EGLD · 多元宇宙</option>
+          <option value="FLOW">FLOW</option>
+          <option value="MINA">MINA · 米娜</option>
+          <option value="CFX">CFX · 冲突</option>
+          <option value="KAVA">KAVA</option>
+          <option value="ONE">ONE · 和谐</option>
+          <option value="ZIL">ZIL · 齐林卡</option>
+          <option value="CELO">CELO</option>
+          <option value="ROSE">ROSE · 玫瑰</option>
+          <option value="KSM">KSM · 草间弥生</option>
+          </optgroup>
+          <optgroup label="── 游戏 / NFT / 元宇宙 ──">
+          <option value="AXS">AXS · 轴无穷</option>
+          <option value="SAND">SAND · 沙盒</option>
+          <option value="MANA">MANA · 曼纳</option>
+          <option value="ENJ">ENJ · 恩金</option>
+          <option value="GALA">GALA</option>
+          <option value="IMX">IMX · 不可变X</option>
+          <option value="GMT">GMT · 步行</option>
+          <option value="APE">APE · 猿猴币</option>
+          <option value="MAGIC">MAGIC</option>
+          <option value="BEAM">BEAM</option>
+          <option value="PIXEL">PIXEL</option>
+          <option value="RONIN">RONIN</option>
+          <option value="YGG">YGG</option>
+          </optgroup>
+          <optgroup label="── 美股代币 ──">
+          <option value="NVDA">NVDA · 英伟达</option>
+          <option value="TSLA">TSLA · 特斯拉</option>
+          <option value="AAPL">AAPL · 苹果</option>
+          <option value="COIN">COIN · Coinbase</option>
+          <option value="MSFT">MSFT · 微软</option>
+          <option value="AMZN">AMZN · 亚马逊</option>
+          <option value="GOOGL">GOOGL · 谷歌</option>
+          <option value="META">META · Meta</option>
+          <option value="MSTR">MSTR · 微策略</option>
+          </optgroup>
+          <option value="CUSTOM">✏️ 自定义…</option>
         </select>
         <input id="pairBaseCustom" type="text" placeholder="输入币种" style="display:none;width:100%;margin-top:6px;padding:9px 8px;font-size:13px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
       </div>
@@ -626,6 +740,8 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
     <div style="font-size:11px;color:var(--tx3);margin-top:8px;text-align:center">添加后在主页卡片展开设置步进和目标价</div>
     <div id="pairMsg" style="font-size:12px;margin-top:8px;display:none"></div>
   </div>
+
+  </div><!-- /drawer-body -->
 </div><!-- /coinDrawer -->
 
 </div><!-- /appWrap -->
@@ -633,26 +749,26 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 <script>
 // ── 预设币种库（客户可从这里选，也可自定义添加）────────────────
 const COIN_PRESETS = [
-  { id:'BTC',    name:'Bitcoin',    sym:'BTCUSDT',    color:'#f7931a', bg:'#1a1208', presets:[100,200,500,1000], defStep:500,  defTarget:105000, defFarStep:500,  defNearStep:100,  defNearDist:1000 },
-  { id:'ETH',    name:'Ethereum',   sym:'ETHUSDT',    color:'#627eea', bg:'#0e1020', presets:[5,10,20,50],       defStep:20,   defTarget:2600,   defFarStep:20,   defNearStep:5,    defNearDist:50   },
-  { id:'SOL',    name:'Solana',     sym:'SOLUSDT',    color:'#9945ff', bg:'#130d1a', presets:[0.5,1,2,5],        defStep:1,    defTarget:175,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
-  { id:'BNB',    name:'BNB',        sym:'BNBUSDT',    color:'#f3ba2f', bg:'#1a1608', presets:[1,2,5,10],         defStep:2,    defTarget:650,    defFarStep:2,    defNearStep:0.5,  defNearDist:20   },
-  { id:'XRP',    name:'Ripple',     sym:'XRPUSDT',    color:'#00aae4', bg:'#061420', presets:[0.05,0.1,0.2,0.5], defStep:0.1,  defTarget:3,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
-  { id:'DOGE',   name:'Dogecoin',   sym:'DOGEUSDT',   color:'#c2a633', bg:'#1a1608', presets:[0.005,0.01,0.02,0.05], defStep:0.01, defTarget:0.5, defFarStep:0.01, defNearStep:0.002,defNearDist:0.05 },
-  { id:'ADA',    name:'Cardano',    sym:'ADAUSDT',    color:'#0033ad', bg:'#060a1a', presets:[0.01,0.02,0.05,0.1],   defStep:0.02, defTarget:1.5,  defFarStep:0.02, defNearStep:0.005,defNearDist:0.1  },
-  { id:'AVAX',   name:'Avalanche',  sym:'AVAXUSDT',   color:'#e84142', bg:'#1a0808', presets:[0.5,1,2,5],         defStep:1,    defTarget:50,     defFarStep:1,    defNearStep:0.25, defNearDist:5    },
-  { id:'DOT',    name:'Polkadot',   sym:'DOTUSDT',    color:'#e6007a', bg:'#1a0612', presets:[0.1,0.2,0.5,1],     defStep:0.2,  defTarget:12,     defFarStep:0.2,  defNearStep:0.05, defNearDist:1    },
-  { id:'MATIC',  name:'Polygon',    sym:'MATICUSDT',  color:'#8247e5', bg:'#0e0820', presets:[0.01,0.02,0.05,0.1],defStep:0.02, defTarget:1.5,   defFarStep:0.02, defNearStep:0.005,defNearDist:0.1  },
-  { id:'SUI',    name:'Sui',        sym:'SUIUSDT',    color:'#4da2ff', bg:'#061420', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:5,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
-  { id:'TIA',    name:'Celestia',   sym:'TIAUSDT',    color:'#7b2bf9', bg:'#0e0820', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:10,     defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
-  { id:'WLD',    name:'Worldcoin',  sym:'WLDUSDT',    color:'#19a9e5', bg:'#061420', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:5,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
-  { id:'FET',    name:'Fetch.ai',   sym:'FETUSDT',    color:'#1ec5c1', bg:'#061a18', presets:[0.02,0.05,0.1,0.2], defStep:0.05, defTarget:2,      defFarStep:0.05, defNearStep:0.01, defNearDist:0.2  },
-  { id:'TAO',    name:'Bittensor',  sym:'TAOUSDT',    color:'#3ec9a7', bg:'#061a12', presets:[5,10,20,50],        defStep:10,   defTarget:500,    defFarStep:10,   defNearStep:2,    defNearDist:50   },
-  { id:'RENDER', name:'Render',     sym:'RENDERUSDT', color:'#ff4d00', bg:'#1a0800', presets:[0.1,0.2,0.5,1],     defStep:0.2,  defTarget:10,     defFarStep:0.2,  defNearStep:0.05, defNearDist:1    },
-  { id:'NVDA',   name:'NVDA',       sym:'NVDAUSDT',   color:'#76b900', bg:'#0e1408', presets:[0.25,0.5,1,2],      defStep:0.5,  defTarget:138,    defFarStep:0.5,  defNearStep:0.1,  defNearDist:2    },
-  { id:'TSLA',   name:'Tesla',      sym:'TSLAUSDT',   color:'#cc0000', bg:'#1a0606', presets:[1,2,5,10],          defStep:2,    defTarget:250,    defFarStep:2,    defNearStep:0.5,  defNearDist:10   },
-  { id:'AAPL',   name:'Apple',      sym:'AAPLUSDT',   color:'#555555', bg:'#111111', presets:[0.5,1,2,5],         defStep:1,    defTarget:200,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
-  { id:'COIN',   name:'Coinbase',   sym:'COINUSDT',   color:'#1652f0', bg:'#060e1a', presets:[0.5,1,2,5],         defStep:1,    defTarget:250,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'BTC',    name:'Bitcoin',    sym:'BTCUSDT', quote:'USDT',    color:'#f7931a', bg:'#1a1208', presets:[100,200,500,1000], defStep:500,  defTarget:105000, defFarStep:500,  defNearStep:100,  defNearDist:1000 },
+  { id:'ETH',    name:'Ethereum',   sym:'ETHUSDT', quote:'USDT',    color:'#627eea', bg:'#0e1020', presets:[5,10,20,50],       defStep:20,   defTarget:2600,   defFarStep:20,   defNearStep:5,    defNearDist:50   },
+  { id:'SOL',    name:'Solana',     sym:'SOLUSDT', quote:'USDT',    color:'#9945ff', bg:'#130d1a', presets:[0.5,1,2,5],        defStep:1,    defTarget:175,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'BNB',    name:'BNB',        sym:'BNBUSDT', quote:'USDT',    color:'#f3ba2f', bg:'#1a1608', presets:[1,2,5,10],         defStep:2,    defTarget:650,    defFarStep:2,    defNearStep:0.5,  defNearDist:20   },
+  { id:'XRP',    name:'Ripple',     sym:'XRPUSDT', quote:'USDT',    color:'#00aae4', bg:'#061420', presets:[0.05,0.1,0.2,0.5], defStep:0.1,  defTarget:3,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'DOGE',   name:'Dogecoin',   sym:'DOGEUSDT', quote:'USDT',   color:'#c2a633', bg:'#1a1608', presets:[0.005,0.01,0.02,0.05], defStep:0.01, defTarget:0.5, defFarStep:0.01, defNearStep:0.002,defNearDist:0.05 },
+  { id:'ADA',    name:'Cardano',    sym:'ADAUSDT', quote:'USDT',    color:'#0033ad', bg:'#060a1a', presets:[0.01,0.02,0.05,0.1],   defStep:0.02, defTarget:1.5,  defFarStep:0.02, defNearStep:0.005,defNearDist:0.1  },
+  { id:'AVAX',   name:'Avalanche',  sym:'AVAXUSDT', quote:'USDT',   color:'#e84142', bg:'#1a0808', presets:[0.5,1,2,5],         defStep:1,    defTarget:50,     defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'DOT',    name:'Polkadot',   sym:'DOTUSDT', quote:'USDT',    color:'#e6007a', bg:'#1a0612', presets:[0.1,0.2,0.5,1],     defStep:0.2,  defTarget:12,     defFarStep:0.2,  defNearStep:0.05, defNearDist:1    },
+  { id:'MATIC',  name:'Polygon',    sym:'MATICUSDT', quote:'USDT',  color:'#8247e5', bg:'#0e0820', presets:[0.01,0.02,0.05,0.1],defStep:0.02, defTarget:1.5,   defFarStep:0.02, defNearStep:0.005,defNearDist:0.1  },
+  { id:'SUI',    name:'Sui',        sym:'SUIUSDT', quote:'USDT',    color:'#4da2ff', bg:'#061420', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:5,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'TIA',    name:'Celestia',   sym:'TIAUSDT', quote:'USDT',    color:'#7b2bf9', bg:'#0e0820', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:10,     defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'WLD',    name:'Worldcoin',  sym:'WLDUSDT', quote:'USDT',    color:'#19a9e5', bg:'#061420', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:5,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'FET',    name:'Fetch.ai',   sym:'FETUSDT', quote:'USDT',    color:'#1ec5c1', bg:'#061a18', presets:[0.02,0.05,0.1,0.2], defStep:0.05, defTarget:2,      defFarStep:0.05, defNearStep:0.01, defNearDist:0.2  },
+  { id:'TAO',    name:'Bittensor',  sym:'TAOUSDT', quote:'USDT',    color:'#3ec9a7', bg:'#061a12', presets:[5,10,20,50],        defStep:10,   defTarget:500,    defFarStep:10,   defNearStep:2,    defNearDist:50   },
+  { id:'RENDER', name:'Render',     sym:'RENDERUSDT', quote:'USDT', color:'#ff4d00', bg:'#1a0800', presets:[0.1,0.2,0.5,1],     defStep:0.2,  defTarget:10,     defFarStep:0.2,  defNearStep:0.05, defNearDist:1    },
+  { id:'NVDA',   name:'NVDA',       sym:'NVDAUSDT', quote:'USDT',   color:'#76b900', bg:'#0e1408', presets:[0.25,0.5,1,2],      defStep:0.5,  defTarget:138,    defFarStep:0.5,  defNearStep:0.1,  defNearDist:2    },
+  { id:'TSLA',   name:'Tesla',      sym:'TSLAUSDT', quote:'USDT',   color:'#cc0000', bg:'#1a0606', presets:[1,2,5,10],          defStep:2,    defTarget:250,    defFarStep:2,    defNearStep:0.5,  defNearDist:10   },
+  { id:'AAPL',   name:'Apple',      sym:'AAPLUSDT', quote:'USDT',   color:'#555555', bg:'#111111', presets:[0.5,1,2,5],         defStep:1,    defTarget:200,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'COIN',   name:'Coinbase',   sym:'COINUSDT', quote:'USDT',   color:'#1652f0', bg:'#060e1a', presets:[0.5,1,2,5],         defStep:1,    defTarget:250,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
 ];
 
 // 活跃币种列表（运行时动态，从 localStorage 读取或使用默认4个）
@@ -680,7 +796,7 @@ function initCoins() {
 
 function saveActiveCoins() {
   localStorage.setItem('active_coins', JSON.stringify(COINS.map(c => ({
-    id: c.id, name: c.name, sym: c.sym, color: c.color, bg: c.bg,
+    id: c.id, name: c.name, sym: c.sym, quote: c.quote||'', color: c.color, bg: c.bg,
     presets: c.presets, defStep: c.defStep, defTarget: c.defTarget,
     defFarStep: c.defFarStep, defNearStep: c.defNearStep, defNearDist: c.defNearDist
   }))));
@@ -1070,6 +1186,226 @@ const EXCHANGES = {
     parseRest(json) { return ((json.data||{}).ticker||[]).map(d=>({ sym:(d.symbol||'').replace('-',''), price:d.last, open:d.open, high:d.high, low:d.low })); }
   },
 
+  bingx: {
+    name: 'BingX', flag: '🔵',
+    getWsUrl() { return 'wss://open-api-ws.bingx.com/market'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ id: Date.now(), reqType: 'sub', dataType: coins.map(c=>`${c.sym}@trade`).join(',') });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data) return [];
+        const d = msg.data;
+        return [{ sym: (d.s||'').replace('-',''), price: d.p||d.c, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: 'ping',
+    restUrl(mktType) { return 'https://open-api.bingx.com/openApi/spot/v1/ticker/24Hr'; },
+    parseRest(json) { return (json.data||[]).map(d=>({ sym:(d.symbol||'').replace('-',''), price:d.lastPrice, open:d.openPrice, high:d.highPrice, low:d.lowPrice })); }
+  },
+
+  xt: {
+    name: 'XT.com', flag: '🟣',
+    getWsUrl() { return 'wss://stream.xt.com/public'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method: 'subscribe', params: coins.map(c=>`ticker@${c.sym.toLowerCase().replace('usdt','_usdt')}`), id: Date.now() });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data) return [];
+        const d = msg.data;
+        const sym = (msg.topic||'').replace('ticker@','').replace('_','').toUpperCase();
+        return [{ sym, price: d.c||d.p, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'ping',id:Date.now()}),
+    restUrl() { return 'https://sapi.xt.com/v4/public/ticker/24h'; },
+    parseRest(json) { return (json.result||[]).map(d=>({ sym:(d.s||'').replace('_','').toUpperCase(), price:d.c, open:d.o, high:d.h, low:d.l })); }
+  },
+
+  coinex: {
+    name: 'CoinEx', flag: '🟤',
+    getWsUrl() { return 'wss://socket.coinex.com/v2/spot'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method: 'state.subscribe', params: { market_list: coins.map(c=>c.sym) }, id: Date.now() });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.method!=='state.update'||!msg.params?.state_list) return [];
+        return msg.params.state_list.map(d=>({ sym:d.market, price:d.last, open:d.open, high:d.high, low:d.low }));
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'server.ping',params:{},id:Date.now()}),
+    restUrl() { return 'https://api.coinex.com/v2/spot/ticker'; },
+    parseRest(json) { return (json.data||[]).map(d=>({ sym:d.market, price:d.last, open:d.open, high:d.high, low:d.low })); }
+  },
+
+  kraken: {
+    name: 'Kraken', flag: '🟣',
+    getWsUrl() { return 'wss://ws.kraken.com/v2'; },
+    subscribe(coins, mktType) {
+      const syms = coins.map(c => {
+        const base = c.id.replace(/USDT$|USD$/,'');
+        return `${base}/USD`;
+      });
+      return JSON.stringify({ method:'subscribe', params:{ channel:'ticker', symbol: syms } });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.channel!=='ticker'||!msg.data) return [];
+        return msg.data.map(d=>({
+          sym: (d.symbol||'').replace('/','').replace('USD','USDT'),
+          price: d.last, open: d.open, high: d.high, low: d.low
+        }));
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'ping'}),
+    restUrl() { return 'https://api.kraken.com/0/public/Ticker'; },
+    parseRest(json) {
+      if (!json.result) return [];
+      return Object.entries(json.result).map(([k,v])=>({
+        sym: k.replace('XBT','BTC').replace('/','').replace('USD','USDT'),
+        price: v.c?.[0], open: v.o, high: v.h?.[0], low: v.l?.[0]
+      }));
+    }
+  },
+
+  coinbase: {
+    name: 'Coinbase', flag: '🔵',
+    getWsUrl() { return 'wss://advanced-trade-ws.coinbase.com'; },
+    subscribe(coins, mktType) {
+      const ids = coins.map(c => `${c.id.replace(/USDT$/,'')}-USD`);
+      return JSON.stringify({ type:'subscribe', product_ids: ids, channel:'ticker' });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.channel!=='ticker'||!msg.events) return [];
+        const ticks = [];
+        for (const ev of msg.events) {
+          for (const t of (ev.tickers||[])) {
+            ticks.push({ sym: (t.product_id||'').replace('-USD','USDT').replace('-',''), price:t.price, open:t.open_24h, high:t.high_52_week||t.price, low:t.low_52_week||t.price });
+          }
+        }
+        return ticks;
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({type:'heartbeats',channel:'heartbeats',product_ids:[]}),
+    restUrl() { return 'https://api.coinbase.com/api/v3/brokerage/market/products'; },
+    parseRest(json) { return (json.products||[]).map(d=>({ sym:(d.product_id||'').replace('-USD','USDT').replace('-',''), price:d.price, open:d.base_display_symbol, high:d.price, low:d.price })); }
+  },
+
+  bitstamp: {
+    name: 'Bitstamp', flag: '🟢',
+    getWsUrl() { return 'wss://ws.bitstamp.net'; },
+    subscribe(coins, mktType) {
+      const msgs = coins.map(c => JSON.stringify({ event:'bts:subscribe', data:{ channel:`live_trades_${c.sym.toLowerCase()}` } }));
+      return msgs[0]; // WS subscribe one by one; simplified: first only
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.event!=='trade'||!msg.data) return [];
+        const sym = (msg.channel||'').replace('live_trades_','').toUpperCase();
+        return [{ sym: sym.replace('USD','USDT'), price: msg.data.price }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({event:'bts:heartbeat'}),
+    restUrl() { return 'https://www.bitstamp.net/api/v2/trading-pairs-info/'; },
+    parseRest(json) { return []; } // Use REST fallback from ticker endpoint
+  },
+
+  bitfinex: {
+    name: 'Bitfinex', flag: '⚫',
+    getWsUrl() { return 'wss://api-pub.bitfinex.com/ws/2'; },
+    subscribe(coins, mktType) {
+      // Subscribe to first coin ticker (simplified)
+      const sym = 't' + coins[0].id.replace(/USDT$/,'USD');
+      return JSON.stringify({ event:'subscribe', channel:'ticker', symbol: sym });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!Array.isArray(msg)||!Array.isArray(msg[1])) return [];
+        const d = msg[1];
+        // [chanId, [BID,BID_SIZE,ASK,ASK_SIZE,DAILY_CHANGE,DAILY_CHANGE_RELATIVE,LAST_PRICE,VOLUME,HIGH,LOW]]
+        if (d.length < 10) return [];
+        return [{ sym: 'BTCUSDT', price: d[6], high: d[8], low: d[9] }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({event:'ping'}),
+    restUrl() { return 'https://api-pub.bitfinex.com/v2/tickers?symbols=ALL'; },
+    parseRest(json) {
+      return (json||[]).filter(d=>d[0]&&d[0].startsWith('t')&&d[0].endsWith('USD')).map(d=>({
+        sym: d[0].slice(1).replace('USD','USDT'),
+        price: d[7], high: d[9], low: d[10]
+      }));
+    }
+  },
+
+  upbit: {
+    name: 'Upbit', flag: '🇰🇷',
+    getWsUrl() { return 'wss://api.upbit.com/websocket/v1'; },
+    subscribe(coins, mktType) {
+      const markets = coins.map(c=>`KRW-${c.id.replace(/USDT$/,'')}`);
+      return JSON.stringify([{ticket:'alert'},{type:'ticker',codes:markets}]);
+    },
+    parseTick(raw) {
+      try {
+        const msg = typeof raw==='string' ? JSON.parse(raw) : JSON.parse(new TextDecoder().decode(raw));
+        if (!msg.trade_price) return [];
+        const sym = (msg.code||'').replace('KRW-','') + 'USDT';
+        return [{ sym, price: msg.trade_price, open: msg.opening_price, high: msg.high_price, low: msg.low_price }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify([{ticket:'ping'}]),
+    restUrl() { return 'https://api.upbit.com/v1/ticker?markets=KRW-BTC,KRW-ETH,KRW-SOL'; },
+    parseRest(json) { return (json||[]).map(d=>({ sym:(d.market||'').replace('KRW-','')+'USDT', price:d.trade_price, open:d.opening_price, high:d.high_price, low:d.low_price })); }
+  },
+
+  whitebit: {
+    name: 'WhiteBIT', flag: '⚪',
+    getWsUrl() { return 'wss://api.whitebit.com/ws'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ id:Date.now(), method:'market_subscribe', params: coins.map(c=>c.sym.replace('USDT','_USDT')) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.method!=='market_update'||!msg.params) return [];
+        const [sym, d] = msg.params;
+        return [{ sym: sym.replace('_',''), price: d.last, open: d.open, high: d.high, low: d.low }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({id:Date.now(),method:'ping',params:[]}),
+    restUrl() { return 'https://whitebit.com/api/v4/public/ticker'; },
+    parseRest(json) { return Object.entries(json||{}).map(([k,v])=>({ sym:k.replace('_',''), price:v.last_price, open:v.open, high:v.base_volume, low:v.low })); }
+  },
+
+  backpack: {
+    name: 'Backpack', flag: '🎒',
+    getWsUrl() { return 'wss://ws.backpack.exchange/'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method:'SUBSCRIBE', params: coins.map(c=>`ticker.${c.sym.replace('USDT','_USDC')}`) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data||!msg.stream?.startsWith('ticker')) return [];
+        const d = msg.data;
+        const sym = (msg.stream||'').replace('ticker.','').replace('_','');
+        return [{ sym: sym.replace('USDC','USDT'), price: d.c||d.lastPrice, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'PING'}),
+    restUrl() { return 'https://api.backpack.exchange/api/v1/tickers'; },
+    parseRest(json) { return (json||[]).map(d=>({ sym:(d.symbol||'').replace('_','').replace('USDC','USDT'), price:d.lastPrice, open:d.firstPrice, high:d.high, low:d.low })); }
+  },
+
   // 已有交易所保持不变
   bybit: {
     name: 'Bybit', flag: '🟠',
@@ -1311,13 +1647,13 @@ function updateCardUI(id, prev, cur) {
   const lo=document.getElementById('lo-'+id);
   const rf=document.getElementById('rf-'+id);
   if(pv){
-    pv.textContent='$'+fmt(id,cur);
+    pv.textContent=fmt(id,cur)+' '+getCoinQuote(id);
     pv.className='price-val '+(cur>=prev?'tick-up':'tick-down');
     clearTimeout(pv._t); pv._t=setTimeout(()=>pv.className='price-val',600);
   }
   if(ct){ const ch=m.change24h; ct.textContent=(ch>=0?'+':'')+ch.toFixed(2)+'%'; ct.className='change-tag '+(ch>=0?'up':'down'); }
-  if(hi&&m.high24h) hi.textContent='H:$'+fmt(id,m.high24h);
-  if(lo&&m.low24h)  lo.textContent='L:$'+fmt(id,m.low24h);
+  if(hi&&m.high24h) hi.textContent='H:'+fmt(id,m.high24h);
+  if(lo&&m.low24h)  lo.textContent='L:'+fmt(id,m.low24h);
   if(rf&&m.high24h>m.low24h) rf.style.left=((cur-m.low24h)/(m.high24h-m.low24h)*100).toFixed(1)+'%';
   // 两个面板同时更新
   updateNextLvls(id);
@@ -1329,6 +1665,25 @@ function updateCardUI(id, prev, cur) {
 
 // ── Helpers ───────────────────────────────────────────────────────
 function isNear(id,p){ const s=state[id]; return Math.abs(p-s.target)<=s.nearDist; }
+
+// 获取币种的计价币符号（用于显示，不播报）
+function getCoinQuote(id) {
+  const coin = COINS.find(c=>c.id===id);
+  if (!coin) return '';
+  if (coin.quote) return coin.quote;
+  // 从 sym 推断：去掉已知计价币后剩余的就是 base，反推 quote
+  const sym = coin.sym || '';
+  const quotes = ['USDT','USDC','USD','BTC','ETH','BNB','BGB','OKB','EUR','GBP','TRY','BRL','RUB','JPY','KRW','BUSD'];
+  for (const q of quotes) {
+    if (sym.endsWith(q)) return q;
+  }
+  return '';
+}
+
+// 带计价币的价格显示（替代 '$'）
+function fmtWithQuote(id, v) {
+  return fmt(id, v) + ' ' + getCoinQuote(id);
+}
 
 function fmt(id,v){
   if(!v&&v!==0) return '—';
@@ -1343,7 +1698,8 @@ function updateNextLvls(id){
   const el=document.getElementById('nl-'+id); if(!el) return;
   const price=mkt[id].price; if(!price){el.innerHTML='';return;}
   const step=state[id].fixedStep, base=Math.round(price/step)*step;
-  el.innerHTML=[-2,-1,1,2].map(i=>`<span class="lvlp ${i>0?'above':'below'}">$${fmt(id,base+i*step)}</span>`).join('');
+  const _lq=getCoinQuote(id);
+  el.innerHTML=[-2,-1,1,2].map(i=>`<span class="lvlp ${i>0?'above':'below'}">${fmt(id,base+i*step)} ${_lq}</span>`).join('');
 }
 
 function updateZone(id){
@@ -1359,7 +1715,7 @@ function updateZone(id){
   const nearLo=Math.max(0,(s.target-s.nearDist-lo)/(hi-lo)*100);
   const nearW=Math.min(100,s.nearDist*2/(hi-lo)*100);
   const tgtPct=(s.target-lo)/(hi-lo)*100;
-  el.innerHTML=`<b>目标</b> $${fmt(id,s.target)} · 距离 <b>$${distStr}</b><br>步进 <b>$${step}</b>${near?' <span class="amb">⚠ 临近区加密播报</span>':''}
+  el.innerHTML=`<b>目标</b> ${fmt(id,s.target)} · 距离 <b>$${distStr}</b><br>步进 <b>$${step}</b>${near?' <span class="amb">⚠ 临近区加密播报</span>':''}
 <div class="zone-bar"><div class="zone-near-bg" style="left:${nearLo}%;width:${nearW}%"></div><div class="zone-cur-fill" style="width:${pct}%;background:${near?'var(--amber)':'var(--blue)'}"></div><div class="zone-tgt-mark" style="left:calc(${tgtPct}% - 1px)"></div></div>`;
 }
 
@@ -1546,7 +1902,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
 
   // 更新状态栏
   const st = document.getElementById('point-status-'+id);
-  if (st) { st.style.color='var(--amber)'; st.textContent=`⚡ 已触发 $${fmt(id,pointPrice)}，正在播报 ${repeat} 次`; }
+  if (st) { st.style.color='var(--amber)'; st.textContent=`⚡ 已触发 ${fmt(id,pointPrice)} ${getCoinQuote(id)}，正在播报 ${repeat} 次`; }
   setTimeout(()=>{ 
     if(st) { 
       const active = state[id].points?.filter(p=>p.price>0)||[];
@@ -1570,8 +1926,8 @@ async function firePointAlert(id, price, pointPrice, repeat) {
   }
 
   // 推送
-  const tgMsg = `📌 *${id}/USDT* 定点价格触发\n到达价：\`$${fmt(id,pointPrice)}\`\n当前价：\`$${fmt(id,price)}\`\n播报 ${repeat} 次\n🕐 ${timeStr}`;
-  const wxTitle = `📌 ${id}/USDT 定点触发 $${fmt(id,pointPrice)}`;
+  const tgMsg = `📌 *${id}/USDT* 定点价格触发\n到达价：\`${fmt(id,pointPrice)}\`\n当前价：\`${fmt(id,price)}\`\n播报 ${repeat} 次\n🕐 ${timeStr}`;
+  const wxTitle = `📌 ${id}/USDT 定点触发 ${fmt(id,pointPrice)}`;
   const wxDesp  = `到达：$${fmt(id,pointPrice)}\n当前：$${fmt(id,price)}\n${timeStr}`;
 
   Promise.all([
@@ -1697,7 +2053,7 @@ async function fireTimerAlert(id) {
 
   // 更新最后播报
   const lfe = document.getElementById('lf-'+id);
-  if (lfe) lfe.textContent = `⏱ ${fmt(id,price)} ${timeStr}`;
+  if (lfe) lfe.textContent = `⏱ ${fmt(id,price)} ${getCoinQuote(id)} ${timeStr}`;
 
   // 声音/语音 — 每次都播
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
@@ -1707,7 +2063,7 @@ async function fireTimerAlert(id) {
   const chs = [];
   if (cfg.soundOn) chs.push('snd');
 
-  const tgMsg = `⏱ *${id}/USDT* 定时播报\n当前价：\`$${fmt(id,price)}\`\n24H涨跌：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
+  const tgMsg = `⏱ *${id}/USDT* 定时播报\n当前价：\`${fmt(id,price)}\`\n24H涨跌：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
   const wxTitle = `⏱ ${id}/USDT 定时播报`;
   const wxDesp = `当前：$${fmt(id,price)}\n24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n${timeStr}`;
 
@@ -1759,7 +2115,7 @@ async function fireAlert(id, price, isUp, level, mode){
   const near=mode==='target'&&isNear(id,price);
   const timeStr=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const lfe=document.getElementById('lf-'+id);
-  if(lfe) lfe.textContent=`${isUp?'↑':'↓'}$${fmt(id,level)} ${timeStr}`;
+  if(lfe) lfe.textContent=`${isUp?'↑':'↓'}${fmt(id,level)} ${getCoinQuote(id)} ${timeStr}`;
   const card=document.getElementById('card-'+id);
   if(card){
     card.className='card flash-'+(isUp?'up':'down')+(near?' near-target':'');
@@ -1926,8 +2282,8 @@ function testVoice() {
 async function sendTg(id,price,isUp,level,near){
   if(!cfg.tgToken||!cfg.tgChatId) return 'skip';
   const s=state[id],sym=isUp?'📈':'📉',dist=Math.abs(price-s.target);
-  const extra=near?`\n🎯 目标 \`$${fmt(id,s.target)}\` · 距离 \`$${dist>=10?dist.toFixed(0):dist.toFixed(2)}\``:'';
-  const text=`${sym} *${id}/USDT* ${isUp?'上穿':'下穿'} \`$${fmt(id,level)}\`\n当前：\`$${fmt(id,price)}\`${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
+  const extra=near?`\n🎯 目标 \`${fmt(id,s.target)}\` · 距离 \`$${dist>=10?dist.toFixed(0):dist.toFixed(2)}\``:'';
+  const text=`${sym} *${id}/USDT* ${isUp?'上穿':'下穿'} \`${fmt(id,level)}\`\n当前：\`${fmt(id,price)}\`${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
     const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text,parse_mode:'Markdown'})});
     const d=await r.json();return d.ok?'ok':'err:'+d.description;
@@ -1936,7 +2292,7 @@ async function sendTg(id,price,isUp,level,near){
 async function sendWx(id,price,isUp,level,near){
   if(!cfg.wxToken) return 'skip';
   const s=state[id], dist=Math.abs(price-s.target);
-  const content=`${isUp?'📈':'📉'} **${id}/USDT** ${isUp?'上穿':'下穿'} **$${fmt(id,level)}**\n> 当前价：$${fmt(id,price)}${near?`\n> ⚠️ 临近目标 $${fmt(id,s.target)}`:''}
+  const content=`${isUp?'📈':'📉'} **${id}/USDT** ${isUp?'上穿':'下穿'} **${fmt(id,level)} ${getCoinQuote(id)}**\n> 当前价：${fmt(id,price)} ${getCoinQuote(id)}${near?`\n> ⚠️ 临近目标 ${fmt(id,s.target)}`:''}
 > ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
     const r=await fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content}})});
@@ -1966,7 +2322,7 @@ function renderLog(){
       <span class="lt">${l.t}</span>
       <span class="lc">${l.id}</span>
       <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
-      <span class="lp">$${fmt(l.id,l.level)}→$${fmt(l.id,l.price)}</span>
+      <span class="lp">${fmt(l.id,l.level)} ${getCoinQuote(l.id)}→${fmt(l.id,l.price)}</span>
       <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':l.mode==='point'?'📌':'固定'}</span>
       <div class="lchs">${l.chs.map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':'ERR'}</span>`).join('')}</div>
     </div>`).join('');
@@ -2126,7 +2482,7 @@ async function addPairCoin() {
   // 根据币种自动推算默认步进
   const step = autoDefaultStep(base, quote);
   const colors=['#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ffd93d','#fd79a8','#6c5ce7','#a29bfe'];
-  addCoin({ id:sym, name:`${base}/${quote}`, sym, color:colors[COINS.length%colors.length], bg:'#111',
+  addCoin({ id:sym, name:`${base}/${quote}`, sym, quote, color:colors[COINS.length%colors.length], bg:'#111',
     presets:[step,step*2,step*5,step*10], defStep:step, defTarget:step*100,
     defFarStep:step, defNearStep:step/5, defNearDist:step*10 });
   showPairMsg('ok',`✅ ${base}/${quote} 已添加，请在主页卡片设置步进`);
@@ -2166,14 +2522,29 @@ function rebuildAllCards(){
 
 // 语音朗读币种名称映射 — 有中文名用中文，没有则逐字母读
 const COIN_VOICE_NAME = {
+  // 顶级主流
   BTC:'比特币', ETH:'以太坊', SOL:'索拉纳', BNB:'币安币', XRP:'瑞波币',
-  DOGE:'狗狗币', ADA:'艾达币', AVAX:'雪崩币', DOT:'波卡', MATIC:'马蹄币',
-  LINK:'链接币', UNI:'优尼斯瓦普', LTC:'莱特币', BCH:'比特现金', ATOM:'科斯莫斯',
-  NEAR:'尼尔', FTM:'幻影', SAND:'沙盒', MANA:'曼纳', APE:'猿猴币',
-  OP:'乐观', ARB:'阿比', SUI:'穗', TIA:'天体', WLD:'世界币',
-  FET:'飞特', TAO:'陶', RENDER:'渲染', TON:'通', NOT:'诺特',
-  PEPE:'佩佩', SHIB:'柴犬币', FLOKI:'弗洛基',
-  NVDA:'英伟达', TSLA:'特斯拉', AAPL:'苹果', MSFT:'微软', COIN:'coinbase',
+  DOGE:'狗狗币', ADA:'艾达币', AVAX:'雪崩', TRX:'波场', TON:'通',
+  SHIB:'柴犬', LINK:'链接', DOT:'波卡', BCH:'比特现金', LTC:'莱特币',
+  UNI:'优尼', NEAR:'尼尔', ATOM:'科斯莫斯', XLM:'恒星', MATIC:'马蹄',
+  // Layer2 / DeFi
+  ARB:'阿比', OP:'乐观', SUI:'穗', APT:'阿普托斯', INJ:'注入',
+  AAVE:'阿维', MKR:'制造者', CRV:'曲线', LDO:'利多', RUNE:'符文',
+  SNX:'合成', COMP:'复合',
+  // AI / 新叙事
+  TAO:'比特张量', FET:'飞特', RENDER:'渲染', WLD:'世界币', AGIX:'奇点', OCEAN:'海洋',
+  // Meme
+  PEPE:'佩佩', FLOKI:'弗洛基', BONK:'邦克', WIF:'威夫', MEME:'迷因',
+  // 公链
+  TIA:'天体', FTM:'幻影', ALGO:'阿尔格', ICP:'互联网计算机', FIL:'文件币',
+  ETC:'以太经典', EOS:'柚子', HBAR:'哈希图', VET:'唯链', MINA:'米娜',
+  ROSE:'玫瑰', KSM:'草间弥生', CFX:'冲突', CELO:'赛罗',
+  // 游戏/NFT
+  AXS:'轴无穷', SAND:'沙盒', MANA:'曼纳', ENJ:'恩金', GALA:'盖拉',
+  APE:'猿猴', IMX:'不可变', GMT:'步行', NOT:'诺特',
+  // 美股代币
+  NVDA:'英伟达', TSLA:'特斯拉', AAPL:'苹果', MSFT:'微软',
+  COIN:'coinbase', AMZN:'亚马逊', GOOGL:'谷歌', META:'元宇宙', MSTR:'微策略',
 };
 function getCoinVoiceName(id) {
   // 先尝试原始 id（如 BTC）
@@ -2225,14 +2596,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(!cd) return;
   let sy=0;
   cd.addEventListener('touchstart',e=>sy=e.touches[0].clientY,{passive:true});
-  cd.addEventListener('touchmove',e=>{if(e.touches[0].clientY-sy>60)closeCoinManager();},{passive:true});
+  // coin manager also uses close button - disable swipe to prevent accidents
+  // cd.addEventListener('touchmove',e=>{if(e.touches[0].clientY-sy>60)closeCoinManager();},{passive:true});
 });
 
-// swipe down to close drawer
+// swipe disabled on settings drawer - use close button instead
 let touchStartY=0;
+// Only track touch for potential future use, no auto-close
 document.getElementById('drawer').addEventListener('touchstart',e=>touchStartY=e.touches[0].clientY,{passive:true});
 document.getElementById('drawer').addEventListener('touchmove',e=>{
-  if(e.touches[0].clientY-touchStartY>60) closeDrawer();
+  // Swipe-to-close disabled: use the ✕ close button
+  void 0;
 },{passive:true});
 
 function pushTab(btn,id){

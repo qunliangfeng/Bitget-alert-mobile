@@ -488,34 +488,37 @@ footer p { font-size: 12px; color: #445566; }
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-plan">免费试用</div>
-        <div class="price-amount"><sup>¥</sup>0</div>
+        <div class="price-amount"><sup></sup>0<sub>USDT</sub></div>
         <div class="price-cny">7 天全功能体验</div>
         <div class="price-list">
           <span>✓</span>全部播报功能<br>
-          <span>✓</span>4 个币种监控<br>
+          <span>✓</span>无限币种监控<br>
           <span>✓</span>无需信用卡
         </div>
+        <button class="btn-trial" style="width:100%;margin-top:20px;padding:12px" onclick="openPayModal('trial')">免费领取激活码</button>
       </div>
       <div class="price-card hot">
         <div class="hot-tag">⭐ 最受欢迎</div>
         <div class="price-plan">月付</div>
-        <div class="price-amount"><sup>¥</sup>29.99<sub>/月</sub></div>
-        <div class="price-cny">随时取消</div>
+        <div class="price-amount"><sup></sup>6<sub>USDT/月</sub></div>
+        <div class="price-cny">约 44 元人民币</div>
         <div class="price-list">
           <span>✓</span>无限币种监控<br>
           <span>✓</span>全部播报模式<br>
           <span>✓</span>专属推荐码返佣
         </div>
+        <button class="btn-buy" style="width:100%;margin-top:20px;padding:12px" onclick="openPayModal('monthly')">立即订阅</button>
       </div>
       <div class="price-card">
         <div class="price-plan">年付</div>
-        <div class="price-amount"><sup>¥</sup>199.99<sub>/年</sub></div>
-        <div class="price-cny">省 44%</div>
+        <div class="price-amount"><sup></sup>48<sub>USDT/年</sub></div>
+        <div class="price-cny">省 33%，约 4U/月</div>
         <div class="price-list">
           <span>✓</span>无限币种监控<br>
           <span>✓</span>优先客服支持<br>
           <span>✓</span>专属推荐码返佣
         </div>
+        <button class="btn-buy" style="width:100%;margin-top:20px;padding:12px;background:var(--navy3);border:1px solid var(--gold);color:var(--gold)" onclick="openPayModal('yearly')">选择年付</button>
       </div>
     </div>
   </section>
@@ -530,8 +533,8 @@ footer p { font-size: 12px; color: #445566; }
         <h3>推荐好友，永久返佣 30%</h3>
         <p>购买后自动获得专属推荐码，每带一位付费用户，永久获得其订阅金额的 30%，无上限，随时提现。</p>
         <div class="ref-amounts">
-          <div class="ref-amt"><div class="num">¥9</div><div class="lbl">月付每人每月</div></div>
-          <div class="ref-amt"><div class="num">¥60</div><div class="lbl">年付每人</div></div>
+          <div class="ref-amt"><div class="num">1.8U</div><div class="lbl">月付每人每月</div></div>
+          <div class="ref-amt"><div class="num">14.4U</div><div class="lbl">年付每人</div></div>
           <div class="ref-amt"><div class="num">∞</div><div class="lbl">无上限</div></div>
         </div>
       </div>
@@ -541,8 +544,8 @@ footer p { font-size: 12px; color: #445566; }
   <!-- ── Stats ── -->
   <section class="stats-section">
     <div class="stats-grid">
-      <div class="stat-box"><div class="stat-num">4</div><div class="stat-lbl">接入交易所</div></div>
-      <div class="stat-box"><div class="stat-num">20+</div><div class="stat-lbl">预设币种</div></div>
+      <div class="stat-box"><div class="stat-num">18+</div><div class="stat-lbl">接入交易所</div></div>
+      <div class="stat-box"><div class="stat-num">100+</div><div class="stat-lbl">预设币种</div></div>
       <div class="stat-box"><div class="stat-num">3</div><div class="stat-lbl">播报模式</div></div>
       <div class="stat-box"><div class="stat-num">9</div><div class="stat-lbl">支持语言</div></div>
     </div>
@@ -577,5 +580,193 @@ footer p { font-size: 12px; color: #445566; }
   </footer>
 
 </div>
+
+<!-- ── 支付弹窗 ── -->
+<div id="payOverlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:#0f1f3d;border:1px solid rgba(243,156,18,0.3);border-radius:20px;width:100%;max-width:440px;padding:36px 28px;position:relative;animation:modalIn .3s ease">
+    <button onclick="closePayModal()" style="position:absolute;top:14px;right:14px;background:#152744;border:none;color:#8899aa;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>
+    <div id="payContent"></div>
+  </div>
+</div>
+
+<style>
+@keyframes modalIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.pay-input {
+  width:100%; padding:12px 14px;
+  background:#152744; border:1px solid #1e3a5f;
+  border-radius:10px; color:#f0f4f8;
+  font-size:14px; font-family:'Inter',sans-serif;
+  outline:none; margin-bottom:12px;
+  transition:border-color .2s;
+}
+.pay-input:focus { border-color:#f39c12; }
+.pay-label { font-size:12px; color:#8899aa; margin-bottom:6px; display:block; }
+.pay-submit {
+  width:100%; padding:14px;
+  background:#f39c12; color:#000;
+  border:none; border-radius:10px;
+  font-size:15px; font-weight:700;
+  cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all .2s; margin-top:4px;
+}
+.pay-submit:hover { background:#e67e22; }
+.pay-submit:disabled { opacity:.5; cursor:not-allowed; }
+.pay-info-box {
+  background:#0a1628; border:1px solid #1e3a5f;
+  border-radius:10px; padding:14px 16px;
+  margin-bottom:16px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.addr-box {
+  background:#0a1628; border:1px solid #1e3a5f;
+  border-radius:10px; padding:14px 16px; margin-bottom:12px;
+}
+.addr-text { font-size:12px; color:#f39c12; font-family:'JetBrains Mono',monospace; word-break:break-all; margin-top:6px; }
+.amt-box {
+  background:rgba(39,174,96,0.1); border:1px solid rgba(39,174,96,0.3);
+  border-radius:10px; padding:14px; text-align:center; margin-bottom:14px;
+}
+.loading-spin { display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,0.3); border-top-color:#000; border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+
+<script>
+const NOWPAY_KEY = 'ZGX71FY-TQ7MJN4-GVXYB4S-RME2QBT';
+const TG_BOT_TOKEN = 'YOUR_BOT_TOKEN'; // 替换成你的 Bot Token
+const TG_ADMIN_ID  = 'YOUR_CHAT_ID';   // 替换成你的 Chat ID
+
+const PLANS = {
+  trial:   { name:'7天免费试用', price:0, free:true },
+  monthly: { name:'月付套餐', price:6, label:'6 USDT / 月' },
+  yearly:  { name:'年付套餐', price:48, label:'48 USDT / 年（省33%）' },
+};
+let curPlan = null;
+
+function openPayModal(plan) {
+  curPlan = PLANS[plan];
+  const ov = document.getElementById('payOverlay');
+  ov.style.display = 'flex';
+  curPlan.free ? renderTrialForm() : renderPayForm();
+}
+function closePayModal() {
+  document.getElementById('payOverlay').style.display = 'none';
+}
+document.getElementById('payOverlay').addEventListener('click', e => {
+  if(e.target === document.getElementById('payOverlay')) closePayModal();
+});
+
+function renderTrialForm() {
+  document.getElementById('payContent').innerHTML = `
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">🎁 领取 7 天免费试用</div>
+    <div style="font-size:13px;color:#8899aa;margin-bottom:20px">填写联系方式，激活码 30 分钟内发送</div>
+    <label class="pay-label">Telegram 用户名（推荐）</label>
+    <input class="pay-input" id="tTg" placeholder="@your_username">
+    <label class="pay-label">或填写邮箱</label>
+    <input class="pay-input" id="tEmail" type="email" placeholder="your@email.com">
+    <button class="pay-submit" onclick="submitTrial()">获取免费激活码</button>
+    <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">每人限领一次 · 无需付款</div>
+  `;
+}
+
+function renderPayForm() {
+  document.getElementById('payContent').innerHTML = `
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">订阅 ${curPlan.name}</div>
+    <div style="font-size:13px;color:#8899aa;margin-bottom:16px">USDT 付款，链上确认后自动发送激活码</div>
+    <div class="pay-info-box">
+      <span style="font-size:13px;color:#8899aa">${curPlan.label}</span>
+      <span style="font-size:22px;font-weight:700;color:#f39c12;font-family:'JetBrains Mono',monospace">${curPlan.price} USDT</span>
+    </div>
+    <label class="pay-label">Telegram 用户名（接收激活码）</label>
+    <input class="pay-input" id="pTg" placeholder="@your_username">
+    <label class="pay-label">或填写邮箱</label>
+    <input class="pay-input" id="pEmail" type="email" placeholder="your@email.com">
+    <button class="pay-submit" id="pBtn" onclick="createPayment()">生成付款地址</button>
+    <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">支持 USDT TRC20 / ERC20 · 由 NOWPayments 安全处理</div>
+  `;
+}
+
+async function submitTrial() {
+  const tg = document.getElementById('tTg').value.trim();
+  const email = document.getElementById('tEmail').value.trim();
+  if(!tg && !email) { alert('请填写 Telegram 或邮箱'); return; }
+  try {
+    await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ chat_id: TG_ADMIN_ID, text: `🎁 新试用申请\nTG: ${tg||'—'}\n邮箱: ${email||'—'}` })
+    });
+  } catch(_) {}
+  document.getElementById('payContent').innerHTML = `
+    <div style="text-align:center;padding:20px 0">
+      <div style="font-size:48px;margin-bottom:16px">✅</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">申请已提交！</div>
+      <div style="font-size:14px;color:#8899aa;line-height:1.7;margin-bottom:24px">我们将在 30 分钟内发送激活码<br>如有疑问请联系 Telegram: @xibencong</div>
+      <button class="pay-submit" onclick="closePayModal()">知道了</button>
+    </div>
+  `;
+}
+
+async function createPayment() {
+  const tg = document.getElementById('pTg').value.trim();
+  const email = document.getElementById('pEmail').value.trim();
+  if(!tg && !email) { alert('请填写 Telegram 或邮箱以接收激活码'); return; }
+  const btn = document.getElementById('pBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spin"></span> 生成中…';
+  try {
+    const res = await fetch('https://api.nowpayments.io/v1/payment', {
+      method:'POST',
+      headers:{ 'x-api-key': NOWPAY_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        price_amount: curPlan.price,
+        price_currency: 'usd',
+        pay_currency: 'usdttrc20',
+        order_id: `xbc_${Date.now()}`,
+        order_description: `西本聪 ${curPlan.name} | TG:${tg} | Email:${email}`,
+        ipn_callback_url: 'https://price-alert-worker.qunliang-feng.workers.dev/nowpayments-webhook',
+      })
+    });
+    const data = await res.json();
+    if(data.pay_address) renderAddress(data, tg||email);
+    else throw new Error(data.message||'创建失败');
+  } catch(e) {
+    btn.disabled=false; btn.textContent='重试';
+    alert('创建支付失败：'+e.message);
+  }
+}
+
+function renderAddress(data, contact) {
+  let sec = 3600;
+  document.getElementById('payContent').innerHTML = `
+    <div style="font-size:18px;font-weight:700;margin-bottom:6px">💳 完成付款</div>
+    <div style="font-size:13px;color:#8899aa;margin-bottom:16px">请在 60 分钟内转入以下地址</div>
+    <div class="amt-box">
+      <div style="font-size:28px;font-weight:700;color:#27ae60;font-family:'JetBrains Mono',monospace">${parseFloat(data.pay_amount).toFixed(2)} USDT</div>
+      <div style="font-size:12px;color:#8899aa;margin-top:4px">TRC20 网络 · 请精确转入此金额</div>
+    </div>
+    <div class="addr-box">
+      <div style="font-size:11px;color:#8899aa">收款地址（TRC20）</div>
+      <div class="addr-text" id="addrTxt">${data.pay_address}</div>
+      <button onclick="copyAddress()" style="margin-top:8px;background:#152744;border:1px solid #1e3a5f;color:#8899aa;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer" id="copyBtn">复制地址</button>
+    </div>
+    <div style="font-size:12px;color:#556677;margin-bottom:6px">激活码将发送至：${contact}</div>
+    <div style="font-size:12px;color:#556677" id="countdownEl">剩余时间：60:00</div>
+  `;
+  const timer = setInterval(()=>{
+    sec--;
+    const el = document.getElementById('countdownEl');
+    if(el) { const m=String(Math.floor(sec/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0'); el.textContent=`剩余时间：${m}:${s}`; }
+    if(sec<=0) clearInterval(timer);
+  },1000);
+}
+
+function copyAddress() {
+  const addr = document.getElementById('addrTxt').textContent;
+  navigator.clipboard.writeText(addr).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    btn.textContent='已复制 ✓'; btn.style.color='#27ae60';
+    setTimeout(()=>{ btn.textContent='复制地址'; btn.style.color='#8899aa'; },2000);
+  });
+}
+</script>
 </body>
 </html>

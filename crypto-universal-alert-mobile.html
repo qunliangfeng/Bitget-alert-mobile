@@ -1560,7 +1560,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
     console.log('[定点播报] 第', i+1, '次，soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
     if (cfg.soundOn) { console.log('[定点播报] 播放beep'); playBeep(price >= pointPrice); }
     if (cfg.voiceOn) {
-      const txt = `${coin}到达定点价格${fmt(id,pointPrice)}美元，第${i+1}次提醒`;
+      const txt = `${coin}到达定点价格${fmt(id,pointPrice)}，第${i+1}次提醒`;
       console.log('[定点播报] 语音:', txt);
       await speakAndWait(txt);
       await new Promise(r=>setTimeout(r, 2000)); // 说完后再等2秒
@@ -1701,7 +1701,7 @@ async function fireTimerAlert(id) {
 
   // 声音/语音 — 每次都播
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
-  if (cfg.voiceOn) speak(`${coin}当前价格${fmt(id,price)}美元`);
+  if (cfg.voiceOn) speak(`${coin}当前价格${fmt(id,price)}`);
 
   // 推送 — 跟随定时器间隔，不额外限制
   const chs = [];
@@ -1770,8 +1770,8 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.voiceOn){
     const name=getCoinVoiceName(id);
     const dist=Math.abs(price-s.target);
-    const nearTxt=near?`，距目标还有${fmtDist(id,dist,price)}美元`:'';
-    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}美元${nearTxt}`);
+    const nearTxt=near?`，距目标还有${fmtDist(id,dist,price)}`:'';
+    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}${nearTxt}`);
   }
   const [tr,wr]=await Promise.all([
     cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
@@ -1903,7 +1903,7 @@ function testVoice() {
   // 等待语音列表加载（iOS 首次加载可能为空）
   function doSpeak() {
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance('比特币上穿一千美元，请注意');
+    const u = new SpeechSynthesisUtterance('比特币上穿一千，请注意');
     u.lang = 'zh-CN'; u.rate = 1.0; u.volume = 1.0;
     const voices = window.speechSynthesis.getVoices();
     const zhVoice = voices.find(v => v.lang.startsWith('zh'));
@@ -2164,17 +2164,21 @@ function rebuildAllCards(){
   updateCoinCountLabel(); buildCards(); loadSettings();
 }
 
-// 语音朗读币种名称映射 — 用中文拼音/名称让TTS更准确
+// 语音朗读币种名称映射 — 有中文名用中文，没有则逐字母读
 const COIN_VOICE_NAME = {
-  BTC:'比特币', ETH:'以太币', SOL:'索拉纳', BNB:'币安币', XRP:'瑞波币',
-  DOGE:'狗狗币', ADA:'卡尔达诺', AVAX:'雪崩币', DOT:'波卡币', MATIC:'马蹄币',
-  LINK:'链链币', UNI:'优尼币', LTC:'莱特币', BCH:'比特现金', ATOM:'科斯莫斯',
-  NEAR:'近端币', FTM:'幻影币', SAND:'沙盒币', MANA:'曼纳币', APE:'猿猴币',
-  OP:'乐观币', ARB:'阿比币', SUI:'水币', SEI:'塞币', TIA:'天体币',
-  NVDA:'英伟达', TSLA:'特斯拉', AAPL:'苹果', MSFT:'微软',
+  BTC:'比特币', ETH:'以太坊', SOL:'索拉纳', BNB:'币安币', XRP:'瑞波币',
+  DOGE:'狗狗币', ADA:'艾达币', AVAX:'雪崩币', DOT:'波卡', MATIC:'马蹄币',
+  LINK:'链接币', UNI:'优尼斯瓦普', LTC:'莱特币', BCH:'比特现金', ATOM:'科斯莫斯',
+  NEAR:'尼尔', FTM:'幻影', SAND:'沙盒', MANA:'曼纳', APE:'猿猴币',
+  OP:'乐观', ARB:'阿比', SUI:'穗', TIA:'天体', WLD:'世界币',
+  FET:'飞特', TAO:'陶', RENDER:'渲染', TON:'通', NOT:'诺特',
+  PEPE:'佩佩', SHIB:'柴犬币', FLOKI:'弗洛基',
+  NVDA:'英伟达', TSLA:'特斯拉', AAPL:'苹果', MSFT:'微软', COIN:'coinbase',
 };
 function getCoinVoiceName(id) {
-  return COIN_VOICE_NAME[id] || id.split('').join(' '); // 未知币种逐字母读
+  if (COIN_VOICE_NAME[id]) return COIN_VOICE_NAME[id];
+  // 没有中文名：逐字母读，字母间加空格让TTS逐个念
+  return id.split('').join(' ');
 }
 function onMoreExSelect(exId) {
   if (!exId) return;

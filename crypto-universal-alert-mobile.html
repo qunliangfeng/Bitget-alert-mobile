@@ -2176,9 +2176,14 @@ const COIN_VOICE_NAME = {
   NVDA:'英伟达', TSLA:'特斯拉', AAPL:'苹果', MSFT:'微软', COIN:'coinbase',
 };
 function getCoinVoiceName(id) {
+  // 先尝试原始 id（如 BTC）
   if (COIN_VOICE_NAME[id]) return COIN_VOICE_NAME[id];
-  // 没有中文名：逐字母读，字母间加空格让TTS逐个念
-  return id.split('').join(' ');
+  // 自定义币 id 可能是完整交易对如 XRPUSDT，去掉稳定币后缀取 base
+  const base = id.replace(/USDT$|BUSD$|USDC$|BTC$|ETH$/i, '').toUpperCase();
+  if (base && base !== id && COIN_VOICE_NAME[base]) return COIN_VOICE_NAME[base];
+  // 没有中文名：用 base（去掉后缀后的部分）逐字母读
+  const readId = base || id;
+  return readId.split('').join(' ');
 }
 function onMoreExSelect(exId) {
   if (!exId) return;

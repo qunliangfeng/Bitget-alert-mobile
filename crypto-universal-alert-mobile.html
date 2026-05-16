@@ -1715,7 +1715,8 @@ function updateZone(id){
   const nearLo=Math.max(0,(s.target-s.nearDist-lo)/(hi-lo)*100);
   const nearW=Math.min(100,s.nearDist*2/(hi-lo)*100);
   const tgtPct=(s.target-lo)/(hi-lo)*100;
-  el.innerHTML=`<b>目标</b> ${fmt(id,s.target)} · 距离 <b>$${distStr}</b><br>步进 <b>$${step}</b>${near?' <span class="amb">⚠ 临近区加密播报</span>':''}
+  const _zq=getCoinQuote(id);
+  el.innerHTML=`<b>目标</b> ${fmt(id,s.target)} ${_zq} · 距离 <b>${distStr} ${_zq}</b><br>步进 <b>${step} ${_zq}</b>${near?' <span class="amb">⚠ 临近区加密播报</span>':''}
 <div class="zone-bar"><div class="zone-near-bg" style="left:${nearLo}%;width:${nearW}%"></div><div class="zone-cur-fill" style="width:${pct}%;background:${near?'var(--amber)':'var(--blue)'}"></div><div class="zone-tgt-mark" style="left:calc(${tgtPct}% - 1px)"></div></div>`;
 }
 
@@ -2282,7 +2283,7 @@ function testVoice() {
 async function sendTg(id,price,isUp,level,near){
   if(!cfg.tgToken||!cfg.tgChatId) return 'skip';
   const s=state[id],sym=isUp?'📈':'📉',dist=Math.abs(price-s.target);
-  const extra=near?`\n🎯 目标 \`${fmt(id,s.target)}\` · 距离 \`$${dist>=10?dist.toFixed(0):dist.toFixed(2)}\``:'';
+  const _eq=getCoinQuote(id);\n  const extra=near?`\n🎯 目标 \`${fmt(id,s.target)} ${_eq}\` · 距离 \`${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}\``:'';
   const text=`${sym} *${id}/USDT* ${isUp?'上穿':'下穿'} \`${fmt(id,level)}\`\n当前：\`${fmt(id,price)}\`${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
     const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text,parse_mode:'Markdown'})});
@@ -2376,7 +2377,7 @@ function renderActiveCoinList() {
       <div style="width:28px;height:28px;border-radius:50%;background:${c.bg};color:${c.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${c.id.slice(0,2)}</div>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600;color:var(--tx)">${c.name.includes('/')?c.name:c.id+'/USDT'}</div>
-        <div style="font-size:10px;color:var(--tx3)">${c.name} · 步进 $${c.defStep}</div>
+        <div style="font-size:10px;color:var(--tx3)">${c.name} · 步进 ${c.defStep} ${c.quote||getCoinQuote(c.id)||'USDT'}</div>
       </div>
       <div style="display:flex;gap:5px">
         ${i>0?`<button onclick="moveCoin(${i},-1)" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer">↑</button>`:''}
@@ -2471,14 +2472,8 @@ async function addPairCoin() {
   if (!base||!quote) { showPairMsg('err','请选择基础币和计价货币'); return; }
   const sym = base+quote;
   if (COINS.find(c=>c.sym===sym)) { showPairMsg('err',`${base}/${quote} 已在监控列表中`); return; }
-  showPairMsg('info',`验证 ${sym} 中…`);
-  try {
-    const url = mktType==='SPOT'
-      ? `https://api.bitget.com/api/v2/spot/market/tickers?symbol=${sym}`
-      : `https://api.bitget.com/api/v2/mix/market/ticker?symbol=${sym}&productType=USDT-FUTURES`;
-    const r=await fetch(url); const d=await r.json();
-    if (d.code!=='00000'||!d.data) { showPairMsg('err',`${base}/${quote} 在当前交易所不存在`); return; }
-  } catch(e) { showPairMsg('info','验证跳过，直接添加'); }
+  // 直接添加，不做验证（各交易所跨域限制不同，验证意义不大）
+  // 若交易对在当前交易所不存在，行情卡片会显示"—"，用户可自行判断
   // 根据币种自动推算默认步进
   const step = autoDefaultStep(base, quote);
   const colors=['#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ffd93d','#fd79a8','#6c5ce7','#a29bfe'];

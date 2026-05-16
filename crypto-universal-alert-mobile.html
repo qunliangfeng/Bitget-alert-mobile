@@ -208,7 +208,7 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 .log-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--bd); }
 .log-title { font-size: 13px; font-weight: 500; color: var(--tx2); }
 .log-clr { font-size: 12px; color: var(--tx3); background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 4px 8px; }
-.log-list { max-height: 500px; overflow-y: auto; }
+.log-list { max-height: calc(100vh - 200px); overflow-y: auto; }
 .log-row { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-bottom: 1px solid var(--bd); font-size: 12px; }
 .log-row:last-child { border-bottom: none; }
 .lt { color: var(--tx3); font-family: var(--mono); min-width: 54px; font-size: 11px; }
@@ -2445,7 +2445,7 @@ function renderLog(){
       <span class="lt">${l.t}</span>
       <span class="lc">${l.id}</span>
       <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
-      <span class="lp">${fmt(l.id,l.level)} ${getCoinQuote(l.id)}→${fmt(l.id,l.price)}</span>
+      <span class="lp">${fmt(l.id,l.level)}→${fmt(l.id,l.price)}</span>
       <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':l.mode==='point'?'📌':'固定'}</span>
       <div class="lchs">${l.chs.map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':'ERR'}</span>`).join('')}</div>
     </div>`).join('');

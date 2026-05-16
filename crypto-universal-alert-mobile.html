@@ -1049,17 +1049,13 @@ const EXCHANGES = {
     restBase: 'https://fapi.binance.com',
     getWsUrl(coins, mktType) {
       if (mktType==='SPOT') {
-        const streams = coins.map(c=>c.sym.toLowerCase()+'@miniTicker').join('/');
+        // 用 ticker 替代 miniTicker，每秒推送，数据更及时
+        const streams = coins.map(c=>c.sym.toLowerCase()+'@ticker').join('/');
         return `wss://stream.binance.com:9443/stream?streams=${streams}`;
       } else {
-        // 合约只支持 USDT 结尾的品种，过滤掉 USDC/BTC/ETH 计价
         const futCoins = coins.filter(c=>c.sym.endsWith('USDT'));
-        if (!futCoins.length) {
-          // 没有可用合约品种，降级用现货
-          const streams = coins.map(c=>c.sym.toLowerCase()+'@miniTicker').join('/');
-          return `wss://stream.binance.com:9443/stream?streams=${streams}`;
-        }
-        const streams = futCoins.map(c=>c.sym.toLowerCase()+'@miniTicker').join('/');
+        const targets = futCoins.length ? futCoins : coins;
+        const streams = targets.map(c=>c.sym.toLowerCase()+'@ticker').join('/');
         return `wss://fstream.binance.com/stream?streams=${streams}`;
       }
     },
@@ -1069,10 +1065,11 @@ const EXCHANGES = {
         const msg = JSON.parse(raw);
         const d = msg.data || msg;
         if (!d||!d.s) return [];
+        // ticker: c=close, o=open, h=high, l=low; miniTicker same fields
         return [{ sym:d.s, price:d.c||d.p, open:d.o, high:d.h, low:d.l }];
       } catch(_) { return []; }
     },
-    ping: null,
+    ping: JSON.stringify({method:'ping'}),
     restUrl(mktType) {
       return mktType==='SPOT'
         ? 'https://api.binance.com/api/v3/ticker/24hr'
@@ -1118,20 +1115,28 @@ const EXCHANGES = {
         : 'wss://api.hbdm.com/linear-swap-ws';
     },
     subscribe(coins, mktType) {
-      // HTX uses individual subscriptions
-      return JSON.stringify({ sub: `market.${coins[0].sym.toLowerCase()}.ticker`, id: 'alert' });
+      // HTX 需要逐个订阅，返回第一个，其余在 onopen 后补发
+      this._pendingSubs = coins.slice(1).map(c =>
+        JSON.stringify({ sub: `market.${c.sym.toLowerCase()}.ticker`, id: c.sym })
+      );
+      return JSON.stringify({ sub: `market.${coins[0].sym.toLowerCase()}.ticker`, id: coins[0].sym });
     },
     parseTick(raw) {
       try {
+        // HTX WS 数据是 gzip 压缩的，但浏览器会自动解压
         const msg = JSON.parse(raw);
-        if (msg.ping) return [];
+        // 响应 ping（HTX 要求必须回 pong，否则断连）
+        if (msg.ping) {
+          // pong 由外层 ping handler 处理，这里返回空
+          return [];
+        }
         if (!msg.tick||!msg.ch) return [];
         const sym = msg.ch.split('.')[1].toUpperCase();
         const d = msg.tick;
-        return [{ sym, price: d.lastPrice||d.close, open: d.open, high: d.high, low: d.low }];
+        return [{ sym, price: d.lastPrice||d.close||d.last, open: d.open, high: d.high, low: d.low }];
       } catch(_) { return []; }
     },
-    ping: null,
+    ping: JSON.stringify({pong: Date.now()}),
     restUrl(mktType) { return mktType==='SPOT' ? 'https://api.huobi.pro/market/tickers' : 'https://api.hbdm.com/linear-swap-ex/market/detail/batch_merged'; },
     parseRest(json) { return (json.data||[]).map(d=>({ sym:(d.symbol||d.contract_code||'').toUpperCase(), price:d.close||d.last, open:d.open, high:d.high, low:d.low })); }
   },
@@ -1311,20 +1316,26 @@ const EXCHANGES = {
     name: 'Bitstamp', flag: '🟢',
     getWsUrl() { return 'wss://ws.bitstamp.net'; },
     subscribe(coins, mktType) {
-      const msgs = coins.map(c => JSON.stringify({ event:'bts:subscribe', data:{ channel:`live_trades_${c.sym.toLowerCase()}` } }));
-      return msgs[0]; // WS subscribe one by one; simplified: first only
+      // Bitstamp 需要逐个订阅，先返回第一个，其余存起来
+      this._pendingSubs = coins.slice(1).map(c =>
+        JSON.stringify({ event:'bts:subscribe', data:{ channel:`live_trades_${c.sym.toLowerCase()}` } })
+      );
+      return JSON.stringify({ event:'bts:subscribe', data:{ channel:`live_trades_${coins[0].sym.toLowerCase()}` } });
     },
     parseTick(raw) {
       try {
         const msg = JSON.parse(raw);
         if (msg.event!=='trade'||!msg.data) return [];
         const sym = (msg.channel||'').replace('live_trades_','').toUpperCase();
-        return [{ sym: sym.replace('USD','USDT'), price: msg.data.price }];
+        return [{ sym: sym.endsWith('USD')?sym+'T':sym, price: msg.data.price }];
       } catch(_) { return []; }
     },
     ping: JSON.stringify({event:'bts:heartbeat'}),
-    restUrl() { return 'https://www.bitstamp.net/api/v2/trading-pairs-info/'; },
-    parseRest(json) { return []; } // Use REST fallback from ticker endpoint
+    restUrl() { return 'https://www.bitstamp.net/api/v2/ticker/'; },
+    parseRest(json) {
+      if (json.last) return [{ sym:'BTCUSDT', price:json.last }];
+      return [];
+    }
   },
 
   bitfinex: {
@@ -1488,14 +1499,28 @@ function connectWS() {
     // 发送订阅（Binance 用 URL 方式不需要）
     const subMsg = ex.subscribe(COINS, mktType);
     if (subMsg) ws.send(subMsg);
+    // 逐个发送剩余订阅（HTX/Bitstamp 等需要逐条订阅）
+    if (ex._pendingSubs && ex._pendingSubs.length) {
+      ex._pendingSubs.forEach((msg, i) => {
+        setTimeout(() => { try{ if(ws.readyState===1) ws.send(msg); }catch(e){} }, 200*(i+1));
+      });
+      ex._pendingSubs = [];
+    }
     // 心跳
     clearInterval(pingTimer);
     if (ex.ping) {
-      pingTimer = setInterval(() => { try{ if(ws.readyState===1) ws.send(ex.ping); }catch(e){} }, 20000);
+      pingTimer = setInterval(() => { try{ if(ws.readyState===1) ws.send(typeof ex.ping==='function'?ex.ping():ex.ping); }catch(e){} }, 20000);
     }
   };
   ws.onmessage = e => {
     try {
+      // HTX 服务端 ping 需要立即回 pong（否则断连）
+      if (currentExchange==='htx') {
+        try {
+          const m = JSON.parse(e.data);
+          if (m.ping) { ws.send(JSON.stringify({pong:m.ping})); return; }
+        } catch(_) {}
+      }
       const ticks = ex.parseTick(e.data);
       if (ticks.length) console.log('[tick]', ticks[0]);
       ticks.forEach(t => {

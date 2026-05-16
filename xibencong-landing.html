@@ -638,7 +638,7 @@ const TG_ADMIN_ID  = 'YOUR_CHAT_ID';   // 替换成你的 Chat ID
 const PLANS = {
   trial:   { name:'7天免费试用', price:0, free:true },
   monthly: { name:'月付套餐', price:10, label:'10 USDT / 月' },
-  yearly:  { name:'年付套餐', price:58.88, label:'58.88 USDT / 年（省45%）' },
+  yearly:  { name:'年付套餐', price:58.88, label:'58.88 USDT / 年（省67%）' },
 };
 let curPlan = null;
 
@@ -713,11 +713,22 @@ async function createPayment() {
   btn.disabled = true;
   btn.innerHTML = '<span class="loading-spin"></span> 生成中…';
   try {
+    // 先查最低金额，自动取较大值
+    let payAmount = curPlan.price;
+    try {
+      const minRes = await fetch(`https://api.nowpayments.io/v1/min-amount?currency_from=usdttrc20&currency_to=usdttrc20`, {
+        headers: { 'x-api-key': NOWPAY_KEY }
+      });
+      const minData = await minRes.json();
+      const minAmount = parseFloat(minData.min_amount || 0);
+      if (minAmount > payAmount) payAmount = Math.ceil(minAmount * 10) / 10 + 0.1;
+    } catch(_) {}
+
     const res = await fetch('https://api.nowpayments.io/v1/payment', {
       method:'POST',
       headers:{ 'x-api-key': NOWPAY_KEY, 'Content-Type':'application/json' },
       body: JSON.stringify({
-        price_amount: curPlan.price,
+        price_amount: payAmount,
         price_currency: 'usdttrc20',
         pay_currency: 'usdttrc20',
         order_id: `xbc_${Date.now()}`,

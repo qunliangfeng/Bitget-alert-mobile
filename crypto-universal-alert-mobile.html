@@ -2057,7 +2057,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
   try {
     const [tr, wr] = await Promise.all([
       cfg.tgOn && cfg.tgToken && cfg.tgChatId
-        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
+        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
         : Promise.resolve('skip'),
       cfg.wxOn && cfg.wxToken
         ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
@@ -2197,7 +2197,7 @@ async function fireTimerAlert(id) {
   try {
     const [tr, wr] = await Promise.all([
       cfg.tgOn && cfg.tgToken && cfg.tgChatId
-        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
+        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
         : Promise.resolve('skip'),
       cfg.wxOn && cfg.wxToken
         ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT 定时播报**\n> 当前：$${fmt(id,price)}\n> 24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
@@ -2417,7 +2417,7 @@ async function sendTg(id,price,isUp,level,near){
   const extra=near?`\n🎯 目标 \`${fmt(id,s.target)} ${_eq}\` · 距离 \`${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}\``:'';
   const text=`${sym} *${id}/USDT* ${isUp?'上穿':'下穿'} \`${fmt(id,level)}\`\n当前：\`${fmt(id,price)}\`${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
-    const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text,parse_mode:'Markdown'})});
+    const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text})});
     const d=await r.json();return d.ok?'ok':'err:'+d.description;
   }catch(e){return 'err:'+e.message;}
 }
@@ -2456,7 +2456,7 @@ function renderLog(){
       <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
       <span class="lp">${fmt(l.id,l.level)}→${fmt(l.id,l.price)}</span>
       <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':l.mode==='point'?'📌':'固定'}</span>
-      <div class="lchs">${l.chs.map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':'ERR'}</span>`).join('')}</div>
+      <div class="lchs">${l.chs.filter(c=>c!=='err').map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':''}</span>`).join('')}</div>
     </div>`).join('');
 }
 

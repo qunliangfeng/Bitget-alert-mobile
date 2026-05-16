@@ -931,11 +931,7 @@ function applySettings(data) {
         b.className = 'ex-btn' + (b.dataset.ex===currentExchange?' active':'');
       });
       // 如果是非快捷按钮的交易所，更新下拉菜单
-      const quickEx = ['bitget','binance','okx','bybit'];
-      if (!quickEx.includes(currentExchange)) {
-        const sel = document.getElementById('exMoreSelect');
-        if (sel) sel.value = currentExchange;
-      }
+      syncExchangeUI(currentExchange);
     }
 
     // 恢复行情类型
@@ -1049,21 +1045,32 @@ const EXCHANGES = {
 
   binance: {
     name: 'Binance', flag: '🟡',
-    // 合约用 fstream，现货用 stream
-    wsUrl: null, // 动态生成
+    wsUrl: null,
     restBase: 'https://fapi.binance.com',
     getWsUrl(coins, mktType) {
-      const streams = coins.map(c => c.sym.toLowerCase()+'@miniTicker').join('/');
-      return mktType==='SPOT'
-        ? `wss://stream.binance.com:9443/stream?streams=${coins.map(c=>c.sym.toLowerCase()+'@miniTicker').join('/')}`
-        : `wss://fstream.binance.com/stream?streams=${streams}`;
+      if (mktType==='SPOT') {
+        const streams = coins.map(c=>c.sym.toLowerCase()+'@miniTicker').join('/');
+        return `wss://stream.binance.com:9443/stream?streams=${streams}`;
+      } else {
+        // 合约只支持 USDT 结尾的品种，过滤掉 USDC/BTC/ETH 计价
+        const futCoins = coins.filter(c=>c.sym.endsWith('USDT'));
+        if (!futCoins.length) {
+          // 没有可用合约品种，降级用现货
+          const streams = coins.map(c=>c.sym.toLowerCase()+'@miniTicker').join('/');
+          return `wss://stream.binance.com:9443/stream?streams=${streams}`;
+        }
+        const streams = futCoins.map(c=>c.sym.toLowerCase()+'@miniTicker').join('/');
+        return `wss://fstream.binance.com/stream?streams=${streams}`;
+      }
     },
-    subscribe() { return null; }, // Binance 用 URL 订阅，无需发送消息
+    subscribe() { return null; },
     parseTick(raw) {
-      const msg = JSON.parse(raw);
-      const d = msg.data || msg;
-      if (!d||!d.s) return [];
-      return [{ sym:d.s, price:d.c||d.p, open:d.o, high:d.h, low:d.l }];
+      try {
+        const msg = JSON.parse(raw);
+        const d = msg.data || msg;
+        if (!d||!d.s) return [];
+        return [{ sym:d.s, price:d.c||d.p, open:d.o, high:d.h, low:d.l }];
+      } catch(_) { return []; }
     },
     ping: null,
     restUrl(mktType) {
@@ -1082,7 +1089,8 @@ const EXCHANGES = {
     restBase: 'https://www.okx.com',
     subscribe(coins, mktType) {
       const instType = mktType==='SPOT' ? 'SPOT' : 'SWAP';
-      return JSON.stringify({ op:'subscribe', args: coins.map(c=>({ channel:'tickers', instId: mktType==='SPOT'?c.sym:c.id+'-USDT-SWAP' })) });
+      const args = coins.map(c=>({ channel:'tickers', instId: mktType==='SPOT'?c.sym:(c.sym.endsWith('USDT')?c.id+'-USDT-SWAP':c.sym) }));
+      return JSON.stringify({ op:'subscribe', args });
     },
     parseTick(raw) {
       if (raw==='pong') return [];
@@ -1416,7 +1424,10 @@ const EXCHANGES = {
         : 'wss://stream.bybit.com/v5/public/linear';
     },
     subscribe(coins, mktType) {
-      return JSON.stringify({ op:'subscribe', args: coins.map(c=>`tickers.${c.sym}`) });
+      // 合约只支持 USDT 结尾
+      const validCoins = mktType==='SPOT' ? coins : coins.filter(c=>c.sym.endsWith('USDT'));
+      const targets = validCoins.length ? validCoins : coins;
+      return JSON.stringify({ op:'subscribe', args: targets.map(c=>`tickers.${c.sym}`) });
     },
     parseTick(raw) {
       const msg = JSON.parse(raw);
@@ -1460,6 +1471,8 @@ function connectWS() {
   let wsUrl;
   try { wsUrl = ex.getWsUrl ? ex.getWsUrl(COINS, mktType) : ex.wsUrl; }
   catch(e) { console.error('getWsUrl error:', e); onWSFail(); return; }
+  console.log('[WS] exchange:', currentExchange, 'mktType:', mktType, 'url:', wsUrl);
+  console.log('[WS] COINS syms:', COINS.map(c=>c.sym));
   if (!wsUrl) { console.error('No wsUrl, falling back to REST'); onWSFail(); return; }
   try { ws = new WebSocket(wsUrl); }
   catch(e) { onWSFail(); return; }
@@ -1484,10 +1497,11 @@ function connectWS() {
   ws.onmessage = e => {
     try {
       const ticks = ex.parseTick(e.data);
+      if (ticks.length) console.log('[tick]', ticks[0]);
       ticks.forEach(t => {
         if (t.price) handleTick(t.sym, { lastPr:t.price, open24h:t.open, high24h:t.high, low24h:t.low });
       });
-    } catch(_) {}
+    } catch(err) { console.error('[parseTick err]', err); }
   };
   ws.onerror = () => { clearTimeout(timeout); wsAlive=false; onWSFail(); };
   ws.onclose = () => {
@@ -1541,15 +1555,30 @@ function setWS(s) {
 }
 
 // ── 切换交易所 ────────────────────────────────────────────────────
+function syncExchangeUI(exId) {
+  const quickEx = ['bitget','binance','okx','bybit'];
+  const isQuick = quickEx.includes(exId);
+  // 四个按钮：只有在快捷列表里的才高亮，其余全灰
+  document.querySelectorAll('.ex-btn').forEach(b => {
+    b.className = 'ex-btn' + (isQuick && b.dataset.ex===exId ? ' active' : '');
+  });
+  // 下拉：在快捷列表里就重置，不在就选中对应项并高亮
+  const sel = document.getElementById('exMoreSelect');
+  if (sel) {
+    sel.value = isQuick ? '' : exId;
+    sel.style.color = isQuick ? '' : 'var(--blue)';
+    sel.style.borderColor = isQuick ? '' : '#1e3a6e';
+    sel.style.background = isQuick ? '' : 'var(--blue-d)';
+  }
+}
+
 function switchExchange(exId) {
   if (currentExchange === exId) return;
   currentExchange = exId;
   localStorage.setItem('current_exchange', exId);
 
   // 更新 UI
-  document.querySelectorAll('.ex-btn').forEach(b => {
-    b.className = 'ex-btn' + (b.dataset.ex===exId ? ' active' : '');
-  });
+  syncExchangeUI(exId);
 
   // 重置行情数据
   COINS.forEach(c => {
@@ -2554,17 +2583,24 @@ function getCoinVoiceName(id) {
 }
 function onMoreExSelect(exId) {
   if (!exId) return;
-  // 如果已有适配就直接切换
   if (EXCHANGES[exId]) {
-    switchExchange(exId);
-    // 更新快捷按钮高亮
-    document.querySelectorAll('.ex-btn').forEach(b => b.className='ex-btn');
-    document.getElementById('exMoreSelect').value = exId;
+    // 手动更新 currentExchange（绕过 switchExchange 的 same-check）
+    const prev = currentExchange;
+    currentExchange = exId;
+    localStorage.setItem('current_exchange', exId);
+    syncExchangeUI(exId);
+    if (prev !== exId) {
+      // 重连
+      wsAlive=false; connMode='ws'; wsFailCount=0;
+      clearInterval(pingTimer); clearTimeout(reconnTimer); clearInterval(restTimer);
+      try{if(ws) ws.close();}catch(_){}
+      updateCardSubtitles();
+      saveSettings();
+      setTimeout(startConnection, 400);
+    }
     return;
   }
-  // 没有适配的交易所，提示用 REST 降级
   showToast(`${exId} 暂时使用 REST 轮询模式`);
-  // 用 Binance 作为通用 REST 降级
   switchExchange('binance');
 }
 
@@ -3018,9 +3054,7 @@ function getRefCodeFromUrl() {
 buildCards();
 updateCoinCountLabel();
 // 初始化交易所按钮高亮（与 currentExchange 保持一致）
-document.querySelectorAll('.ex-btn').forEach(b => {
-  b.className = 'ex-btn' + (b.dataset.ex === currentExchange ? ' active' : '');
-});
+syncExchangeUI(currentExchange);
 loadSettings();
 
 // 包裹整个 app，方便激活界面覆盖

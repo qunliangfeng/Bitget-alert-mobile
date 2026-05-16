@@ -2324,8 +2324,9 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.voiceOn){
     const name=getCoinVoiceName(id);
     const dist=Math.abs(price-s.target);
-    const nearTxt=near?`，距目标还有${fmtDist(id,dist,price)}`:'';
-    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}${nearTxt}`);
+    // 有设目标价就播报距离，无论远近
+    const distTxt = s.target>0 ? `，距目标还有${fmtDist(id,dist,price)}` : '';
+    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}${distTxt}`);
   }
   // TG/微信推送，失败不影响日志记录
   try {

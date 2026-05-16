@@ -551,12 +551,12 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 <div class="drawer" id="coinDrawer">
   <div class="drawer-header">
     <div class="drawer-handle"></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px 14px;border-bottom:1px solid var(--bd)">
-    <div style="font-size:15px;font-weight:600">⚙️ 管理监控币种</div>
-  </div><!-- /drawer-header -->
-  <div class="drawer-body">
-    <button onclick="closeCoinManager()" style="background:none;border:none;color:var(--tx3);font-size:20px;cursor:pointer">✕</button>
+    <div class="drawer-title">
+      <span>⚙️ 管理监控币种</span>
+      <button class="drawer-close-btn" onclick="closeCoinManager()">✕ 关闭</button>
+    </div>
   </div>
+  <div class="drawer-body">
 
   <!-- 当前监控 -->
   <div class="dsec">

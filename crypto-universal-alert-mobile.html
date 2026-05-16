@@ -2052,16 +2052,21 @@ async function firePointAlert(id, price, pointPrice, repeat) {
   const wxTitle = `📌 ${id}/USDT 定点触发 ${fmt(id,pointPrice)}`;
   const wxDesp  = `到达：$${fmt(id,pointPrice)}\n当前：$${fmt(id,price)}\n${timeStr}`;
 
-  Promise.all([
-    cfg.tgOn && cfg.tgToken && cfg.tgChatId
-      ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})})
-      : Promise.resolve(),
-    cfg.wxOn && cfg.wxToken
-      ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`}})})
-      : Promise.resolve()
-  ]);
-
-  logs.unshift({t:timeStr, id, price, isUp:true, level:pointPrice, mode:'point', chs:[]});
+  const chs = [];
+  if (cfg.soundOn) chs.push('snd');
+  try {
+    const [tr, wr] = await Promise.all([
+      cfg.tgOn && cfg.tgToken && cfg.tgChatId
+        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
+        : Promise.resolve('skip'),
+      cfg.wxOn && cfg.wxToken
+        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
+        : Promise.resolve('skip')
+    ]);
+    if (tr==='ok') chs.push('tg'); else if (tr==='err') chs.push('err');
+    if (wr==='ok') chs.push('wx'); else if (wr==='err'&&!chs.includes('err')) chs.push('err');
+  } catch(_) { chs.push('err'); }
+  logs.unshift({t:timeStr, id, price, isUp:true, level:pointPrice, mode:'point', chs});
   if(logs.length>80) logs.pop();
   renderLog();
 }

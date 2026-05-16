@@ -658,11 +658,14 @@ function renderTrialForm() {
   document.getElementById('payContent').innerHTML = `
     <div style="font-size:20px;font-weight:700;margin-bottom:6px">🎁 领取 7 天免费试用</div>
     <div style="font-size:13px;color:#8899aa;margin-bottom:20px">填写联系方式，激活码 30 分钟内发送</div>
-    <label class="pay-label">Telegram 用户名 <span style="color:#e74c3c">*</span>（激活码将发送到此）</label>
+    <div style="background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.7">
+      ⚠️ 领取前请先完成一步：<br>
+      在 Telegram 搜索 <a href="https://t.me/nvda_fql_bot" target="_blank" style="color:#f39c12;font-weight:700">@nvda_fql_bot</a>，发送 <b>/start</b>，否则无法收到激活码
+    </div>
+    <label class="pay-label">Telegram 用户名 <span style="color:#e74c3c">*</span></label>
     <input class="pay-input" id="tTg" placeholder="@your_username">
-    <label class="pay-label" style="color:#556677">备用联系方式（选填，仅供记录）</label>
+    <label class="pay-label" style="color:#556677">邮箱（选填，仅供记录）</label>
     <input class="pay-input" id="tEmail" type="email" placeholder="your@email.com" style="opacity:0.6">
-    <div style="font-size:11px;color:#556677;margin-bottom:8px">⚠️ 请确保先向 Bot 发送过 /start，否则无法收到消息</div>
     <button class="pay-submit" onclick="submitTrial()">获取免费激活码</button>
     <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">每人限领一次 · 无需付款</div>
   `;
@@ -676,11 +679,14 @@ function renderPayForm() {
       <span style="font-size:13px;color:#8899aa">${curPlan.label}</span>
       <span style="font-size:22px;font-weight:700;color:#f39c12;font-family:'JetBrains Mono',monospace">${curPlan.price} USDT</span>
     </div>
-    <label class="pay-label">Telegram 用户名 <span style="color:#e74c3c">*</span>（激活码将发送到此）</label>
+    <div style="background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.7">
+      ⚠️ 付款前请先完成一步：<br>
+      在 Telegram 搜索 <a href="https://t.me/nvda_fql_bot" target="_blank" style="color:#f39c12;font-weight:700">@nvda_fql_bot</a>，发送 <b>/start</b>，激活码将自动发送到你的 TG
+    </div>
+    <label class="pay-label">Telegram 用户名 <span style="color:#e74c3c">*</span></label>
     <input class="pay-input" id="pTg" placeholder="@your_username">
-    <label class="pay-label" style="color:#556677">备用联系方式（选填，仅供记录）</label>
+    <label class="pay-label" style="color:#556677">邮箱（选填，仅供记录）</label>
     <input class="pay-input" id="pEmail" type="email" placeholder="your@email.com" style="opacity:0.6">
-    <div style="font-size:11px;color:#556677;margin-bottom:8px">⚠️ 请确保先向 Bot 发送过 /start，否则无法收到消息</div>
     <button class="pay-submit" id="pBtn" onclick="createPayment()">生成付款地址</button>
     <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">支持 USDT TRC20 / ERC20 · 由 NOWPayments 安全处理</div>
   `;

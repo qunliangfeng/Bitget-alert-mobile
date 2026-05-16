@@ -2189,18 +2189,18 @@ async function fireTimerAlert(id) {
   const wxTitle = `⏱ ${id}/USDT 定时播报`;
   const wxDesp = `当前：$${fmt(id,price)}\n24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n${timeStr}`;
 
-  const [tr, wr] = await Promise.all([
-    cfg.tgOn && cfg.tgToken && cfg.tgChatId
-      ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
-      : Promise.resolve('skip'),
-    cfg.wxOn && cfg.wxToken
-      ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT 定时播报**\n> 当前：$${fmt(id,price)}\n> 24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
-      : Promise.resolve('skip')
-  ]);
-
-  if (tr==='ok') chs.push('tg');
-  if (wr==='ok') chs.push('wx');
-
+  try {
+    const [tr, wr] = await Promise.all([
+      cfg.tgOn && cfg.tgToken && cfg.tgChatId
+        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg,parse_mode:'Markdown'})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
+        : Promise.resolve('skip'),
+      cfg.wxOn && cfg.wxToken
+        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT 定时播报**\n> 当前：$${fmt(id,price)}\n> 24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
+        : Promise.resolve('skip')
+    ]);
+    if (tr==='ok') chs.push('tg');
+    if (wr==='ok') chs.push('wx');
+  } catch(_) {}
   logs.unshift({t:timeStr, id, price, isUp:mkt[id].change24h>=0, level:price, mode:'timer', chs});
   if (logs.length>80) logs.pop();
   renderLog();
@@ -2251,12 +2251,16 @@ async function fireAlert(id, price, isUp, level, mode){
     const nearTxt=near?`，距目标还有${fmtDist(id,dist,price)}`:'';
     speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}${nearTxt}`);
   }
-  const [tr,wr]=await Promise.all([
-    cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
-    cfg.wxOn?sendWx(id,price,isUp,level,near):Promise.resolve('skip')
-  ]);
-  if(tr==='ok') chs.push('tg'); else if(String(tr).startsWith('err')) chs.push('err');
-  if(wr==='ok') chs.push('wx'); else if(String(wr).startsWith('err')&&!chs.includes('err')) chs.push('err');
+  // TG/微信推送，失败不影响日志记录
+  try {
+    const [tr,wr]=await Promise.all([
+      cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
+      cfg.wxOn?sendWx(id,price,isUp,level,near):Promise.resolve('skip')
+    ]);
+    if(tr==='ok') chs.push('tg'); else if(String(tr).startsWith('err')) chs.push('err');
+    if(wr==='ok') chs.push('wx'); else if(String(wr).startsWith('err')&&!chs.includes('err')) chs.push('err');
+  } catch(_) { chs.push('err'); }
+  // 无论推送是否成功，日志必须写入
   logs.unshift({t:timeStr,id,price,isUp,level,mode:near?'target':'fixed',chs});
   if(logs.length>80) logs.pop();
   renderLog();

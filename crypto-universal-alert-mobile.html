@@ -2048,7 +2048,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
   }
 
   // 推送
-  const tgMsg = `📌 *${id}/USDT* 定点价格触发\n到达价：\`${fmt(id,pointPrice)}\`\n当前价：\`${fmt(id,price)}\`\n播报 ${repeat} 次\n🕐 ${timeStr}`;
+  const tgMsg = `📌 ${id}/USDT 定点价格触发\n到达价：${fmt(id,pointPrice)}\n当前价：${fmt(id,price)}\n播报 ${repeat} 次\n🕐 ${timeStr}`;
   const wxTitle = `📌 ${id}/USDT 定点触发 ${fmt(id,pointPrice)}`;
   const wxDesp  = `到达：$${fmt(id,pointPrice)}\n当前：$${fmt(id,price)}\n${timeStr}`;
 
@@ -2063,8 +2063,8 @@ async function firePointAlert(id, price, pointPrice, repeat) {
         ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
         : Promise.resolve('skip')
     ]);
-    if (tr==='ok'||tr==='err') { if(cfg.tgOn&&cfg.tgToken) chs.push('tg'); }
-    if (wr==='ok'||wr==='err') { if(cfg.wxOn&&cfg.wxToken) chs.push('wx'); }
+    if (tr==='ok') chs.push('tg');
+    if (wr==='ok') chs.push('wx');
   } catch(_) { chs.push('err'); }
   logs.unshift({t:timeStr, id, price, isUp:true, level:pointPrice, mode:'point', chs});
   if(logs.length>80) logs.pop();
@@ -2190,7 +2190,7 @@ async function fireTimerAlert(id) {
   const chs = [];
   if (cfg.soundOn) chs.push('snd');
 
-  const tgMsg = `⏱ *${id}/USDT* 定时播报\n当前价：\`${fmt(id,price)}\`\n24H涨跌：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
+  const tgMsg = `⏱ ${id}/USDT 定时播报\n当前价：${fmt(id,price)}\n24H涨跌：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
   const wxTitle = `⏱ ${id}/USDT 定时播报`;
   const wxDesp = `当前：$${fmt(id,price)}\n24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n${timeStr}`;
 
@@ -2203,8 +2203,8 @@ async function fireTimerAlert(id) {
         ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT 定时播报**\n> 当前：$${fmt(id,price)}\n> 24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
         : Promise.resolve('skip')
     ]);
-    if (tr==='ok'||tr==='err') { if(cfg.tgOn&&cfg.tgToken) chs.push('tg'); }
-    if (wr==='ok'||wr==='err') { if(cfg.wxOn&&cfg.wxToken) chs.push('wx'); }
+    if (tr==='ok') chs.push('tg');
+    if (wr==='ok') chs.push('wx');
   } catch(_) {}
   logs.unshift({t:timeStr, id, price, isUp:mkt[id].change24h>=0, level:price, mode:'timer', chs});
   if (logs.length>80) logs.pop();
@@ -2262,8 +2262,8 @@ async function fireAlert(id, price, isUp, level, mode){
       cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
       cfg.wxOn?sendWx(id,price,isUp,level,near):Promise.resolve('skip')
     ]);
-    if(tr==='ok'||String(tr).startsWith('err')) { if(cfg.tgOn&&cfg.tgToken) chs.push('tg'); }
-    if(wr==='ok'||String(wr).startsWith('err')) { if(cfg.wxOn&&cfg.wxToken) chs.push('wx'); }
+    if(tr==='ok') chs.push('tg');
+    if(wr==='ok') chs.push('wx');
   } catch(_) { chs.push('err'); }
   // 无论推送是否成功，日志必须写入
   logs.unshift({t:timeStr,id,price,isUp,level,mode:near?'target':'fixed',chs});
@@ -2414,8 +2414,8 @@ async function sendTg(id,price,isUp,level,near){
   if(!cfg.tgToken||!cfg.tgChatId) return 'skip';
   const s=state[id],sym=isUp?'📈':'📉',dist=Math.abs(price-s.target);
   const _eq=getCoinQuote(id);
-  const extra=near?`\n🎯 目标 \`${fmt(id,s.target)} ${_eq}\` · 距离 \`${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}\``:'';
-  const text=`${sym} *${id}/USDT* ${isUp?'上穿':'下穿'} \`${fmt(id,level)}\`\n当前：\`${fmt(id,price)}\`${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
+  const extra=near?`\n🎯 目标 ${fmt(id,s.target)} ${_eq} · 距离 ${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}`:'';
+  const text=`${sym} ${id}/USDT ${isUp?'上穿':'下穿'} ${fmt(id,level)}\n当前：${fmt(id,price)}${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
   try{
     const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text})});
     const d=await r.json();return d.ok?'ok':'err:'+d.description;

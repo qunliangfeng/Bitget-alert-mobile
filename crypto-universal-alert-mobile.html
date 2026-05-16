@@ -1026,9 +1026,17 @@ const EXCHANGES = {
     // 解析 WS 消息 → [{sym, price, open, high, low}]
     parseTick(raw) {
       if (raw==='pong') return [];
-      const msg = JSON.parse(raw);
-      if (!msg.data||!msg.arg||msg.arg.channel!=='ticker') return [];
-      return msg.data.map(d=>({ sym: msg.arg.instId, price:d.lastPr||d.last, open:d.open24h, high:d.high24h, low:d.low24h }));
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data || !msg.arg || msg.arg.channel!=='ticker') return [];
+        // Bitget instId 可能带后缀如 NVDAUSDT，直接用 data 里的 instId 字段
+        return msg.data.map(d => {
+          const instId = d.instId || msg.arg.instId || '';
+          // 统一格式：去掉可能的连字符，保证和 COINS[].sym 一致
+          const sym = instId.replace(/-/g,'');
+          return { sym, price: d.lastPr||d.last, open: d.open24h, high: d.high24h, low: d.low24h };
+        });
+      } catch(_) { return []; }
     },
     ping: 'ping',
     // REST 降级 URL
@@ -1473,6 +1481,8 @@ function startConnection() {
   wsFailCount = 0;
   connMode = 'ws';
   connectWS();
+  // 10秒后检查哪些币还没数据，用 REST 补充
+  setTimeout(fetchMissingStockTokens, 10000);
 }
 
 function connectWS() {
@@ -1548,6 +1558,9 @@ function schedReconn() {
 }
 
 // ── REST 降级 ─────────────────────────────────────────────────────
+// 美股代币列表（只在特定交易所有，需要独立补充）
+const STOCK_TOKENS = ['NVDA','TSLA','AAPL','MSFT','AMZN','GOOGL','META','MSTR','COIN'];
+
 async function fetchRESTTickers() {
   if(paused) return;
   const ex = EXCHANGES[currentExchange];
@@ -1560,6 +1573,28 @@ async function fetchRESTTickers() {
     });
     setWS('rest');
   } catch(e) { setWS('error'); }
+  // 补充：当前交易所可能没有美股代币，用 Bitget REST 单独拉（仅在无数据时）
+  setTimeout(fetchMissingStockTokens, 8000);
+}
+
+async function fetchMissingStockTokens() {
+  // 只补充真正没有数据的美股代币，有数据的不干预
+  const missing = COINS.filter(c => {
+    const base = c.id.replace(/USDT$|USDC$/,'');
+    return STOCK_TOKENS.includes(base) && (!mkt[c.id] || !mkt[c.id].loaded);
+  });
+  if (!missing.length) return;
+  for (const coin of missing) {
+    try {
+      const url = `https://api.bitget.com/api/v2/mix/market/ticker?symbol=${coin.sym}&productType=USDT-FUTURES`;
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.code==='00000' && d.data) {
+        const t = Array.isArray(d.data) ? d.data[0] : d.data;
+        if (t && t.lastPr) handleTick(coin.sym, { lastPr:t.lastPr, open24h:t.open24h, high24h:t.high24h, low24h:t.low24h });
+      }
+    } catch(_) {}
+  }
 }
 
 function startREST() {
@@ -1636,7 +1671,9 @@ function updateCardSubtitles() {
 // ── Tick ──────────────────────────────────────────────────────────
 function handleTick(sym, d) {
   if(paused) return;
-  const coin = COINS.find(c => c.sym===sym); if(!coin) return;
+  // 精确匹配，或去掉连字符后匹配
+  const cleanSym = sym.replace(/-/g,'');
+  const coin = COINS.find(c => c.sym===sym || c.sym===cleanSym); if(!coin) return;
   const m = mkt[coin.id], s = state[coin.id];
   const price = parseFloat(d.lastPr||d.last||0); if(!price) return;
   const open  = parseFloat(d.open24h||0);

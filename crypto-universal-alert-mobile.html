@@ -2063,8 +2063,8 @@ async function firePointAlert(id, price, pointPrice, repeat) {
         ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
         : Promise.resolve('skip')
     ]);
-    if (tr==='ok') chs.push('tg'); else if (tr==='err') chs.push('err');
-    if (wr==='ok') chs.push('wx'); else if (wr==='err'&&!chs.includes('err')) chs.push('err');
+    if (tr==='ok'||tr==='err') { if(cfg.tgOn&&cfg.tgToken) chs.push('tg'); }
+    if (wr==='ok'||wr==='err') { if(cfg.wxOn&&cfg.wxToken) chs.push('wx'); }
   } catch(_) { chs.push('err'); }
   logs.unshift({t:timeStr, id, price, isUp:true, level:pointPrice, mode:'point', chs});
   if(logs.length>80) logs.pop();
@@ -2203,8 +2203,8 @@ async function fireTimerAlert(id) {
         ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT 定时播报**\n> 当前：$${fmt(id,price)}\n> 24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
         : Promise.resolve('skip')
     ]);
-    if (tr==='ok') chs.push('tg');
-    if (wr==='ok') chs.push('wx');
+    if (tr==='ok'||tr==='err') { if(cfg.tgOn&&cfg.tgToken) chs.push('tg'); }
+    if (wr==='ok'||wr==='err') { if(cfg.wxOn&&cfg.wxToken) chs.push('wx'); }
   } catch(_) {}
   logs.unshift({t:timeStr, id, price, isUp:mkt[id].change24h>=0, level:price, mode:'timer', chs});
   if (logs.length>80) logs.pop();
@@ -2262,8 +2262,8 @@ async function fireAlert(id, price, isUp, level, mode){
       cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
       cfg.wxOn?sendWx(id,price,isUp,level,near):Promise.resolve('skip')
     ]);
-    if(tr==='ok') chs.push('tg'); else if(String(tr).startsWith('err')) chs.push('err');
-    if(wr==='ok') chs.push('wx'); else if(String(wr).startsWith('err')&&!chs.includes('err')) chs.push('err');
+    if(tr==='ok'||String(tr).startsWith('err')) { if(cfg.tgOn&&cfg.tgToken) chs.push('tg'); }
+    if(wr==='ok'||String(wr).startsWith('err')) { if(cfg.wxOn&&cfg.wxToken) chs.push('wx'); }
   } catch(_) { chs.push('err'); }
   // 无论推送是否成功，日志必须写入
   logs.unshift({t:timeStr,id,price,isUp,level,mode:near?'target':'fixed',chs});

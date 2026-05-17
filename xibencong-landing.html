@@ -338,7 +338,7 @@ footer p { font-size: 12px; color: #445566; }
       <span class="gold">西本聪</span><br>
       <span class="blue">加密币智能播报</span><br>机器人
     </h1>
-    <p class="hero-sub">实时监控主流币种价格，穿越关口自动语音播报，Telegram 和微信同步推送。接入 Bitget、Binance、OKX、Bybit，无需安装，手机即用。</p>
+    <p class="hero-sub">实时监控主流币种价格，穿越关口自动语音播报，Telegram 同步推送。接入 Bitget、Binance、OKX、Bybit、Kraken、Coinbase，无需安装，手机即用。</p>
     <div class="badge-row">
       <span class="badge b-blue">📡 实时行情</span>
       <span class="badge b-green">🔊 中文语音</span>
@@ -439,7 +439,7 @@ footer p { font-size: 12px; color: #445566; }
   <section class="modes-section">
     <div class="section-head">
       <div class="label">播报模式</div>
-      <h2>三种模式，全场景覆盖</h2>
+      <h2>四种模式，全场景覆盖</h2>
       <p>可同时开启，互不干扰</p>
     </div>
     <div class="modes-grid">
@@ -458,6 +458,11 @@ footer p { font-size: 12px; color: #445566; }
         <div class="mode-title">定时播报</div>
         <div class="mode-desc">每隔 1 分钟 / 5 分钟 / 自定义秒数，定时播报当前价格，保持价格感知。</div>
       </div>
+      <div class="mode-card">
+        <div class="mode-icon">☁️</div>
+        <div class="mode-title">云端监控播报</div>
+        <div class="mode-desc">无需保持页面开启，云端持续监控价格，穿越关口自动推送 Telegram 通知。</div>
+      </div>
     </div>
   </section>
 
@@ -466,13 +471,15 @@ footer p { font-size: 12px; color: #445566; }
   <!-- ── Exchanges ── -->
   <section class="ex-section">
     <div class="label">数据来源</div>
-    <h2 style="font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px">四大交易所官方实时行情</h2>
+    <h2 style="font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px">主流交易所官方实时行情</h2>
     <p style="color:var(--light);font-size:14px;font-weight:300">WebSocket 直连，延迟低于 200ms，断线自动重连</p>
     <div class="ex-grid">
       <div class="ex-card"><div class="ex-dot" style="background:#f7931a"></div>Bitget</div>
       <div class="ex-card"><div class="ex-dot" style="background:#f0b90b"></div>Binance</div>
       <div class="ex-card"><div class="ex-dot" style="background:#aaa"></div>OKX</div>
       <div class="ex-card"><div class="ex-dot" style="background:#ff6b35"></div>Bybit</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#5b67f8"></div>Kraken</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#0052ff"></div>Coinbase</div>
     </div>
   </section>
 
@@ -500,12 +507,12 @@ footer p { font-size: 12px; color: #445566; }
       <div class="price-card hot">
         <div class="hot-tag">⭐ 最受欢迎</div>
         <div class="price-plan">月付</div>
-        <div class="price-amount"><sup></sup>12.88<sub>USDT/月</sub></div>
-        <div class="price-cny">约 94 元人民币</div>
+        <div class="price-amount"><sup></sup>11.88<sub>USDT/月</sub></div>
         <div class="price-list">
           <span>✓</span>无限币种监控<br>
-          <span>✓</span>全部播报模式<br>
-          <span>✓</span>专属推荐码返佣
+          <span>✓</span>全部四种播报模式<br>
+          <span>✓</span>云端监控（关屏不漏价）<br>
+          <span>✓</span>专属推荐码 · 返佣 30%
         </div>
         <button class="btn-buy" style="width:100%;margin-top:20px;padding:12px" onclick="openPayModal('monthly')">立即订阅</button>
       </div>
@@ -515,8 +522,9 @@ footer p { font-size: 12px; color: #445566; }
         <div class="price-cny">省 45%，约 4.9U/月</div>
         <div class="price-list">
           <span>✓</span>无限币种监控<br>
-          <span>✓</span>优先客服支持<br>
-          <span>✓</span>专属推荐码返佣
+          <span>✓</span>全部四种播报模式<br>
+          <span>✓</span>云端监控（关屏不漏价）<br>
+          <span>✓</span>专属推荐码 · 返佣 30%
         </div>
         <button class="btn-buy" style="width:100%;margin-top:20px;padding:12px;background:var(--navy3);border:1px solid var(--gold);color:var(--gold)" onclick="openPayModal('yearly')">选择年付</button>
       </div>
@@ -533,7 +541,7 @@ footer p { font-size: 12px; color: #445566; }
         <h3>推荐好友，永久返佣 30%</h3>
         <p>购买后自动获得专属推荐码，每带一位付费用户，永久获得其订阅金额的 30%，无上限，随时提现。</p>
         <div class="ref-amounts">
-          <div class="ref-amt"><div class="num">3.86U</div><div class="lbl">月付每人每月</div></div>
+          <div class="ref-amt"><div class="num">3.56U</div><div class="lbl">月付每人每月</div></div>
           <div class="ref-amt"><div class="num">20.66U</div><div class="lbl">年付每人</div></div>
           <div class="ref-amt"><div class="num">∞</div><div class="lbl">无上限</div></div>
         </div>
@@ -636,7 +644,7 @@ const NOWPAY_KEY = 'ZGX71FY-TQ7MJN4-GVXYB4S-RME2QBT';
 
 const PLANS = {
   trial:   { name:'7天免费试用', price:0, free:true },
-  monthly: { name:'月付套餐', price:12.88, label:'12.88 USDT / 月' },
+  monthly: { name:'月付套餐', price:11.88, label:'11.88 USDT / 月' },
   yearly:  { name:'年付套餐', price:68.88, label:'68.88 USDT / 年（省55%）' },
 };
 let curPlan = null;

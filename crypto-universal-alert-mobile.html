@@ -951,19 +951,27 @@ async function loadSettings() {
   try {
     // 先用本地缓存快速启动，没有则从 Cookie 恢复
     let raw = localStorage.getItem(STORAGE_KEY);
+    console.log('[loadSettings] localStorage raw:', raw ? 'EXISTS ('+raw.length+' chars)' : 'EMPTY');
     if (!raw) {
       const cookieSettings = getCookie('xbc_settings');
+      console.log('[loadSettings] cookie settings:', cookieSettings ? 'EXISTS' : 'EMPTY');
       if (cookieSettings) {
         raw = cookieSettings;
         localStorage.setItem(STORAGE_KEY, raw);
+        console.log('[loadSettings] restored from cookie');
       }
     }
-    if (raw) applySettings(JSON.parse(raw));
+    if (raw) {
+      console.log('[loadSettings] applying settings...');
+      applySettings(JSON.parse(raw));
+    }
 
     // 从云端拉取设置（无论本地是否有数据都执行，确保恢复最新设置）
     const cloudData = await loadSettingsFromCloud();
+    console.log('[loadSettings] cloud data:', cloudData ? 'EXISTS savedAt='+cloudData.savedAt : 'NULL');
     if (cloudData && cloudData.savedAt) {
       const localSavedAt = raw ? (JSON.parse(raw).savedAt || 0) : 0;
+      console.log('[loadSettings] cloud savedAt:', cloudData.savedAt, 'local savedAt:', localSavedAt);
       if (cloudData.savedAt >= localSavedAt) {
         // 云端数据更新或本地为空，覆盖本地
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));

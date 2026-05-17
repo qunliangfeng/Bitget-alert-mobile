@@ -3091,7 +3091,7 @@ async function doActivate() {
       showLicMsg('ok', `✅ 激活成功！有效至 ${new Date(data.expiresAt).toLocaleDateString()}`);
       setTimeout(()=>{ licenseValid=true; hideLicenseScreen(); }, 1200);
     } else {
-      const errMap = { invalid_code:'激活码无效', expired:'激活码已过期', revoked:'激活码已停用', device_mismatch:'该码已在其他设备使用' };
+      const errMap = { invalid_code:'激活码无效', expired:'激活码已过期', revoked:'激活码已停用', device_mismatch:'切换设备失败，请重试' };
       showLicMsg('err', errMap[data.error]||'激活失败：'+data.error);
     }
   } catch(e) { showLicMsg('err', '网络错误，请检查连接'); }

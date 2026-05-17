@@ -900,7 +900,11 @@ function saveSettings() {
     COINS.forEach(c => {
       data.coinStates[c.id] = { ...state[c.id] };
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const dataStr = JSON.stringify(data);
+    localStorage.setItem(STORAGE_KEY, dataStr);
+    // Cookie 备份（只存关键配置，不存行情状态，控制大小）
+    const cookieData = { cfg: data.cfg, mktType: data.mktType, exchange: data.exchange, savedAt: data.savedAt };
+    setCookie('xbc_settings', JSON.stringify(cookieData), 365);
     // 防抖：3秒后上传到云端（避免频繁请求）
     clearTimeout(cloudSaveTimer);
     cloudSaveTimer = setTimeout(() => syncSettingsToCloud(data), 3000);
@@ -938,8 +942,15 @@ async function loadSettingsFromCloud() {
 
 async function loadSettings() {
   try {
-    // 先用本地缓存快速启动
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // 先用本地缓存快速启动，没有则从 Cookie 恢复
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const cookieSettings = getCookie('xbc_settings');
+      if (cookieSettings) {
+        raw = cookieSettings;
+        localStorage.setItem(STORAGE_KEY, raw);
+      }
+    }
     if (raw) applySettings(JSON.parse(raw));
 
     // 再从云端拉取最新设置（可能比本地更新）
@@ -2943,6 +2954,19 @@ function disableVideoWakeLock() {
 const WORKER_URL = 'https://price-alert-worker.qunliang-feng.workers.dev';
 
 const LIC_KEY = 'bitget_license_v1';
+
+// ── Cookie 辅助（iOS Safari 不会清除 Cookie，比 localStorage 更持久）──
+function setCookie(name, value, days) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires};path=/;SameSite=Lax`;
+}
+function getCookie(name) {
+  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function deleteCookie(name) {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+}
 let licenseValid = false;
 
 function getDeviceId() {
@@ -3035,7 +3059,9 @@ async function doActivate() {
     const res  = await fetch(WORKER_URL+'/activate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code, deviceId:getDeviceId(), referredBy:referredBy||undefined }) });
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem(LIC_KEY, JSON.stringify({ code, plan:data.plan, expiresAt:data.expiresAt, email:data.email, refCode:data.refCode, verifiedAt:Date.now() }));
+      const licData = { code, plan:data.plan, expiresAt:data.expiresAt, email:data.email, refCode:data.refCode, verifiedAt:Date.now() };
+      localStorage.setItem(LIC_KEY, JSON.stringify(licData));
+      setCookie('xbc_lic', JSON.stringify(licData), 365); // Cookie 备份，1年有效
       showLicMsg('ok', `✅ 激活成功！有效至 ${new Date(data.expiresAt).toLocaleDateString()}`);
       setTimeout(()=>{ licenseValid=true; hideLicenseScreen(); }, 1200);
     } else {
@@ -3047,7 +3073,15 @@ async function doActivate() {
 
 async function checkLicense() {
   // 先读本地缓存
-  const cached = localStorage.getItem(LIC_KEY);
+  // 优先读 localStorage，没有则从 Cookie 恢复
+  let cached = localStorage.getItem(LIC_KEY);
+  if (!cached) {
+    const cookieLic = getCookie('xbc_lic');
+    if (cookieLic) {
+      cached = cookieLic;
+      localStorage.setItem(LIC_KEY, cookieLic); // 写回 localStorage
+    }
+  }
   if (!cached) { showLicenseScreen(); return; }
 
   const lic = JSON.parse(cached);
@@ -3078,12 +3112,15 @@ async function checkLicense() {
     const data = await res.json();
     if (data.valid) {
       lic.expiresAt = data.expiresAt;
-      localStorage.setItem(LIC_KEY, JSON.stringify({ ...lic, verifiedAt: now }));
+      const updatedLic = { ...lic, verifiedAt: now };
+      localStorage.setItem(LIC_KEY, JSON.stringify(updatedLic));
+      setCookie('xbc_lic', JSON.stringify(updatedLic), 365);
       localStorage.setItem('lic_last_check', now.toString());
       if (data.warning) showExpireWarning(data.daysLeft);
     } else if (data.reason === 'revoked' || data.reason === 'not_found') {
       // 只有明确被吊销或不存在才中断，过期继续用到本地过期时间
       localStorage.removeItem(LIC_KEY);
+      deleteCookie('xbc_lic');
       licenseValid = false;
       wsAlive = false;
       clearInterval(pingTimer);

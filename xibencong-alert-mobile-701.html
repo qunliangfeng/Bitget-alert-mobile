@@ -3084,20 +3084,31 @@ function showLicMsg(type, text) {
   el.textContent = text;
 }
 
-async function doActivate() {
+async function doActivate(force) {
   const code      = document.getElementById('licInput').value.trim();
   const referredBy= (document.getElementById('refInput')?.value||'').trim() || getRefCodeFromUrl();
   if (code.length < 19) { showLicMsg('err', '请输入完整的激活码'); return; }
   showLicMsg('ok', '验证中…');
   try {
-    const res  = await fetch(WORKER_URL+'/activate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code, deviceId:getDeviceId(), referredBy:referredBy||undefined }) });
+    const body = { code, deviceId:getDeviceId(), referredBy:referredBy||undefined };
+    if (force) body.force = true;
+    const res  = await fetch(WORKER_URL+'/activate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
     const data = await res.json();
     if (data.success) {
       const licData = { code, plan:data.plan, expiresAt:data.expiresAt, email:data.email, refCode:data.refCode, verifiedAt:Date.now() };
       localStorage.setItem(LIC_KEY, JSON.stringify(licData));
-      setCookie('xbc_lic', JSON.stringify(licData), 365); // Cookie 备份，1年有效
+      setCookie('xbc_lic', JSON.stringify(licData), 365);
       showLicMsg('ok', `✅ 激活成功！有效至 ${new Date(data.expiresAt).toLocaleDateString()}`);
       setTimeout(()=>{ licenseValid=true; hideLicenseScreen(); }, 1200);
+    } else if (data.error === 'device_switch') {
+      // 付费码已在其他设备，弹确认框
+      showLicMsg('warn', '⚠️ 此激活码已在另一台设备使用');
+      const confirmBtn = document.createElement('button');
+      confirmBtn.textContent = '确认切换（退出另一台设备）';
+      confirmBtn.style.cssText = 'width:100%;margin-top:8px;padding:10px;background:var(--amber);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer';
+      confirmBtn.onclick = () => { confirmBtn.remove(); doActivate(true); };
+      const msgEl = document.getElementById('licMsg');
+      if (msgEl) msgEl.after(confirmBtn);
     } else {
       const errMap = { invalid_code:'激活码无效', expired:'激活码已过期', revoked:'激活码已停用', device_mismatch:'切换设备失败，请重试' };
       showLicMsg('err', errMap[data.error]||'激活失败：'+data.error);

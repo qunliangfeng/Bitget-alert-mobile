@@ -3287,6 +3287,26 @@ function getRefCodeFromUrl() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────
+// 先从 localStorage 恢复 state，再 buildCards，确保卡片用正确的状态渲染
+(function preloadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    // 恢复 cfg
+    if (data.cfg) Object.assign(cfg, data.cfg);
+    // 恢复 mktType
+    if (data.mktType) mktType = data.mktType;
+    // 恢复 exchange
+    if (data.exchange) currentExchange = data.exchange;
+    // 恢复 coinStates 到 state 对象
+    if (data.coinStates) {
+      Object.keys(data.coinStates).forEach(id => {
+        if (state[id]) Object.assign(state[id], data.coinStates[id]);
+      });
+    }
+  } catch(_) {}
+})();
 buildCards();
 updateCoinCountLabel();
 // 初始化交易所按钮高亮（与 currentExchange 保持一致）

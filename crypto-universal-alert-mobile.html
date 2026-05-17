@@ -1,0 +1,3337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="西本聪播报">
+<meta name="application-name" content="西本聪播报">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png">
+<link rel="icon" href="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png">
+<title>西本聪播报机器人</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #0d0f14;
+  --bg2:   #13161d;
+  --bg3:   #1a1e28;
+  --bd:    #252a38;
+  --bd2:   #2e3445;
+  --tx:    #e8eaf0;
+  --tx2:   #8891a8;
+  --tx3:   #555e72;
+  --blue:  #3b82f6;
+  --blue-d:#1d3461;
+  --green: #22c55e;
+  --gd:    #0f2d1e;
+  --red:   #ef4444;
+  --rd:    #2d0f0f;
+  --amber: #f59e0b;
+  --ad:    #2d1f06;
+  --mono:  'JetBrains Mono', monospace;
+  --sans:  'Inter', sans-serif;
+  --nav-h: 56px;
+  --bottom-h: 64px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-size: 14px; }
+
+/* ── Top Nav ── */
+.topnav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+}
+.nav-logo { display: flex; align-items: center; gap: 8px; }
+.nav-logo-icon { width: 26px; height: 26px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.nav-title { font-size: 15px; font-weight: 600; letter-spacing: -.3px; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+
+.ws-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; font-size: 11px; border-radius: 99px;
+  font-family: var(--mono); border: 1px solid var(--bd);
+  color: var(--tx3); background: var(--bg3);
+}
+.ws-pill.connected { border-color: #166534; color: var(--green); background: var(--gd); }
+.ws-pill.connecting { border-color: #713f12; color: var(--amber); background: var(--ad); }
+.ws-pill.error { border-color: #7f1d1d; color: var(--red); background: var(--rd); }
+
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; flex-shrink: 0; }
+.dot.off { background: var(--tx3); animation: none; }
+.dot.warn { background: var(--amber); animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.nav-settings-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer;
+}
+
+/* ── Scroll area ── */
+.scroll-area {
+  position: fixed;
+  top: var(--nav-h); bottom: var(--bottom-h);
+  left: 0; right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+}
+
+/* ── Market type bar ── */
+.mkt-bar {
+  display: flex; gap: 6px; margin-bottom: 12px;
+}
+.mkt-btn {
+  flex: 1; padding: 9px 0; font-size: 13px; font-weight: 500;
+  text-align: center; border: 1px solid var(--bd); border-radius: 10px;
+  background: var(--bg2); color: var(--tx3); cursor: pointer;
+  font-family: var(--sans); transition: all .15s;
+}
+.mkt-btn.active { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+
+/* ── Cards ── */
+.cards { display: flex; flex-direction: column; gap: 10px; }
+
+.card {
+  background: var(--bg2); border: 1px solid var(--bd); border-radius: 14px;
+  overflow: hidden; transition: border-color .4s, box-shadow .4s;
+}
+.card.flash-up { border-color: var(--green); box-shadow: 0 0 0 1px #22c55e33, 0 0 16px #22c55e18; }
+.card.flash-down { border-color: var(--red); box-shadow: 0 0 0 1px #ef444433, 0 0 16px #ef444418; }
+.card.near-target { border-color: var(--amber) !important; box-shadow: 0 0 0 1px #f59e0b33, 0 0 16px #f59e0b18 !important; }
+
+/* card top row */
+.card-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 14px 0;
+}
+.coin-left { display: flex; align-items: center; gap: 10px; }
+.cicon {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; font-family: var(--mono); flex-shrink: 0;
+}
+.coin-name { font-size: 14px; font-weight: 600; color: var(--tx); }
+.coin-sub { font-size: 11px; color: var(--tx3); margin-top: 1px; }
+.card-right { display: flex; align-items: center; gap: 8px; }
+.ch-icons { display: flex; gap: 4px; }
+.chi { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: .2; transition: opacity .2s; }
+.chi.on { opacity: 1; }
+.chi.tg { background: #0d2137; }
+.chi.wx { background: #0d2116; }
+.tgl { width: 36px; height: 20px; background: var(--bd2); border-radius: 99px; position: relative; cursor: pointer; border: none; transition: background .2s; flex-shrink: 0; }
+.tgl.on { background: var(--green); }
+.tgl::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: white; top: 2px; left: 2px; transition: left .2s; }
+.tgl.on::after { left: 18px; }
+
+/* price */
+.card-price { padding: 6px 14px 10px; }
+.price-main { display: flex; align-items: baseline; gap: 10px; }
+.price-val {
+  font-size: 32px; font-weight: 600; font-family: var(--mono);
+  color: var(--tx); letter-spacing: -1px; line-height: 1;
+  transition: color .3s;
+}
+.price-val.tick-up { color: var(--green); }
+.price-val.tick-down { color: var(--red); }
+.change-tag { font-size: 13px; padding: 3px 8px; border-radius: 99px; font-family: var(--mono); white-space: nowrap; }
+.change-tag.up { background: var(--gd); color: var(--green); }
+.change-tag.down { background: var(--rd); color: var(--red); }
+.price-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.price-hl { font-size: 11px; color: var(--tx3); font-family: var(--mono); }
+.last-fire { font-size: 11px; color: var(--tx3); font-family: var(--mono); }
+
+/* range bar */
+.range-wrap { margin: 0 14px 10px; }
+.range-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--tx3); font-family: var(--mono); margin-bottom: 3px; }
+.range-bar { height: 3px; border-radius: 2px; background: var(--bd2); position: relative; }
+.range-fill { position: absolute; top: 0; height: 100%; width: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--red), var(--green)); }
+.range-cur { position: absolute; top: -3px; width: 3px; height: 9px; background: var(--tx2); border-radius: 1px; transform: translateX(-50%); transition: left .4s; }
+
+/* expand toggle */
+.card-expand-btn {
+  width: 100%; padding: 8px 14px;
+  background: none; border: none; border-top: 1px solid var(--bd);
+  color: var(--tx3); font-size: 12px; font-family: var(--sans);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: background .15s;
+}
+.card-expand-btn:active { background: var(--bg3); }
+
+/* expandable settings */
+.card-settings { display: none; border-top: 1px solid var(--bd); padding: 12px 14px; }
+.card-settings.open { display: block; }
+
+.mode-tabs { display: flex; gap: 3px; margin-bottom: 10px; background: var(--bg3); border-radius: 8px; padding: 3px; }
+.mtab { flex: 1; padding: 7px 0; font-size: 12px; font-weight: 500; text-align: center; border: none; border-radius: 6px; background: transparent; color: var(--tx3); cursor: pointer; font-family: var(--sans); transition: all .15s; }
+.mtab.active { background: var(--bg2); color: var(--tx); box-shadow: 0 1px 3px #0005; }
+.mbody { display: none; }
+.mbody.active { display: block; }
+
+.presets { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+.preset { padding: 6px 12px; font-size: 12px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 99px; background: var(--bg3); color: var(--tx3); cursor: pointer; transition: all .15s; }
+.preset.sel { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+
+.step-row { display: flex; align-items: center; gap: 8px; }
+.step-inp { flex: 1; padding: 8px 10px; font-size: 14px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 8px; background: var(--bg3); color: var(--tx); outline: none; }
+.step-inp:focus { border-color: var(--blue); }
+.step-unit { font-size: 12px; color: var(--tx3); white-space: nowrap; }
+
+.next-lvls { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.lvlp { font-size: 11px; padding: 3px 8px; border-radius: 99px; font-family: var(--mono); border: 1px solid var(--bd); color: var(--tx3); background: var(--bg3); }
+.lvlp.above { border-color: #166534; color: var(--green); }
+.lvlp.below { border-color: #7f1d1d; color: var(--red); }
+
+.tgt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.tgt-field label { display: block; font-size: 10px; color: var(--tx3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em; }
+.tgt-field input { width: 100%; padding: 8px 9px; font-size: 13px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 8px; background: var(--bg3); color: var(--tx); outline: none; }
+.tgt-field input:focus { border-color: var(--amber); }
+
+.zone-info { padding: 9px 11px; background: var(--bg3); border-radius: 8px; font-size: 12px; color: var(--tx3); line-height: 1.8; border: 1px solid var(--bd); }
+.zone-info b { color: var(--tx2); }
+.zone-info .amb { color: var(--amber); font-weight: 600; }
+.zone-bar { height: 4px; border-radius: 2px; background: var(--bd); position: relative; overflow: hidden; margin-top: 8px; }
+.zone-near-bg { position: absolute; top: 0; height: 100%; background: #2d1f0680; }
+.zone-cur-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px; transition: width .4s; }
+.zone-tgt-mark { position: absolute; top: -2px; width: 2px; height: 8px; background: var(--amber); border-radius: 1px; }
+
+/* log panel */
+.log-panel { background: var(--bg2); border: 1px solid var(--bd); border-radius: 14px; overflow: hidden; margin-bottom: 4px; }
+.log-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--bd); }
+.log-title { font-size: 13px; font-weight: 500; color: var(--tx2); }
+.log-clr { font-size: 12px; color: var(--tx3); background: none; border: none; cursor: pointer; font-family: var(--sans); padding: 4px 8px; }
+.log-list { max-height: calc(100vh - 200px); overflow-y: auto; }
+.log-row { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-bottom: 1px solid var(--bd); font-size: 12px; }
+.log-row:last-child { border-bottom: none; }
+.lt { color: var(--tx3); font-family: var(--mono); min-width: 54px; font-size: 11px; }
+.lc { font-weight: 600; min-width: 32px; font-family: var(--mono); color: var(--tx); }
+.ld { min-width: 12px; text-align: center; }
+.lp { font-family: var(--mono); flex: 1; color: var(--tx2); font-size: 11px; }
+.lm { font-size: 10px; padding: 1px 6px; border-radius: 99px; white-space: nowrap; }
+.lm.target { background: var(--ad); color: var(--amber); }
+.lm.fixed  { background: var(--bg3); color: var(--tx3); }
+.lm.timer  { background: #0e1a2d; color: #60a5fa; }
+.lm.point  { background: #2d1a2d; color: #c084fc; }
+.lchs { display: flex; gap: 3px; }
+.lch { font-size: 10px; padding: 1px 6px; border-radius: 99px; font-family: var(--mono); }
+.lch.tg { background: #0d2137; color: #60a5fa; }
+.lch.wx { background: #0d2116; color: var(--green); }
+.lch.snd { background: var(--bg3); color: var(--tx3); }
+.lch.err { background: var(--rd); color: var(--red); }
+.log-empty { text-align: center; padding: 1.5rem; color: var(--tx3); font-size: 12px; }
+
+/* ── Bottom Nav ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+  height: var(--bottom-h);
+  background: var(--bg2); border-top: 1px solid var(--bd);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0 8px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px; cursor: pointer; background: none; border: none;
+  color: var(--tx3); font-family: var(--sans); font-size: 10px; font-weight: 500;
+  border-radius: 10px; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative; z-index: 151;
+  min-height: 48px; min-width: 48px;
+}
+.nav-tab:active { background: var(--bg3); }
+.nav-tab.active { color: var(--blue); }
+.nav-tab svg { width: 22px; height: 22px; }
+
+/* ── Settings drawer ── */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: #000a; backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+.drawer {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 201;
+  background: var(--bg2); border-top: 1px solid var(--bd);
+  border-radius: 20px 20px 0 0;
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .3s cubic-bezier(.32,0,.67,0);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.drawer.open { transform: translateY(0); }
+.drawer-header {
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-radius: 20px 20px 0 0;
+  border-bottom: 1px solid var(--bd);
+  padding-bottom: 14px;
+}
+.drawer-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.drawer-handle { width: 36px; height: 4px; background: var(--bd2); border-radius: 2px; margin: 12px auto 10px; }
+.drawer-title {
+  font-size: 15px; font-weight: 600;
+  padding: 0 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.drawer-close-btn {
+  background: var(--bg3); border: 1px solid var(--bd); color: var(--tx2);
+  border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.drawer-close-btn:active { opacity: 0.7; }
+
+.dsec { padding: 14px 18px; border-bottom: 1px solid var(--bd); }
+.dsec-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--tx3); margin-bottom: 12px; }
+.drow { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+.drow-name { font-size: 14px; color: var(--tx2); display: flex; align-items: center; gap: 8px; }
+.drow-name svg { flex-shrink: 0; }
+
+.mkt-seg { display: flex; gap: 4px; }
+.seg-btn { flex: 1; padding: 8px 0; font-size: 13px; font-weight: 500; text-align: center; border: 1px solid var(--bd); border-radius: 8px; background: var(--bg3); color: var(--tx3); cursor: pointer; font-family: var(--sans); transition: all .15s; }
+.seg-btn.active { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+.ex-btn { padding: 9px 0; font-size: 13px; font-weight: 500; text-align: center; border: 1px solid var(--bd); border-radius: 8px; background: var(--bg3); color: var(--tx3); cursor: pointer; font-family: var(--sans); transition: all .15s; }
+.ex-btn.active { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+
+.push-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.ptab { flex: 1; padding: 7px 0; font-size: 12px; font-weight: 500; text-align: center; border: 1px solid var(--bd); border-radius: 8px; background: transparent; color: var(--tx3); cursor: pointer; font-family: var(--sans); transition: all .15s; }
+.ptab.active { background: var(--blue-d); color: #60a5fa; border-color: #1e3a6e; }
+.pbody { display: none; }
+.pbody.active { display: block; }
+
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 11px; color: var(--tx3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+.field input { width: 100%; padding: 10px 12px; font-size: 14px; font-family: var(--mono); border: 1px solid var(--bd); border-radius: 10px; background: var(--bg3); color: var(--tx); outline: none; transition: border-color .15s; }
+.field input:focus { border-color: var(--blue); }
+
+.big-btn { width: 100%; padding: 12px; font-size: 14px; font-family: var(--sans); font-weight: 500; border: none; border-radius: 10px; background: var(--blue-d); color: #60a5fa; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: background .15s; margin-top: 4px; }
+.big-btn:active { background: #1e3a6e; }
+
+.smsg { font-size: 12px; padding: 8px 10px; border-radius: 8px; margin-top: 8px; display: none; font-family: var(--mono); }
+.smsg.ok { background: var(--gd); color: var(--green); display: block; }
+.smsg.err { background: var(--rd); color: var(--red); display: block; }
+.smsg.loading { background: var(--bg3); color: var(--tx3); display: block; }
+
+.help-text { font-size: 12px; color: var(--tx3); line-height: 1.9; }
+.help-text b { color: var(--tx2); }
+.cm { background: var(--bg3); padding: 1px 6px; border-radius: 4px; font-family: var(--mono); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ico-tg" viewBox="0 0 24 24"><path fill="#60a5fa" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.93 6.79-1.68 7.93c-.12.55-.46.68-.93.42l-2.58-1.9-1.24 1.2c-.14.14-.25.25-.5.25l.18-2.57 4.65-4.2c.2-.18-.04-.28-.32-.1L8.18 14.6l-2.52-.79c-.55-.17-.56-.55.12-.81l9.85-3.8c.46-.17.86.11.3.59z"/></symbol>
+  <symbol id="ico-wx" viewBox="0 0 24 24"><path fill="#22c55e" d="M9.5 4C5.36 4 2 6.91 2 10.5c0 2.04 1.06 3.86 2.73 5.05L4 18l2.5-1.25C7.25 17 8.35 17.25 9.5 17.25c.34 0 .68-.02 1.01-.06A5.98 5.98 0 0 1 10 15c0-3.31 3.13-6 7-6 .35 0 .69.02 1.03.06C17.4 6.6 13.78 4 9.5 4zm-2 4.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM17 11c-2.76 0-5 1.79-5 4s2.24 4 5 4c.62 0 1.22-.1 1.76-.28L21 20l-.6-2.1A3.87 3.87 0 0 0 22 15c0-2.21-2.24-4-5-4zm-1.5 2.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm3 0a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5z"/></symbol>
+  <symbol id="ico-chart" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3v18h18v-2H5V3H3zm4 11 3-3.5 2.5 2 3.5-4.5 2 2.5V17H7v-3z"/></symbol>
+  <symbol id="ico-log" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></symbol>
+  <symbol id="ico-settings" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+</svg>
+
+<div id="appWrap">
+<!-- Top Nav -->
+<nav class="topnav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon" style="background:none;padding:0;overflow:hidden">
+      <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" style="width:100%;height:100%;object-fit:cover;border-radius:6px">
+    </div>
+    <span class="nav-title">西本聪数字资产播报机器人</span>
+  </div>
+  <div class="nav-right">
+    <div class="ws-pill connecting" id="wsPill">
+      <div class="dot warn" id="wsDot"></div>
+      <span id="wsText">连接中</span>
+    </div>
+    <button class="nav-settings-btn" onclick="openDrawer()" aria-label="设置">⚙️</button>
+  </div>
+</nav>
+
+<!-- Scroll area -->
+<div class="scroll-area" id="scrollArea">
+  <!-- Market type bar -->
+  <div class="mkt-bar">
+    <button class="mkt-btn" id="mktSpot" onclick="switchMkt('SPOT')">📈 现货</button>
+    <button class="mkt-btn active" id="mktFutures" onclick="switchMkt('USDT-FUTURES')">📊 永续合约</button>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards" id="cardsWrap"></div>
+
+  <!-- Log -->
+  <div class="log-panel" id="logPanel" style="display:none">
+    <div class="log-head">
+      <span class="log-title">播报记录</span>
+      <button class="log-clr" onclick="logs.length=0;renderLog()">清空</button>
+    </div>
+    <div class="log-list" id="logList"><div class="log-empty">等待价格触发…</div></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="tab-market" onclick="switchTab('market')">
+    <svg viewBox="0 0 24 24"><use href="#ico-chart"/></svg>
+    行情
+  </button>
+  <button class="nav-tab" id="tab-log" onclick="switchTab('log')">
+    <svg viewBox="0 0 24 24"><use href="#ico-log"/></svg>
+    播报记录
+  </button>
+  <button class="nav-tab" id="tab-ref" onclick="showReferralPanel()">
+    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    推荐赚钱
+  </button>
+  <button class="nav-tab" id="tab-settings" onclick="openDrawer()">
+    <svg viewBox="0 0 24 24"><use href="#ico-settings"/></svg>
+    设置
+  </button>
+</nav>
+
+<!-- Settings Drawer -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header" id="drawerHeader">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">
+      <span>系统设置</span>
+      <button class="drawer-close-btn" onclick="closeDrawer()">✕ 关闭</button>
+    </div>
+  </div>
+  <div class="drawer-body">
+
+  <!-- Exchange + Market type -->
+  <div class="dsec">
+    <div class="dsec-lbl">交易所</div>
+    <!-- 4个常用快捷按钮 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px" id="exBtnWrap">
+      <button class="ex-btn active" data-ex="bitget"  onclick="switchExchange('bitget')">🟡 Bitget</button>
+      <button class="ex-btn"        data-ex="binance" onclick="switchExchange('binance')">🟡 Binance</button>
+      <button class="ex-btn"        data-ex="okx"     onclick="switchExchange('okx')">⚫ OKX</button>
+      <button class="ex-btn"        data-ex="bybit"   onclick="switchExchange('bybit')">🟠 Bybit</button>
+    </div>
+    <!-- 更多交易所下拉 -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--tx3);flex-shrink:0">更多：</span>
+      <select id="exMoreSelect" onchange="onMoreExSelect(this.value)"
+        style="flex:1;padding:8px 10px;font-size:13px;border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none">
+        <option value="">— 选择其他交易所 —</option>
+        <optgroup label="🌏 亚洲（已接入实时）">
+          <option value="gate">Gate.io（芝麻开门）</option>
+          <option value="mexc">MEXC（抹茶）</option>
+          <option value="kucoin">KuCoin（库币）</option>
+          <option value="htx">HTX（原火币）</option>
+          <option value="bingx">BingX</option>
+          <option value="bitmart">BitMart</option>
+          <option value="xt">XT.com</option>
+          <option value="coinex">CoinEx</option>
+          <option value="lbank">LBank</option>
+          <option value="phemex">Phemex</option>
+          <option value="upbit">Upbit（韩国）</option>
+          <option value="bithumb">Bithumb（韩国）</option>
+        </optgroup>
+        <optgroup label="🌎 欧美（已接入实时）">
+          <option value="kraken">Kraken</option>
+          <option value="coinbase">Coinbase Advanced</option>
+          <option value="bitstamp">Bitstamp</option>
+          <option value="bitfinex">Bitfinex</option>
+          <option value="gemini">Gemini</option>
+        </optgroup>
+        <optgroup label="🌍 其他（已接入实时）">
+          <option value="crypto_com">Crypto.com</option>
+          <option value="poloniex">Poloniex</option>
+          <option value="deribit">Deribit（期权）</option>
+          <option value="whitebit">WhiteBIT</option>
+          <option value="hashkey">HashKey</option>
+          <option value="backpack">Backpack</option>
+        </optgroup>
+      </select>
+    </div>
+  </div>
+
+  <!-- Coin management -->
+  <div class="dsec">
+    <div class="dsec-lbl">监控币种</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:13px;color:var(--tx2)" id="coinCountLabel">当前监控 4 个币种</span>
+      <button class="big-btn" style="width:auto;padding:8px 16px;font-size:13px" onclick="closeDrawer();openCoinManager()">⚙️ 管理币种</button>
+    </div>
+    <div id="activeCoinChips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="dsec">
+    <div class="dsec-lbl">播报控制</div>
+    <div class="drow"><span class="drow-name">🔊 声音提示</span><button class="tgl on" id="togSound" onclick="togCtrl('sound')"></button></div>
+    <div class="drow" style="flex-direction:column;align-items:flex-start;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+        <span class="drow-name">🔈 播报音量</span>
+        <span id="volumeVal" style="font-size:12px;color:var(--tx2);font-family:var(--mono)">80%</span>
+      </div>
+      <input type="range" id="volumeSlider" min="0" max="100" value="80"
+        style="width:100%;accent-color:var(--blue);height:4px;cursor:pointer"
+        oninput="setVolume(this.value)">
+    </div>
+    <div class="drow"><span class="drow-name">🎙 中文语音播报</span><button class="tgl" id="togVoice" onclick="togCtrl('voice')"></button></div>
+    <div class="drow" id="voiceGenderRow" style="padding-left:4px">
+      <span class="drow-name" style="font-size:12px;color:var(--tx3)">语音音色</span>
+      <div style="display:flex;gap:6px">
+        <button id="voiceGenderF" class="seg-btn active" style="padding:5px 12px;font-size:12px" onclick="setVoiceGender('female')">👩 女声</button>
+        <button id="voiceGenderM" class="seg-btn" style="padding:5px 12px;font-size:12px" onclick="setVoiceGender('male')">👨 男声</button>
+      </div>
+    </div>
+    <div class="drow" style="flex-direction:column;align-items:stretch;gap:6px">
+      <div style="display:flex;gap:6px">
+        <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testSound()">🔊 测试声音</button>
+        <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testVoice()">🎙 测试语音</button>
+      </div>
+      <div id="audioTestMsg" style="font-size:11px;color:var(--tx3);text-align:center;display:none"></div>
+    </div>
+    <div class="drow">
+      <div>
+        <div class="drow-name">☀️ 屏幕常亮</div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:2px">防止锁屏，保持声音播报</div>
+      </div>
+      <button class="tgl" id="togWakeLock" onclick="togCtrl('wakeLock')"></button>
+    </div>
+    <div class="drow">
+      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>Telegram 推送</span>
+      <button class="tgl on" id="togTg" onclick="togCtrl('tg')"></button>
+    </div>
+    <div class="drow">
+      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>微信推送</span>
+      <button class="tgl on" id="togWx" onclick="togCtrl('wx')"></button>
+    </div>
+    <div class="drow"><span class="drow-name">⏸ 暂停监控</span><button class="tgl" id="togPause" onclick="togPause()"></button></div>
+  </div>
+
+  <!-- Push config -->
+  <div class="dsec">
+    <div class="dsec-lbl">推送渠道配置</div>
+    <div class="push-tabs">
+      <button class="ptab active" onclick="pushTab(this,'tg')">Telegram</button>
+      <button class="ptab" onclick="pushTab(this,'wx')">微信</button>
+    </div>
+    <div class="pbody active" id="pb-tg">
+      <div class="field"><label>Bot Token</label><input type="password" id="tgToken" placeholder="123456:ABCdef..." oninput="cfg.tgToken=this.value;saveSettings()" autocomplete="off"></div>
+      <div class="field"><label>Chat ID</label><input type="text" id="tgChatId" placeholder="123456789" oninput="cfg.tgChatId=this.value;saveSettings()" inputmode="numeric"></div>
+      <button class="big-btn" onclick="testTg()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>发送测试消息</button>
+      <div id="tgMsg" class="smsg"></div>
+    </div>
+    <div class="pbody" id="pb-wx">
+      <div class="field"><label>企业微信机器人 Webhook</label><input type="text" id="wxToken" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." oninput="cfg.wxToken=this.value;saveSettings()" autocomplete="off"></div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.6">
+        企业微信群 → 添加机器人 → 复制 Webhook 地址粘贴到上方
+      </div>
+      <button class="big-btn" onclick="testWx()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>发送测试消息</button>
+      <div id="wxMsg" class="smsg"></div>
+    </div>
+  </div>
+
+  <!-- Help -->
+  <div class="dsec">
+    <div class="dsec-lbl">配置说明</div>
+    <div class="help-text">
+      <b>Telegram Bot</b><br>
+      1. 搜索 <span class="cm">@BotFather</span> → 发送 <span class="cm">/newbot</span><br>
+      2. 搜索 <span class="cm">@userinfobot</span> 获取 Chat ID<br>
+      3. 先给 bot 发 <span class="cm">/start</span><br><br>
+      <b>企业微信机器人</b><br>
+      1. 下载企业微信，注册企业（免费）<br>
+      2. 建群 → 添加机器人 → 新建机器人<br>
+      3. 复制 Webhook 地址填入上方<br>
+      4. 消息发到企业微信群，免费无限制
+    </div>
+  </div>
+  <!-- 关于 & 版权 -->
+  <div class="dsec" style="margin-top:8px">
+    <div class="dsec-lbl">关于</div>
+    <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:16px 18px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0">
+          <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--tx)">西本聪数字资产播报机器人</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:2px">Version 6.11 · © 2026 西本聪</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        <a href="https://t.me/xibencong" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
+          <span style="font-size:18px">✈️</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">Telegram 频道 / 群</div>
+            <div style="font-size:11px;color:var(--tx3)">@xibencong</div>
+          </div>
+        </a>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px">
+          <span style="font-size:18px">💬</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">微信群</div>
+            <div style="font-size:11px;color:var(--tx3)">扫码加入 · 搜索「西本聪」</div>
+          </div>
+        </div>
+        <a href="https://xibencong.com" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
+          <span style="font-size:18px">🌐</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">官网</div>
+            <div style="font-size:11px;color:var(--tx3)">xibencong.com</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- 免责声明 -->
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px 14px">
+        <div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px">⚠️ 免责声明</div>
+        <div style="font-size:10px;color:var(--tx3);line-height:1.7">
+          本工具仅提供加密资产及相关品种的实时价格播报服务，所有播报内容均来源于第三方交易所公开数据，<b style="color:var(--tx2)">不构成任何投资建议或交易指引</b>。数字资产市场波动剧烈，投资存在重大风险，请用户根据自身风险承受能力独立判断。因使用本工具产生的任何直接或间接损失，作者不承担任何责任。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /drawer-body -->
+</div><!-- /drawer -->
+
+<!-- 币种管理抽屉 -->
+<div class="drawer-overlay" id="coinOverlay" onclick="closeCoinManager()"></div>
+<div class="drawer" id="coinDrawer">
+  <div class="drawer-header">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">
+      <span>⚙️ 管理监控币种</span>
+      <button class="drawer-close-btn" onclick="closeCoinManager()">✕ 关闭</button>
+    </div>
+  </div>
+  <div class="drawer-body">
+
+  <!-- 当前监控 -->
+  <div class="dsec">
+    <div class="dsec-lbl">当前监控（长按拖动排序，点 × 移除）</div>
+    <div id="activeCoinList" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+
+  <!-- 从预设添加 -->
+  <div class="dsec">
+    <div class="dsec-lbl">从预设列表添加</div>
+    <div id="presetCoinGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"></div>
+  </div>
+
+  <!-- 配对添加 -->
+  <div class="dsec">
+    <div class="dsec-lbl">自由配对添加</div>
+    <div style="font-size:11px;color:var(--tx3);margin-bottom:12px">选择基础币和计价货币，自动组成交易对</div>
+
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px">
+      <!-- 基础币 -->
+      <div>
+        <div style="font-size:10px;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">基础币</div>
+        <select id="pairBase" style="width:100%;padding:9px 8px;font-size:13px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none">
+          <optgroup label="── 顶级主流 ──">
+          <option value="BTC">BTC · 比特币</option>
+          <option value="ETH">ETH · 以太坊</option>
+          <option value="SOL">SOL · 索拉纳</option>
+          <option value="BNB">BNB · 币安币</option>
+          <option value="XRP">XRP · 瑞波币</option>
+          <option value="DOGE">DOGE · 狗狗币</option>
+          <option value="ADA">ADA · 艾达币</option>
+          <option value="AVAX">AVAX · 雪崩</option>
+          <option value="TRX">TRX · 波场</option>
+          <option value="TON">TON · 通</option>
+          <option value="SHIB">SHIB · 柴犬</option>
+          <option value="LINK">LINK · 链接</option>
+          <option value="DOT">DOT · 波卡</option>
+          <option value="BCH">BCH · 比特现金</option>
+          <option value="LTC">LTC · 莱特币</option>
+          <option value="UNI">UNI · 优尼</option>
+          <option value="NEAR">NEAR · 尼尔</option>
+          <option value="ATOM">ATOM · 科斯莫斯</option>
+          <option value="XLM">XLM · 恒星币</option>
+          <option value="MATIC">MATIC · 马蹄</option>
+          </optgroup>
+          <optgroup label="── Layer2 / DeFi ──">
+          <option value="ARB">ARB · 阿比</option>
+          <option value="OP">OP · 乐观</option>
+          <option value="SUI">SUI · 穗</option>
+          <option value="APT">APT · 阿普托斯</option>
+          <option value="INJ">INJ · 注入</option>
+          <option value="SEI">SEI</option>
+          <option value="JUP">JUP · 木星</option>
+          <option value="AAVE">AAVE · 阿维</option>
+          <option value="MKR">MKR · 制造者</option>
+          <option value="CRV">CRV · 曲线</option>
+          <option value="LDO">LDO · 利多</option>
+          <option value="RUNE">RUNE · 符文</option>
+          <option value="SNX">SNX · 合成</option>
+          <option value="COMP">COMP · 复合</option>
+          <option value="1INCH">1INCH</option>
+          <option value="BAL">BAL · 均衡</option>
+          <option value="ZRX">ZRX</option>
+          </optgroup>
+          <optgroup label="── AI / 新叙事 ──">
+          <option value="TAO">TAO · 比特张量</option>
+          <option value="FET">FET · 飞特</option>
+          <option value="RENDER">RENDER · 渲染</option>
+          <option value="WLD">WLD · 世界币</option>
+          <option value="AGIX">AGIX · 奇点</option>
+          <option value="OCEAN">OCEAN · 海洋</option>
+          <option value="ALT">ALT</option>
+          <option value="IO">IO</option>
+          <option value="ATH">ATH</option>
+          </optgroup>
+          <optgroup label="── Meme ──">
+          <option value="PEPE">PEPE · 佩佩</option>
+          <option value="FLOKI">FLOKI · 弗洛基</option>
+          <option value="BONK">BONK</option>
+          <option value="WIF">WIF</option>
+          <option value="MEME">MEME</option>
+          <option value="TURBO">TURBO</option>
+          <option value="BRETT">BRETT</option>
+          <option value="NEIRO">NEIRO</option>
+          <option value="MOG">MOG</option>
+          </optgroup>
+          <optgroup label="── BTC 生态 ──">
+          <option value="ORDI">ORDI</option>
+          <option value="SATS">SATS</option>
+          <option value="RATS">RATS</option>
+          <option value="BTCS">BTCS</option>
+          </optgroup>
+          <optgroup label="── 公链 ──">
+          <option value="TIA">TIA · 天体</option>
+          <option value="FTM">FTM · 幻影</option>
+          <option value="ALGO">ALGO · 阿尔格</option>
+          <option value="ICP">ICP · 互联网计算机</option>
+          <option value="FIL">FIL · 文件币</option>
+          <option value="ETC">ETC · 以太经典</option>
+          <option value="EOS">EOS</option>
+          <option value="XTZ">XTZ · 太泽</option>
+          <option value="HBAR">HBAR · 哈希图</option>
+          <option value="VET">VET · 唯链</option>
+          <option value="EGLD">EGLD · 多元宇宙</option>
+          <option value="FLOW">FLOW</option>
+          <option value="MINA">MINA · 米娜</option>
+          <option value="CFX">CFX · 冲突</option>
+          <option value="KAVA">KAVA</option>
+          <option value="ONE">ONE · 和谐</option>
+          <option value="ZIL">ZIL · 齐林卡</option>
+          <option value="CELO">CELO</option>
+          <option value="ROSE">ROSE · 玫瑰</option>
+          <option value="KSM">KSM · 草间弥生</option>
+          </optgroup>
+          <optgroup label="── 游戏 / NFT / 元宇宙 ──">
+          <option value="AXS">AXS · 轴无穷</option>
+          <option value="SAND">SAND · 沙盒</option>
+          <option value="MANA">MANA · 曼纳</option>
+          <option value="ENJ">ENJ · 恩金</option>
+          <option value="GALA">GALA</option>
+          <option value="IMX">IMX · 不可变X</option>
+          <option value="GMT">GMT · 步行</option>
+          <option value="APE">APE · 猿猴币</option>
+          <option value="MAGIC">MAGIC</option>
+          <option value="BEAM">BEAM</option>
+          <option value="PIXEL">PIXEL</option>
+          <option value="RONIN">RONIN</option>
+          <option value="YGG">YGG</option>
+          </optgroup>
+          <optgroup label="── 美股代币 ──">
+          <option value="NVDA">NVDA · 英伟达</option>
+          <option value="TSLA">TSLA · 特斯拉</option>
+          <option value="AAPL">AAPL · 苹果</option>
+          <option value="COIN">COIN · Coinbase</option>
+          <option value="MSFT">MSFT · 微软</option>
+          <option value="AMZN">AMZN · 亚马逊</option>
+          <option value="GOOGL">GOOGL · 谷歌</option>
+          <option value="META">META · Meta</option>
+          <option value="MSTR">MSTR · 微策略</option>
+          </optgroup>
+          <option value="CUSTOM">✏️ 自定义…</option>
+        </select>
+        <input id="pairBaseCustom" type="text" placeholder="输入币种" style="display:none;width:100%;margin-top:6px;padding:9px 8px;font-size:13px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      </div>
+
+      <!-- 分隔符 -->
+      <div style="font-size:18px;color:var(--tx3);text-align:center;padding-top:20px">/</div>
+
+      <!-- 计价货币 -->
+      <div>
+        <div style="font-size:10px;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">计价货币</div>
+        <select id="pairQuote" style="width:100%;padding:9px 8px;font-size:13px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none">
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+          <option value="USD">USD</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="BNB">BNB</option>
+          <option value="BGB">BGB</option>
+          <option value="OKB">OKB</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+          <option value="TRY">TRY</option>
+          <option value="BRL">BRL</option>
+          <option value="RUB">RUB</option>
+          <option value="JPY">JPY</option>
+          <option value="KRW">KRW</option>
+          <option value="CUSTOM">自定义…</option>
+        </select>
+        <input id="pairQuoteCustom" type="text" placeholder="输入货币" style="display:none;width:100%;margin-top:6px;padding:9px 8px;font-size:13px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      </div>
+    </div>
+
+    <!-- 预览 -->
+    <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:12px;color:var(--tx3)">交易对预览</span>
+      <span id="pairPreview" style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--tx)">BTC/USDT</span>
+    </div>
+
+    <button class="big-btn" onclick="addPairCoin()" style="width:100%">➕ 添加此交易对</button>
+    <div style="font-size:11px;color:var(--tx3);margin-top:8px;text-align:center">添加后在主页卡片展开设置步进和目标价</div>
+    <div id="pairMsg" style="font-size:12px;margin-top:8px;display:none"></div>
+  </div>
+
+  </div><!-- /drawer-body -->
+</div><!-- /coinDrawer -->
+
+</div><!-- /appWrap -->
+
+<script>
+// ── 预设币种库（客户可从这里选，也可自定义添加）────────────────
+const COIN_PRESETS = [
+  { id:'BTC',    name:'Bitcoin',    sym:'BTCUSDT', quote:'USDT',    color:'#f7931a', bg:'#1a1208', presets:[100,200,500,1000], defStep:500,  defTarget:105000, defFarStep:500,  defNearStep:100,  defNearDist:1000 },
+  { id:'ETH',    name:'Ethereum',   sym:'ETHUSDT', quote:'USDT',    color:'#627eea', bg:'#0e1020', presets:[5,10,20,50],       defStep:20,   defTarget:2600,   defFarStep:20,   defNearStep:5,    defNearDist:50   },
+  { id:'SOL',    name:'Solana',     sym:'SOLUSDT', quote:'USDT',    color:'#9945ff', bg:'#130d1a', presets:[0.5,1,2,5],        defStep:1,    defTarget:175,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'BNB',    name:'BNB',        sym:'BNBUSDT', quote:'USDT',    color:'#f3ba2f', bg:'#1a1608', presets:[1,2,5,10],         defStep:2,    defTarget:650,    defFarStep:2,    defNearStep:0.5,  defNearDist:20   },
+  { id:'XRP',    name:'Ripple',     sym:'XRPUSDT', quote:'USDT',    color:'#00aae4', bg:'#061420', presets:[0.05,0.1,0.2,0.5], defStep:0.1,  defTarget:3,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'DOGE',   name:'Dogecoin',   sym:'DOGEUSDT', quote:'USDT',   color:'#c2a633', bg:'#1a1608', presets:[0.005,0.01,0.02,0.05], defStep:0.01, defTarget:0.5, defFarStep:0.01, defNearStep:0.002,defNearDist:0.05 },
+  { id:'ADA',    name:'Cardano',    sym:'ADAUSDT', quote:'USDT',    color:'#0033ad', bg:'#060a1a', presets:[0.01,0.02,0.05,0.1],   defStep:0.02, defTarget:1.5,  defFarStep:0.02, defNearStep:0.005,defNearDist:0.1  },
+  { id:'AVAX',   name:'Avalanche',  sym:'AVAXUSDT', quote:'USDT',   color:'#e84142', bg:'#1a0808', presets:[0.5,1,2,5],         defStep:1,    defTarget:50,     defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'DOT',    name:'Polkadot',   sym:'DOTUSDT', quote:'USDT',    color:'#e6007a', bg:'#1a0612', presets:[0.1,0.2,0.5,1],     defStep:0.2,  defTarget:12,     defFarStep:0.2,  defNearStep:0.05, defNearDist:1    },
+  { id:'MATIC',  name:'Polygon',    sym:'MATICUSDT', quote:'USDT',  color:'#8247e5', bg:'#0e0820', presets:[0.01,0.02,0.05,0.1],defStep:0.02, defTarget:1.5,   defFarStep:0.02, defNearStep:0.005,defNearDist:0.1  },
+  { id:'SUI',    name:'Sui',        sym:'SUIUSDT', quote:'USDT',    color:'#4da2ff', bg:'#061420', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:5,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'TIA',    name:'Celestia',   sym:'TIAUSDT', quote:'USDT',    color:'#7b2bf9', bg:'#0e0820', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:10,     defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'WLD',    name:'Worldcoin',  sym:'WLDUSDT', quote:'USDT',    color:'#19a9e5', bg:'#061420', presets:[0.05,0.1,0.2,0.5],  defStep:0.1,  defTarget:5,      defFarStep:0.1,  defNearStep:0.02, defNearDist:0.5  },
+  { id:'FET',    name:'Fetch.ai',   sym:'FETUSDT', quote:'USDT',    color:'#1ec5c1', bg:'#061a18', presets:[0.02,0.05,0.1,0.2], defStep:0.05, defTarget:2,      defFarStep:0.05, defNearStep:0.01, defNearDist:0.2  },
+  { id:'TAO',    name:'Bittensor',  sym:'TAOUSDT', quote:'USDT',    color:'#3ec9a7', bg:'#061a12', presets:[5,10,20,50],        defStep:10,   defTarget:500,    defFarStep:10,   defNearStep:2,    defNearDist:50   },
+  { id:'RENDER', name:'Render',     sym:'RENDERUSDT', quote:'USDT', color:'#ff4d00', bg:'#1a0800', presets:[0.1,0.2,0.5,1],     defStep:0.2,  defTarget:10,     defFarStep:0.2,  defNearStep:0.05, defNearDist:1    },
+  { id:'NVDA',   name:'NVDA',       sym:'NVDAUSDT', quote:'USDT',   color:'#76b900', bg:'#0e1408', presets:[0.25,0.5,1,2],      defStep:0.5,  defTarget:138,    defFarStep:0.5,  defNearStep:0.1,  defNearDist:2    },
+  { id:'TSLA',   name:'Tesla',      sym:'TSLAUSDT', quote:'USDT',   color:'#cc0000', bg:'#1a0606', presets:[1,2,5,10],          defStep:2,    defTarget:250,    defFarStep:2,    defNearStep:0.5,  defNearDist:10   },
+  { id:'AAPL',   name:'Apple',      sym:'AAPLUSDT', quote:'USDT',   color:'#555555', bg:'#111111', presets:[0.5,1,2,5],         defStep:1,    defTarget:200,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+  { id:'COIN',   name:'Coinbase',   sym:'COINUSDT', quote:'USDT',   color:'#1652f0', bg:'#060e1a', presets:[0.5,1,2,5],         defStep:1,    defTarget:250,    defFarStep:1,    defNearStep:0.25, defNearDist:5    },
+];
+
+// 活跃币种列表（运行时动态，从 localStorage 读取或使用默认4个）
+let COINS = [];
+
+function initCoins() {
+  const saved = localStorage.getItem('active_coins');
+  if (saved) {
+    try {
+      const ids = JSON.parse(saved);
+      COINS = ids.map(id => {
+        // 先找预设
+        const preset = COIN_PRESETS.find(c => c.id === id.id);
+        if (preset) return preset;
+        // 自定义币种
+        return id;
+      }).filter(Boolean);
+    } catch(e) {}
+  }
+  if (!COINS.length) {
+    // 默认启用 BTC ETH SOL NVDA
+    COINS = ['BTC','ETH','SOL','NVDA'].map(id => COIN_PRESETS.find(c => c.id === id));
+  }
+}
+
+function saveActiveCoins() {
+  localStorage.setItem('active_coins', JSON.stringify(COINS.map(c => ({
+    id: c.id, name: c.name, sym: c.sym, quote: c.quote||'', color: c.color, bg: c.bg,
+    presets: c.presets, defStep: c.defStep, defTarget: c.defTarget,
+    defFarStep: c.defFarStep, defNearStep: c.defNearStep, defNearDist: c.defNearDist
+  }))));
+}
+
+function initCoinState(c) {
+  if (!mkt[c.id]) mkt[c.id] = { price:0, prevPrice:0, change24h:0, high24h:0, low24h:0, open24h:0, loaded:false };
+  if (!state[c.id]) state[c.id] = {
+    enabled:true, fixedOn:true, targetOn:true, timerOn:false, timerMin:5, pointOn:false,
+    points: [{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3}],
+    fixedStep: c.defStep, lastFixedLevel:0,
+    target: c.defTarget, farStep: c.defFarStep,
+    nearStep: c.defNearStep, nearDist: c.defNearDist
+  };
+}
+
+const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:false, wakeLock:false, voiceGender:'female', volume:0.8 };
+const mkt = {};
+const state = {};
+let paused = false;
+let mktType = 'USDT-FUTURES';
+const logs = [];
+const lastFired = {};
+let ws = null, wsAlive = false, pingTimer = null, reconnTimer = null;
+
+// 初始化币种（必须在其他逻辑之前）
+initCoins();
+COINS.forEach(initCoinState);
+
+// ── 本地存储：保存 / 读取设置 ────────────────────────────────────
+const STORAGE_KEY = 'bitget_alert_settings_v1';
+let cloudSaveTimer = null;
+
+function saveSettings() {
+  try {
+    const data = {
+      cfg: { ...cfg },
+      mktType,
+      exchange: currentExchange,
+      paused,
+      savedAt: Date.now(),
+      coinStates: {}
+    };
+    COINS.forEach(c => {
+      data.coinStates[c.id] = { ...state[c.id] };
+    });
+    const dataStr = JSON.stringify(data);
+    localStorage.setItem(STORAGE_KEY, dataStr);
+    // Cookie 备份（只存关键配置，不存行情状态，控制大小）
+    const cookieData = { cfg: data.cfg, mktType: data.mktType, exchange: data.exchange, savedAt: data.savedAt };
+    setCookie('xbc_settings', JSON.stringify(cookieData), 365);
+    // 防抖：3秒后上传到云端（避免频繁请求）
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(() => syncSettingsToCloud(data), 3000);
+  } catch(_) {}
+}
+
+// 上传设置到 Worker KV
+async function syncSettingsToCloud(data) {
+  try {
+    const licRaw = localStorage.getItem(LIC_KEY) || getCookie('xbc_lic');
+    if (!licRaw) return;
+    const licObj = JSON.parse(licRaw);
+    const licenseCode = licObj.code;
+    if (!licenseCode) return;
+    await fetch(`${WORKER_URL}/settings/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ licenseCode, settings: data }),
+    });
+  } catch(_) {}
+}
+
+// 从云端拉取设置
+async function loadSettingsFromCloud() {
+  try {
+    // 从正确的 key 读取激活码
+    const licRaw = localStorage.getItem(LIC_KEY) || getCookie('xbc_lic');
+    if (!licRaw) return null;
+    const licObj = JSON.parse(licRaw);
+    const licenseCode = licObj.code;
+    if (!licenseCode) return null;
+    const res = await fetch(`${WORKER_URL}/settings/load`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ licenseCode }),
+    });
+    const data = await res.json();
+    if (data.success && data.settings) return data.settings;
+    return null;
+  } catch(_) { return null; }
+}
+
+async function loadSettings() {
+  try {
+    // 先用本地缓存快速启动，没有则从 Cookie 恢复
+    let raw = localStorage.getItem(STORAGE_KEY);
+    console.log('[loadSettings] localStorage raw:', raw ? 'EXISTS ('+raw.length+' chars)' : 'EMPTY');
+    if (!raw) {
+      const cookieSettings = getCookie('xbc_settings');
+      console.log('[loadSettings] cookie settings:', cookieSettings ? 'EXISTS' : 'EMPTY');
+      if (cookieSettings) {
+        raw = cookieSettings;
+        localStorage.setItem(STORAGE_KEY, raw);
+        console.log('[loadSettings] restored from cookie');
+      }
+    }
+    if (raw) {
+      console.log('[loadSettings] applying settings...');
+      applySettings(JSON.parse(raw));
+    }
+
+    // 从云端拉取设置（无论本地是否有数据都执行，确保恢复最新设置）
+    const cloudData = await loadSettingsFromCloud();
+    console.log('[loadSettings] cloud data:', cloudData ? 'EXISTS savedAt='+cloudData.savedAt : 'NULL');
+    if (cloudData && cloudData.savedAt) {
+      const localSavedAt = raw ? (JSON.parse(raw).savedAt || 0) : 0;
+      console.log('[loadSettings] cloud savedAt:', cloudData.savedAt, 'local savedAt:', localSavedAt);
+      // 策略：本地有数据就用本地，本地为空才用云端（iOS清缓存恢复场景）
+      const localEmpty = !raw;
+      if (localEmpty) {
+        // 本地为空（iOS清了缓存），从云端完整恢复
+        console.log('[loadSettings] local empty, restoring from cloud');
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+        setCookie('xbc_settings', JSON.stringify({
+          cfg: cloudData.cfg,
+          mktType: cloudData.mktType,
+          exchange: cloudData.exchange,
+          savedAt: cloudData.savedAt
+        }), 365);
+        applySettings(cloudData);
+      }
+      // 本地有数据时不用云端覆盖，本地数据永远优先
+      // （云端只是备份，防止iOS清缓存）
+    }
+  } catch(_) {}
+}
+
+function applySettings(data) {
+  try {
+    if (data.cfg) {
+      Object.assign(cfg, data.cfg);
+      // 填入输入框
+      if (cfg.tgToken)  { const el=document.getElementById('tgToken');  if(el) el.value=cfg.tgToken; }
+      if (cfg.tgChatId) { const el=document.getElementById('tgChatId'); if(el) el.value=cfg.tgChatId; }
+      if (cfg.wxToken)  { const el=document.getElementById('wxToken');  if(el) el.value=cfg.wxToken; }
+      if (cfg.wxUid)    { const el=document.getElementById('wxUid');    if(el) el.value=cfg.wxUid; }
+      // 恢复开关状态
+      document.getElementById('togSound').className = 'tgl'+(cfg.soundOn?' on':'');
+      document.getElementById('togVoice').className = 'tgl'+(cfg.voiceOn?' on':'');
+      document.getElementById('togTg').className    = 'tgl'+(cfg.tgOn?' on':'');
+      document.getElementById('togWx').className    = 'tgl'+(cfg.wxOn?' on':'');
+      if (cfg.wakeLock) {
+        document.getElementById('togWakeLock').className = 'tgl on';
+        requestWakeLock().then(ok => { if(!ok) enableVideoWakeLock(); });
+      }
+      // 恢复男女声选择
+      if (cfg.voiceGender) {
+        document.getElementById('voiceGenderF').className = 'seg-btn'+(cfg.voiceGender==='female'?' active':'');
+        document.getElementById('voiceGenderM').className = 'seg-btn'+(cfg.voiceGender==='male'?' active':'');
+      }
+      updIcons();
+      // 恢复音量滑条
+      if (cfg.volume !== undefined) {
+        const pct = Math.round(cfg.volume * 100);
+        const sl = document.getElementById('volumeSlider');
+        const vl = document.getElementById('volumeVal');
+        if (sl) sl.value = pct;
+        if (vl) vl.textContent = pct + '%';
+      }
+    }
+
+    // 恢复交易所
+    if (data.exchange && EXCHANGES[data.exchange]) {
+      currentExchange = data.exchange;
+      document.querySelectorAll('.ex-btn').forEach(b => {
+        b.className = 'ex-btn' + (b.dataset.ex===currentExchange?' active':'');
+      });
+      // 如果是非快捷按钮的交易所，更新下拉菜单
+      syncExchangeUI(currentExchange);
+    }
+
+    // 恢复行情类型
+    if (data.mktType) {
+      mktType = data.mktType;
+      document.getElementById('mktSpot').className     = 'mkt-btn'+(mktType==='SPOT'?' active':'');
+      document.getElementById('mktFutures').className  = 'mkt-btn'+(mktType==='USDT-FUTURES'?' active':'');
+      document.getElementById('segSpot').className     = 'seg-btn'+(mktType==='SPOT'?' active':'');
+      document.getElementById('segFutures').className  = 'seg-btn'+(mktType==='USDT-FUTURES'?' active':'');
+      const label = mktType==='USDT-FUTURES' ? '永续合约' : '现货';
+      COINS.forEach(c => {
+        const el = document.getElementById('csub-'+c.id);
+        if (el) el.textContent = c.name+' · '+label;
+      });
+    }
+
+    // 恢复暂停状态
+    if (data.paused) {
+      paused = true;
+      document.getElementById('togPause').className = 'tgl on';
+    }
+
+    // 恢复每个币种设置
+    if (data.coinStates) {
+      COINS.forEach(c => {
+        const saved = data.coinStates[c.id];
+        if (!saved) return;
+        Object.assign(state[c.id], saved);
+        // 恢复定时器
+        if (state[c.id].timerOn) {
+          const togEl = document.getElementById('tog-timer-'+c.id);
+          if (togEl) togEl.className = 'tgl on';
+          const panEl = document.getElementById('mb-timer-'+c.id);
+          if (panEl) panEl.style.opacity = '1';
+          const tiEl = document.getElementById('ti-'+c.id);
+          if (tiEl) tiEl.value = state[c.id].timerMin||5;
+          startTimer(c.id);
+          updateTimerStatus(c.id);
+        }
+        // 恢复定点价格
+        if (state[c.id].pointOn) {
+          const togEl = document.getElementById('tog-point-'+c.id);
+          if (togEl) togEl.className = 'tgl on';
+          const panEl = document.getElementById('mb-point-'+c.id);
+          if (panEl) panEl.style.opacity = '1';
+        }
+        if (state[c.id].points) {
+          state[c.id].points.forEach((pt, idx) => {
+            const ppEl = document.getElementById(`pp-${c.id}-${idx+1}`);
+            const prEl = document.getElementById(`pr-${c.id}-${idx+1}`);
+            if (ppEl && pt.price > 0) ppEl.value = pt.price;
+            if (prEl) prEl.value = pt.repeat || 3;
+          });
+        }
+        const tfEl = document.getElementById('tog-fixed-'+c.id);
+        const ttEl = document.getElementById('tog-target-'+c.id);
+        if (tfEl) tfEl.className = 'tgl'+(state[c.id].fixedOn!==false?' on':'');
+        if (ttEl) ttEl.className = 'tgl'+(state[c.id].targetOn!==false?' on':'');
+        const fp = document.getElementById('mb-fixed-'+c.id);
+        const tp2 = document.getElementById('mb-target-'+c.id);
+        if (fp)  fp.style.opacity  = state[c.id].fixedOn!==false  ? '1' : '0.4';
+        if (tp2) tp2.style.opacity = state[c.id].targetOn!==false ? '1' : '0.4';
+        // 恢复固定步进
+        const si = document.getElementById('si-'+c.id);
+        if (si) si.value = saved.fixedStep;
+        document.querySelectorAll(`#ps-${c.id} .preset`).forEach(b =>
+          b.className='preset'+(parseFloat(b.textContent)===saved.fixedStep?' sel':'')
+        );
+        // 恢复目标价参数
+        const tp  = document.getElementById('tp-'+c.id);  if(tp)  tp.value  = saved.target;
+        const tfs = document.getElementById('tfs-'+c.id); if(tfs) tfs.value = saved.farStep;
+        const tnd = document.getElementById('tnd-'+c.id); if(tnd) tnd.value = saved.nearDist;
+        const tns = document.getElementById('tns-'+c.id); if(tns) tns.value = saved.nearStep;
+        // 恢复开关
+        const ctog = document.getElementById('ctog-'+c.id);
+        if (ctog) ctog.className = 'tgl'+(saved.enabled?' on':'');
+      });
+    }
+  } catch(_) {}
+}
+
+// ── 交易所配置 ────────────────────────────────────────────────────
+const EXCHANGES = {
+  bitget: {
+    name: 'Bitget', flag: '🟡',
+    wsUrl: 'wss://ws.bitget.com/v2/ws/public',
+    restBase: 'https://api.bitget.com',
+    // 构造订阅消息
+    subscribe(coins, mktType) {
+      return JSON.stringify({ op:'subscribe', args: coins.map(c=>({ instType: mktType, channel:'ticker', instId: c.sym })) });
+    },
+    // 解析 WS 消息 → [{sym, price, open, high, low}]
+    parseTick(raw) {
+      if (raw==='pong') return [];
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data || !msg.arg || msg.arg.channel!=='ticker') return [];
+        // msg.arg.instId 是订阅的交易对，去掉连字符统一格式
+        const sym = (msg.arg.instId || '').replace(/-/g,'');
+        return msg.data.map(d => ({
+          sym, price: d.lastPr||d.last, open: d.open24h, high: d.high24h, low: d.low24h
+        }));
+      } catch(_) { return []; }
+    },
+    ping: 'ping',
+    // REST 降级 URL
+    restUrl(mktType) {
+      return mktType==='SPOT'
+        ? 'https://api.bitget.com/api/v2/spot/market/tickers'
+        : 'https://api.bitget.com/api/v2/mix/market/tickers?productType=USDT-FUTURES';
+    },
+    parseRest(json) {
+      if (json.code!=='00000') return [];
+      return (json.data||[]).map(d=>({ sym:d.symbol||d.instId, price:d.lastPr||d.last||d.close, open:d.open24h||d.openUtc0, high:d.high24h, low:d.low24h }));
+    }
+  },
+
+  binance: {
+    name: 'Binance', flag: '🟡',
+    wsUrl: null,
+    restBase: 'https://fapi.binance.com',
+    getWsUrl(coins, mktType) {
+      if (mktType==='SPOT') {
+        // 用 ticker 替代 miniTicker，每秒推送，数据更及时
+        const streams = coins.map(c=>c.sym.toLowerCase()+'@ticker').join('/');
+        return `wss://stream.binance.com:9443/stream?streams=${streams}`;
+      } else {
+        const futCoins = coins.filter(c=>c.sym.endsWith('USDT'));
+        const targets = futCoins.length ? futCoins : coins;
+        const streams = targets.map(c=>c.sym.toLowerCase()+'@ticker').join('/');
+        return `wss://fstream.binance.com/stream?streams=${streams}`;
+      }
+    },
+    subscribe() { return null; },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        const d = msg.data || msg;
+        if (!d||!d.s) return [];
+        // ticker: c=close, o=open, h=high, l=low; miniTicker same fields
+        return [{ sym:d.s, price:d.c||d.p, open:d.o, high:d.h, low:d.l }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'ping'}),
+    restUrl(mktType) {
+      return mktType==='SPOT'
+        ? 'https://api.binance.com/api/v3/ticker/24hr'
+        : 'https://fapi.binance.com/fapi/v1/ticker/24hr';
+    },
+    parseRest(json) {
+      return (Array.isArray(json)?json:[json]).map(d=>({ sym:d.symbol, price:d.lastPrice, open:d.openPrice, high:d.highPrice, low:d.lowPrice }));
+    }
+  },
+
+  okx: {
+    name: 'OKX', flag: '⚫',
+    wsUrl: 'wss://ws.okx.com:8443/ws/v5/public',
+    restBase: 'https://www.okx.com',
+    subscribe(coins, mktType) {
+      const instType = mktType==='SPOT' ? 'SPOT' : 'SWAP';
+      const args = coins.map(c=>({ channel:'tickers', instId: mktType==='SPOT'?c.sym:(c.sym.endsWith('USDT')?c.id+'-USDT-SWAP':c.sym) }));
+      return JSON.stringify({ op:'subscribe', args });
+    },
+    parseTick(raw) {
+      if (raw==='pong') return [];
+      const msg = JSON.parse(raw);
+      if (!msg.data||!msg.arg||msg.arg.channel!=='tickers') return [];
+      return msg.data.map(d=>({ sym:d.instId.replace('-USDT-SWAP','USDT').replace('-USDT','USDT'), price:d.last, open:d.open24h, high:d.high24h, low:d.low24h }));
+    },
+    ping: 'ping',
+    restUrl(mktType) {
+      return mktType==='SPOT'
+        ? 'https://www.okx.com/api/v5/market/tickers?instType=SPOT'
+        : 'https://www.okx.com/api/v5/market/tickers?instType=SWAP';
+    },
+    parseRest(json) {
+      if (json.code!=='0') return [];
+      return (json.data||[]).map(d=>({ sym:d.instId.replace('-USDT-SWAP','USDT').replace('-USDT','USDT'), price:d.last, open:d.open24h, high:d.high24h, low:d.low24h }));
+    }
+  },
+
+  htx: {
+    name: 'HTX', flag: '🔴',
+    getWsUrl(coins, mktType) {
+      return mktType==='SPOT'
+        ? 'wss://api.huobi.pro/ws'
+        : 'wss://api.hbdm.com/linear-swap-ws';
+    },
+    subscribe(coins, mktType) {
+      // HTX 需要逐个订阅，返回第一个，其余在 onopen 后补发
+      this._pendingSubs = coins.slice(1).map(c =>
+        JSON.stringify({ sub: `market.${c.sym.toLowerCase()}.ticker`, id: c.sym })
+      );
+      return JSON.stringify({ sub: `market.${coins[0].sym.toLowerCase()}.ticker`, id: coins[0].sym });
+    },
+    parseTick(raw) {
+      try {
+        // HTX WS 数据是 gzip 压缩的，但浏览器会自动解压
+        const msg = JSON.parse(raw);
+        // 响应 ping（HTX 要求必须回 pong，否则断连）
+        if (msg.ping) {
+          // pong 由外层 ping handler 处理，这里返回空
+          return [];
+        }
+        if (!msg.tick||!msg.ch) return [];
+        const sym = msg.ch.split('.')[1].toUpperCase();
+        const d = msg.tick;
+        return [{ sym, price: d.lastPrice||d.close||d.last, open: d.open, high: d.high, low: d.low }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({pong: Date.now()}),
+    restUrl(mktType) { return mktType==='SPOT' ? 'https://api.huobi.pro/market/tickers' : 'https://api.hbdm.com/linear-swap-ex/market/detail/batch_merged'; },
+    parseRest(json) { return (json.data||[]).map(d=>({ sym:(d.symbol||d.contract_code||'').toUpperCase(), price:d.close||d.last, open:d.open, high:d.high, low:d.low })); }
+  },
+
+  gate: {
+    name: 'Gate.io', flag: '🔵',
+    getWsUrl(coins, mktType) { return mktType==='SPOT' ? 'wss://api.gateio.ws/ws/v4/' : 'wss://fx-ws.gateio.ws/v4/ws/usdt'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ time: Date.now(), channel: mktType==='SPOT'?'spot.tickers':'futures.tickers', event: 'subscribe', payload: coins.map(c=>c.sym) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.result||msg.event!=='update') return [];
+        const d = msg.result;
+        return [{ sym: (d.currency_pair||d.contract||'').replace('_',''), price: d.last, open: d.base_volume, high: d.high_24h, low: d.low_24h }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({time:Date.now(),channel:'spot.ping'}),
+    restUrl(mktType) { return mktType==='SPOT' ? 'https://api.gateio.ws/api/v4/spot/tickers' : 'https://api.gateio.ws/api/v4/futures/usdt/tickers'; },
+    parseRest(json) { return (Array.isArray(json)?json:[]).map(d=>({ sym:(d.currency_pair||d.contract||'').replace('_',''), price:d.last, open:d.base_volume, high:d.high_24h, low:d.low_24h })); }
+  },
+
+  mexc: {
+    name: 'MEXC', flag: '🟣',
+    getWsUrl(coins, mktType) { return 'wss://wbs.mexc.com/ws'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method: 'SUBSCRIPTION', params: coins.map(c=>`spot@public.miniTickers.v3.api@UTC+8`) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.d) return [];
+        const d = msg.d;
+        return [{ sym: d.s||'', price: d.c, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'PING'}),
+    restUrl(mktType) { return 'https://api.mexc.com/api/v3/ticker/24hr'; },
+    parseRest(json) { return (Array.isArray(json)?json:[]).map(d=>({ sym:d.symbol, price:d.lastPrice, open:d.openPrice, high:d.highPrice, low:d.lowPrice })); }
+  },
+
+  kucoin: {
+    name: 'KuCoin', flag: '🟢',
+    getWsUrl(coins, mktType) { return 'wss://ws-api-spot.kucoin.com/'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ id: Date.now(), type: 'subscribe', topic: `/market/ticker:${coins.map(c=>c.sym.replace('USDT','-USDT')).join(',')}`, response: true });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.type!=='message'||!msg.data) return [];
+        const sym = (msg.subject||'').replace('-','');
+        const d = msg.data;
+        return [{ sym, price: d.price, open: d.open, high: d.high, low: d.low }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({id:Date.now(),type:'ping'}),
+    restUrl(mktType) { return 'https://api.kucoin.com/api/v1/market/allTickers'; },
+    parseRest(json) { return ((json.data||{}).ticker||[]).map(d=>({ sym:(d.symbol||'').replace('-',''), price:d.last, open:d.open, high:d.high, low:d.low })); }
+  },
+
+  bingx: {
+    name: 'BingX', flag: '🔵',
+    getWsUrl() { return 'wss://open-api-ws.bingx.com/market'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ id: Date.now(), reqType: 'sub', dataType: coins.map(c=>`${c.sym}@trade`).join(',') });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data) return [];
+        const d = msg.data;
+        return [{ sym: (d.s||'').replace('-',''), price: d.p||d.c, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: 'ping',
+    restUrl(mktType) { return 'https://open-api.bingx.com/openApi/spot/v1/ticker/24Hr'; },
+    parseRest(json) { return (json.data||[]).map(d=>({ sym:(d.symbol||'').replace('-',''), price:d.lastPrice, open:d.openPrice, high:d.highPrice, low:d.lowPrice })); }
+  },
+
+  xt: {
+    name: 'XT.com', flag: '🟣',
+    getWsUrl() { return 'wss://stream.xt.com/public'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method: 'subscribe', params: coins.map(c=>`ticker@${c.sym.toLowerCase().replace('usdt','_usdt')}`), id: Date.now() });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data) return [];
+        const d = msg.data;
+        const sym = (msg.topic||'').replace('ticker@','').replace('_','').toUpperCase();
+        return [{ sym, price: d.c||d.p, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'ping',id:Date.now()}),
+    restUrl() { return 'https://sapi.xt.com/v4/public/ticker/24h'; },
+    parseRest(json) { return (json.result||[]).map(d=>({ sym:(d.s||'').replace('_','').toUpperCase(), price:d.c, open:d.o, high:d.h, low:d.l })); }
+  },
+
+  coinex: {
+    name: 'CoinEx', flag: '🟤',
+    getWsUrl() { return 'wss://socket.coinex.com/v2/spot'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method: 'state.subscribe', params: { market_list: coins.map(c=>c.sym) }, id: Date.now() });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.method!=='state.update'||!msg.params?.state_list) return [];
+        return msg.params.state_list.map(d=>({ sym:d.market, price:d.last, open:d.open, high:d.high, low:d.low }));
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'server.ping',params:{},id:Date.now()}),
+    restUrl() { return 'https://api.coinex.com/v2/spot/ticker'; },
+    parseRest(json) { return (json.data||[]).map(d=>({ sym:d.market, price:d.last, open:d.open, high:d.high, low:d.low })); }
+  },
+
+  kraken: {
+    name: 'Kraken', flag: '🟣',
+    getWsUrl() { return 'wss://ws.kraken.com/v2'; },
+    subscribe(coins, mktType) {
+      const syms = coins.map(c => {
+        const base = c.id.replace(/USDT$|USD$/,'');
+        return `${base}/USD`;
+      });
+      return JSON.stringify({ method:'subscribe', params:{ channel:'ticker', symbol: syms } });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.channel!=='ticker'||!msg.data) return [];
+        return msg.data.map(d=>({
+          sym: (d.symbol||'').replace('/','').replace('USD','USDT'),
+          price: d.last, open: d.open, high: d.high, low: d.low
+        }));
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'ping'}),
+    restUrl() { return 'https://api.kraken.com/0/public/Ticker'; },
+    parseRest(json) {
+      if (!json.result) return [];
+      return Object.entries(json.result).map(([k,v])=>({
+        sym: k.replace('XBT','BTC').replace('/','').replace('USD','USDT'),
+        price: v.c?.[0], open: v.o, high: v.h?.[0], low: v.l?.[0]
+      }));
+    }
+  },
+
+  coinbase: {
+    name: 'Coinbase', flag: '🔵',
+    getWsUrl() { return 'wss://advanced-trade-ws.coinbase.com'; },
+    subscribe(coins, mktType) {
+      const ids = coins.map(c => `${c.id.replace(/USDT$/,'')}-USD`);
+      return JSON.stringify({ type:'subscribe', product_ids: ids, channel:'ticker' });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.channel!=='ticker'||!msg.events) return [];
+        const ticks = [];
+        for (const ev of msg.events) {
+          for (const t of (ev.tickers||[])) {
+            ticks.push({ sym: (t.product_id||'').replace('-USD','USDT').replace('-',''), price:t.price, open:t.open_24h, high:t.high_52_week||t.price, low:t.low_52_week||t.price });
+          }
+        }
+        return ticks;
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({type:'heartbeats',channel:'heartbeats',product_ids:[]}),
+    restUrl() { return 'https://api.coinbase.com/api/v3/brokerage/market/products'; },
+    parseRest(json) { return (json.products||[]).map(d=>({ sym:(d.product_id||'').replace('-USD','USDT').replace('-',''), price:d.price, open:d.base_display_symbol, high:d.price, low:d.price })); }
+  },
+
+  bitstamp: {
+    name: 'Bitstamp', flag: '🟢',
+    getWsUrl() { return 'wss://ws.bitstamp.net'; },
+    subscribe(coins, mktType) {
+      // Bitstamp 需要逐个订阅，先返回第一个，其余存起来
+      this._pendingSubs = coins.slice(1).map(c =>
+        JSON.stringify({ event:'bts:subscribe', data:{ channel:`live_trades_${c.sym.toLowerCase()}` } })
+      );
+      return JSON.stringify({ event:'bts:subscribe', data:{ channel:`live_trades_${coins[0].sym.toLowerCase()}` } });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.event!=='trade'||!msg.data) return [];
+        const sym = (msg.channel||'').replace('live_trades_','').toUpperCase();
+        return [{ sym: sym.endsWith('USD')?sym+'T':sym, price: msg.data.price }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({event:'bts:heartbeat'}),
+    restUrl() { return 'https://www.bitstamp.net/api/v2/ticker/'; },
+    parseRest(json) {
+      if (json.last) return [{ sym:'BTCUSDT', price:json.last }];
+      return [];
+    }
+  },
+
+  bitfinex: {
+    name: 'Bitfinex', flag: '⚫',
+    getWsUrl() { return 'wss://api-pub.bitfinex.com/ws/2'; },
+    subscribe(coins, mktType) {
+      // Subscribe to first coin ticker (simplified)
+      const sym = 't' + coins[0].id.replace(/USDT$/,'USD');
+      return JSON.stringify({ event:'subscribe', channel:'ticker', symbol: sym });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!Array.isArray(msg)||!Array.isArray(msg[1])) return [];
+        const d = msg[1];
+        // [chanId, [BID,BID_SIZE,ASK,ASK_SIZE,DAILY_CHANGE,DAILY_CHANGE_RELATIVE,LAST_PRICE,VOLUME,HIGH,LOW]]
+        if (d.length < 10) return [];
+        return [{ sym: 'BTCUSDT', price: d[6], high: d[8], low: d[9] }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({event:'ping'}),
+    restUrl() { return 'https://api-pub.bitfinex.com/v2/tickers?symbols=ALL'; },
+    parseRest(json) {
+      return (json||[]).filter(d=>d[0]&&d[0].startsWith('t')&&d[0].endsWith('USD')).map(d=>({
+        sym: d[0].slice(1).replace('USD','USDT'),
+        price: d[7], high: d[9], low: d[10]
+      }));
+    }
+  },
+
+  upbit: {
+    name: 'Upbit', flag: '🇰🇷',
+    getWsUrl() { return 'wss://api.upbit.com/websocket/v1'; },
+    subscribe(coins, mktType) {
+      const markets = coins.map(c=>`KRW-${c.id.replace(/USDT$/,'')}`);
+      return JSON.stringify([{ticket:'alert'},{type:'ticker',codes:markets}]);
+    },
+    parseTick(raw) {
+      try {
+        const msg = typeof raw==='string' ? JSON.parse(raw) : JSON.parse(new TextDecoder().decode(raw));
+        if (!msg.trade_price) return [];
+        const sym = (msg.code||'').replace('KRW-','') + 'USDT';
+        return [{ sym, price: msg.trade_price, open: msg.opening_price, high: msg.high_price, low: msg.low_price }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify([{ticket:'ping'}]),
+    restUrl() { return 'https://api.upbit.com/v1/ticker?markets=KRW-BTC,KRW-ETH,KRW-SOL'; },
+    parseRest(json) { return (json||[]).map(d=>({ sym:(d.market||'').replace('KRW-','')+'USDT', price:d.trade_price, open:d.opening_price, high:d.high_price, low:d.low_price })); }
+  },
+
+  whitebit: {
+    name: 'WhiteBIT', flag: '⚪',
+    getWsUrl() { return 'wss://api.whitebit.com/ws'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ id:Date.now(), method:'market_subscribe', params: coins.map(c=>c.sym.replace('USDT','_USDT')) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (msg.method!=='market_update'||!msg.params) return [];
+        const [sym, d] = msg.params;
+        return [{ sym: sym.replace('_',''), price: d.last, open: d.open, high: d.high, low: d.low }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({id:Date.now(),method:'ping',params:[]}),
+    restUrl() { return 'https://whitebit.com/api/v4/public/ticker'; },
+    parseRest(json) { return Object.entries(json||{}).map(([k,v])=>({ sym:k.replace('_',''), price:v.last_price, open:v.open, high:v.base_volume, low:v.low })); }
+  },
+
+  backpack: {
+    name: 'Backpack', flag: '🎒',
+    getWsUrl() { return 'wss://ws.backpack.exchange/'; },
+    subscribe(coins, mktType) {
+      return JSON.stringify({ method:'SUBSCRIBE', params: coins.map(c=>`ticker.${c.sym.replace('USDT','_USDC')}`) });
+    },
+    parseTick(raw) {
+      try {
+        const msg = JSON.parse(raw);
+        if (!msg.data||!msg.stream?.startsWith('ticker')) return [];
+        const d = msg.data;
+        const sym = (msg.stream||'').replace('ticker.','').replace('_','');
+        return [{ sym: sym.replace('USDC','USDT'), price: d.c||d.lastPrice, open: d.o, high: d.h, low: d.l }];
+      } catch(_) { return []; }
+    },
+    ping: JSON.stringify({method:'PING'}),
+    restUrl() { return 'https://api.backpack.exchange/api/v1/tickers'; },
+    parseRest(json) { return (json||[]).map(d=>({ sym:(d.symbol||'').replace('_','').replace('USDC','USDT'), price:d.lastPrice, open:d.firstPrice, high:d.high, low:d.low })); }
+  },
+
+  // 已有交易所保持不变
+  bybit: {
+    name: 'Bybit', flag: '🟠',
+    wsUrl: null, // 动态
+    getWsUrl(coins, mktType) {
+      return mktType==='SPOT'
+        ? 'wss://stream.bybit.com/v5/public/spot'
+        : 'wss://stream.bybit.com/v5/public/linear';
+    },
+    subscribe(coins, mktType) {
+      // 合约只支持 USDT 结尾
+      const validCoins = mktType==='SPOT' ? coins : coins.filter(c=>c.sym.endsWith('USDT'));
+      const targets = validCoins.length ? validCoins : coins;
+      return JSON.stringify({ op:'subscribe', args: targets.map(c=>`tickers.${c.sym}`) });
+    },
+    parseTick(raw) {
+      const msg = JSON.parse(raw);
+      if (msg.op==='pong'||!msg.data||msg.topic?.indexOf('tickers')<0) return [];
+      const d = msg.data;
+      const sym = msg.topic.replace('tickers.','');
+      return [{ sym, price:d.lastPrice, open:d.prevPrice24h, high:d.highPrice24h, low:d.lowPrice24h }];
+    },
+    ping: JSON.stringify({op:'ping'}),
+    restUrl(mktType) {
+      return mktType==='SPOT'
+        ? 'https://api.bybit.com/v5/market/tickers?category=spot'
+        : 'https://api.bybit.com/v5/market/tickers?category=linear';
+    },
+    parseRest(json) {
+      if (json.retCode!==0) return [];
+      return (json.result?.list||[]).map(d=>({ sym:d.symbol, price:d.lastPrice, open:d.prevPrice24h, high:d.highPrice24h, low:d.lowPrice24h }));
+    }
+  }
+};
+
+// 当前交易所
+let currentExchange = localStorage.getItem('current_exchange') || 'binance';
+
+// ── 连接模式 ──────────────────────────────────────────────────────
+let connMode = 'ws';
+let wsFailCount = 0;
+let restTimer = null;
+
+function startConnection() {
+  setWS('connecting');
+  wsFailCount = 0;
+  connMode = 'ws';
+  connectWS();
+  // 延迟补充美股代币（等 WS 先建立）
+  setTimeout(fetchMissingStockTokens, 8000);
+  // 非支持交易所持续轮询美股
+  setTimeout(startStockPoll, 3000);
+}
+
+function connectWS() {
+  const ex = EXCHANGES[currentExchange];
+  if (!ex) { console.error('Unknown exchange:', currentExchange); onWSFail(); return; }
+  if (!COINS || COINS.length === 0) { console.error('No coins loaded'); onWSFail(); return; }
+  let wsUrl;
+  try { wsUrl = ex.getWsUrl ? ex.getWsUrl(COINS, mktType) : ex.wsUrl; }
+  catch(e) { console.error('getWsUrl error:', e); onWSFail(); return; }
+  console.log('[WS] exchange:', currentExchange, 'mktType:', mktType, 'url:', wsUrl);
+  console.log('[WS] COINS syms:', COINS.map(c=>c.sym));
+  if (!wsUrl) { console.error('No wsUrl, falling back to REST'); onWSFail(); return; }
+  try { ws = new WebSocket(wsUrl); }
+  catch(e) { onWSFail(); return; }
+
+  const timeout = setTimeout(() => {
+    if(!wsAlive) { try{ws.close();}catch(_){} onWSFail(); }
+  }, 5000);
+
+  ws.onopen = () => {
+    clearTimeout(timeout);
+    wsAlive = true; wsFailCount = 0;
+    setWS('connected');
+    // 发送订阅（Binance 用 URL 方式不需要）
+    const subMsg = ex.subscribe(COINS, mktType);
+    if (subMsg) ws.send(subMsg);
+    // 逐个发送剩余订阅（HTX/Bitstamp 等需要逐条订阅）
+    if (ex._pendingSubs && ex._pendingSubs.length) {
+      ex._pendingSubs.forEach((msg, i) => {
+        setTimeout(() => { try{ if(ws.readyState===1) ws.send(msg); }catch(e){} }, 200*(i+1));
+      });
+      ex._pendingSubs = [];
+    }
+    // 心跳
+    clearInterval(pingTimer);
+    if (ex.ping) {
+      pingTimer = setInterval(() => { try{ if(ws.readyState===1) ws.send(typeof ex.ping==='function'?ex.ping():ex.ping); }catch(e){} }, 20000);
+    }
+  };
+  ws.onmessage = e => {
+    try {
+      // HTX 服务端 ping 需要立即回 pong（否则断连）
+      if (currentExchange==='htx') {
+        try {
+          const m = JSON.parse(e.data);
+          if (m.ping) { ws.send(JSON.stringify({pong:m.ping})); return; }
+        } catch(_) {}
+      }
+      const ticks = ex.parseTick(e.data);
+      if (ticks.length) console.log('[tick]', ticks[0]);
+      ticks.forEach(t => {
+        if (t.price) handleTick(t.sym, { lastPr:t.price, open24h:t.open, high24h:t.high, low24h:t.low });
+      });
+    } catch(err) { console.error('[parseTick err]', err); }
+  };
+  ws.onerror = () => { clearTimeout(timeout); wsAlive=false; onWSFail(); };
+  ws.onclose = () => {
+    clearTimeout(timeout);
+    if(wsAlive){ wsAlive=false; setWS('connecting'); schedReconn(); }
+    else onWSFail();
+  };
+}
+
+function onWSFail() {
+  wsFailCount++;
+  if(wsFailCount >= 2) { connMode='rest'; setWS('rest'); startREST(); }
+  else schedReconn();
+}
+
+function schedReconn() {
+  clearTimeout(reconnTimer);
+  reconnTimer = setTimeout(() => { if(!wsAlive && connMode==='ws') connectWS(); }, 3000);
+}
+
+// ── REST 降级 ─────────────────────────────────────────────────────
+// 美股代币列表（只在特定交易所有，需要独立补充）
+const STOCK_TOKENS = ['NVDA','TSLA','AAPL','MSFT','AMZN','GOOGL','META','MSTR','COIN'];
+
+async function fetchRESTTickers() {
+  if(paused) return;
+  const ex = EXCHANGES[currentExchange];
+  try {
+    const r = await fetch(ex.restUrl(mktType));
+    const json = await r.json();
+    const ticks = ex.parseRest(json);
+    ticks.forEach(t => {
+      if (t.price) handleTick(t.sym, { lastPr:t.price, open24h:t.open, high24h:t.high, low24h:t.low });
+    });
+    setWS('rest');
+  } catch(e) { setWS('error'); }
+  // 补充：当前交易所可能没有美股代币，用 Bitget REST 单独拉（仅在无数据时）
+  setTimeout(fetchMissingStockTokens, 8000);
+}
+
+let stockPollTimer = null;
+
+async function fetchMissingStockTokens() {
+  // 找出 COINS 里的美股代币
+  const stockCoins = COINS.filter(c => {
+    const base = c.id.replace(/USDT$|USDC$/,'');
+    return STOCK_TOKENS.includes(base);
+  });
+  if (!stockCoins.length) { clearInterval(stockPollTimer); stockPollTimer=null; return; }
+
+  // 当前交易所是否支持美股代币（Bitget/OKX 支持，Binance 不支持）
+  const supportedExchanges = ['bitget','okx','mexc','gate'];
+  if (supportedExchanges.includes(currentExchange)) {
+    // 当前交易所支持，由主 WS 处理，只补充 loaded=false 的
+    const missing = stockCoins.filter(c => !mkt[c.id]?.loaded);
+    if (!missing.length) return;
+    await fetchStockFromBitget(missing);
+  } else {
+    // 当前交易所不支持美股（如 Binance），全部从 Bitget 持续补充
+    await fetchStockFromBitget(stockCoins);
+  }
+}
+
+async function fetchStockFromBitget(coins) {
+  for (const coin of coins) {
+    try {
+      const url = `https://api.bitget.com/api/v2/mix/market/ticker?symbol=${coin.sym}&productType=USDT-FUTURES`;
+      const r = await fetch(url);
+      const d = await r.json();
+      if (d.code==='00000' && d.data) {
+        const t = Array.isArray(d.data) ? d.data[0] : d.data;
+        if (t && t.lastPr) handleTick(coin.sym, { lastPr:t.lastPr, open24h:t.open24h, high24h:t.high24h, low24h:t.low24h });
+      }
+    } catch(_) {}
+  }
+}
+
+function startStockPoll() {
+  clearInterval(stockPollTimer);
+  const stockCoins = COINS.filter(c => STOCK_TOKENS.includes(c.id.replace(/USDT$|USDC$/, '')));
+  if (!stockCoins.length) return;
+  const supportedExchanges = ['bitget','okx','mexc','gate'];
+  // 非支持交易所才需要持续轮询
+  if (!supportedExchanges.includes(currentExchange)) {
+    fetchStockFromBitget(stockCoins);
+    stockPollTimer = setInterval(() => fetchStockFromBitget(stockCoins), 5000);
+  }
+}
+
+function startREST() {
+  clearInterval(restTimer);
+  fetchRESTTickers();
+  restTimer = setInterval(fetchRESTTickers, 3000);
+  setInterval(() => { if(connMode==='rest'&&!wsAlive){ wsFailCount=0; connectWS(); } }, 30000);
+}
+
+function setWS(s) {
+  const p=document.getElementById('wsPill'), d=document.getElementById('wsDot'), t=document.getElementById('wsText');
+  const ex = EXCHANGES[currentExchange];
+  const exName = ex ? ex.name : '';
+  if(s==='connected'){ p.className='ws-pill connected'; d.className='dot'; t.textContent=exName+' 实时'; }
+  else if(s==='rest'){  p.className='ws-pill connected'; d.className='dot'; t.textContent=exName+' 轮询'; }
+  else if(s==='connecting'){ p.className='ws-pill connecting'; d.className='dot warn'; t.textContent=exName+' 连接中…'; }
+  else { p.className='ws-pill error'; d.className='dot off'; t.textContent='连接断开'; }
+}
+
+// ── 切换交易所 ────────────────────────────────────────────────────
+function syncExchangeUI(exId) {
+  const quickEx = ['bitget','binance','okx','bybit'];
+  const isQuick = quickEx.includes(exId);
+  // 四个按钮：只有在快捷列表里的才高亮，其余全灰
+  document.querySelectorAll('.ex-btn').forEach(b => {
+    b.className = 'ex-btn' + (isQuick && b.dataset.ex===exId ? ' active' : '');
+  });
+  // 下拉：在快捷列表里就重置，不在就选中对应项并高亮
+  const sel = document.getElementById('exMoreSelect');
+  if (sel) {
+    sel.value = isQuick ? '' : exId;
+    sel.style.color = isQuick ? '' : 'var(--blue)';
+    sel.style.borderColor = isQuick ? '' : '#1e3a6e';
+    sel.style.background = isQuick ? '' : 'var(--blue-d)';
+  }
+}
+
+function switchExchange(exId) {
+  if (currentExchange === exId) return;
+  currentExchange = exId;
+  localStorage.setItem('current_exchange', exId);
+
+  // 更新 UI
+  syncExchangeUI(exId);
+
+  // 重置行情数据
+  COINS.forEach(c => {
+    mkt[c.id] = { price:0, prevPrice:0, change24h:0, high24h:0, low24h:0, open24h:0, loaded:false };
+    const pv=document.getElementById('pv-'+c.id); if(pv) pv.textContent='—';
+    const ct=document.getElementById('ct-'+c.id); if(ct){ct.textContent='+0.00%';ct.className='change-tag up';}
+    const hi=document.getElementById('hi-'+c.id); if(hi) hi.textContent='H:—';
+    const lo=document.getElementById('lo-'+c.id); if(lo) lo.textContent='L:—';
+  });
+
+  // 更新卡片副标题
+  updateCardSubtitles();
+
+  // 重连
+  wsAlive=false; connMode='ws'; wsFailCount=0;
+  clearInterval(pingTimer); clearTimeout(reconnTimer); clearInterval(restTimer);
+  clearInterval(stockPollTimer); stockPollTimer=null;
+  try{if(ws) ws.close();}catch(_){}
+  setTimeout(startConnection, 400);
+}
+
+function updateCardSubtitles() {
+  const ex = EXCHANGES[currentExchange];
+  const typeLabel = mktType==='USDT-FUTURES'?'永续合约':'现货';
+  COINS.forEach(c => {
+    const el = document.getElementById('csub-'+c.id);
+    if(el) el.textContent = `${c.name} · ${ex.name} ${typeLabel}`;
+  });
+}
+
+// ── Tick ──────────────────────────────────────────────────────────
+function handleTick(sym, d) {
+  if(paused) return;
+  // 精确匹配，或去掉连字符后匹配
+  const cleanSym = sym.replace(/-/g,'');
+  const coin = COINS.find(c => c.sym===sym || c.sym===cleanSym); if(!coin) return;
+  const m = mkt[coin.id], s = state[coin.id];
+  const price = parseFloat(d.lastPr||d.last||0); if(!price) return;
+  const open  = parseFloat(d.open24h||0);
+  const high  = parseFloat(d.high24h||0);
+  const low   = parseFloat(d.low24h||0);
+  const prev  = m.loaded ? m.price : price;
+  m.prevPrice=prev; m.price=price;
+  if(open) m.open24h=open; if(high) m.high24h=high; if(low) m.low24h=low;
+  m.change24h = m.open24h ? (price-m.open24h)/m.open24h*100 : 0;
+  if(!m.loaded){ m.loaded=true; s.lastFixedLevel=Math.round(price/s.fixedStep)*s.fixedStep; }
+  updateCardUI(coin.id, prev, price);
+  if(s.enabled) checkAlert(coin.id, prev, price);
+}
+
+async function checkAlert(id, prev, cur) {
+  const s = state[id];
+
+  // ── 固定梯度（常规关口播报）────────────────────────────────────
+  if (s.fixedOn) {
+    const step = s.fixedStep;
+    const ln = Math.floor(cur/step)*step, lp = Math.floor(prev/step)*step;
+    if (ln !== lp) await fireAlert(id, cur, cur>prev, ln>lp?ln:lp, 'fixed');
+  }
+
+  // ── 定点价格播报 ──────────────────────────────────────────────
+  if (s.pointOn && s.points) {
+    s.points.forEach((pt, idx) => {
+      if (!pt.price || pt.price <= 0) return;
+      const key = `${id}_point_${idx}`;
+      const crossed = (prev < pt.price && cur >= pt.price) || (prev > pt.price && cur <= pt.price);
+      if (crossed && !pointFired[key]) {
+        pointFired[key] = true;
+        firePointAlert(id, cur, pt.price, pt.repeat||3);
+        // 触发后5分钟内不再触发同一定点
+        setTimeout(() => { delete pointFired[key]; }, 5 * 60 * 1000);
+      }
+    });
+  }
+  if (s.targetOn) {
+    const sc = isNear(id,cur)  ? s.nearStep : s.farStep;
+    const sp = isNear(id,prev) ? s.nearStep : s.farStep;
+    if (Math.floor(cur/sc) !== Math.floor(prev/sp)) {
+      const ln = Math.floor(cur/sc)*sc, lp = Math.floor(prev/sp)*sp;
+      // 避免与固定梯度在同一关口重复触发
+      const level = ln>lp?ln:lp;
+      const fixedStep = s.fixedStep;
+      const alreadyFiredByFixed = s.fixedOn && (Math.abs(level % fixedStep) < 0.001 || Math.abs(level % fixedStep - fixedStep) < 0.001);
+      if (!alreadyFiredByFixed) await fireAlert(id, cur, cur>prev, level, 'target');
+    }
+    // 精确穿越目标价
+    if ((prev < s.target && cur >= s.target) || (prev > s.target && cur <= s.target))
+      await fireAlert(id, cur, cur>prev, s.target, 'target');
+  }
+}
+
+// ── Card UI ───────────────────────────────────────────────────────
+function updateCardUI(id, prev, cur) {
+  const m = mkt[id], s = state[id];
+  const pv=document.getElementById('pv-'+id);
+  const ct=document.getElementById('ct-'+id);
+  const hi=document.getElementById('hi-'+id);
+  const lo=document.getElementById('lo-'+id);
+  const rf=document.getElementById('rf-'+id);
+  if(pv){
+    pv.textContent=fmt(id,cur)+' '+getCoinQuote(id);
+    pv.className='price-val '+(cur>=prev?'tick-up':'tick-down');
+    clearTimeout(pv._t); pv._t=setTimeout(()=>pv.className='price-val',600);
+  }
+  if(ct){ const ch=m.change24h; ct.textContent=(ch>=0?'+':'')+ch.toFixed(2)+'%'; ct.className='change-tag '+(ch>=0?'up':'down'); }
+  if(hi&&m.high24h) hi.textContent='H:'+fmt(id,m.high24h);
+  if(lo&&m.low24h)  lo.textContent='L:'+fmt(id,m.low24h);
+  if(rf&&m.high24h>m.low24h) rf.style.left=((cur-m.low24h)/(m.high24h-m.low24h)*100).toFixed(1)+'%';
+  // 两个面板同时更新
+  updateNextLvls(id);
+  updateZone(id);
+  const card=document.getElementById('card-'+id);
+  if(card&&s.targetOn&&!card.className.includes('flash'))
+    card.className='card'+(isNear(id,cur)?' near-target':'');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function isNear(id,p){ const s=state[id]; return Math.abs(p-s.target)<=s.nearDist; }
+
+// 获取币种的计价币符号（用于显示，不播报）
+function setVolume(val) {
+  cfg.volume = parseInt(val) / 100;
+  document.getElementById('volumeVal').textContent = val + '%';
+  saveSettings();
+}
+
+function getCoinQuote(id) {
+  const coin = COINS.find(c=>c.id===id);
+  if (!coin) return '';
+  if (coin.quote) return coin.quote;
+  // 从 sym 推断：去掉已知计价币后剩余的就是 base，反推 quote
+  const sym = coin.sym || '';
+  const quotes = ['USDT','USDC','USD','BTC','ETH','BNB','BGB','OKB','EUR','GBP','TRY','BRL','RUB','JPY','KRW','BUSD'];
+  for (const q of quotes) {
+    if (sym.endsWith(q)) return q;
+  }
+  return '';
+}
+
+// 带计价币的价格显示（替代 '$'）
+function fmtWithQuote(id, v) {
+  return fmt(id, v) + ' ' + getCoinQuote(id);
+}
+
+function fmt(id,v){
+  if(!v&&v!==0) return '—';
+  if(v>=10000) return v.toLocaleString('en-US',{maximumFractionDigits:0});
+  if(v>=1000)  return v.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+  if(v>=100)   return v.toFixed(2);
+  if(v>=10)    return v.toFixed(3);
+  return v.toFixed(4);
+}
+
+function updateNextLvls(id){
+  const el=document.getElementById('nl-'+id); if(!el) return;
+  const price=mkt[id].price; if(!price){el.innerHTML='';return;}
+  const step=state[id].fixedStep, base=Math.round(price/step)*step;
+  const _lq=getCoinQuote(id);
+  el.innerHTML=[-2,-1,1,2].map(i=>`<span class="lvlp ${i>0?'above':'below'}">${fmt(id,base+i*step)} ${_lq}</span>`).join('');
+}
+
+function updateZone(id){
+  const el=document.getElementById('zi-'+id); if(!el) return;
+  const s=state[id], price=mkt[id].price;
+  if(!price){el.innerHTML='等待行情…';return;}
+  const near=isNear(id,price), dist=Math.abs(price-s.target);
+  // 距离用价格的小数位，而不是距离本身的大小
+  const distStr=fmtDist(id, dist, price);
+  const step=near?s.nearStep:s.farStep;
+  const range=s.nearDist*5,lo=s.target-range,hi=s.target+range;
+  const pct=Math.max(0,Math.min(100,(price-lo)/(hi-lo)*100));
+  const nearLo=Math.max(0,(s.target-s.nearDist-lo)/(hi-lo)*100);
+  const nearW=Math.min(100,s.nearDist*2/(hi-lo)*100);
+  const tgtPct=(s.target-lo)/(hi-lo)*100;
+  const _zq=getCoinQuote(id);
+  el.innerHTML=`<b>目标</b> ${fmt(id,s.target)} ${_zq} · 距离 <b>${distStr} ${_zq}</b><br>步进 <b>${step} ${_zq}</b>${near?' <span class="amb">⚠ 临近区加密播报</span>':''}
+<div class="zone-bar"><div class="zone-near-bg" style="left:${nearLo}%;width:${nearW}%"></div><div class="zone-cur-fill" style="width:${pct}%;background:${near?'var(--amber)':'var(--blue)'}"></div><div class="zone-tgt-mark" style="left:calc(${tgtPct}% - 1px)"></div></div>`;
+}
+
+// ── Build cards ───────────────────────────────────────────────────
+function buildCards(){
+  const typeLabel = mktType==='USDT-FUTURES' ? '永续合约' : '现货';
+  document.getElementById('cardsWrap').innerHTML = COINS.map(c=>{
+    const s=state[c.id];
+    return`<div class="card" id="card-${c.id}">
+  <div class="card-top">
+    <div class="coin-left">
+      <div class="cicon" style="background:${c.bg};color:${c.color}">${c.id.slice(0,2)}</div>
+      <div>
+        <div class="coin-name">${c.name.includes('/')?c.name:c.id+'/USDT'}</div>
+        <div class="coin-sub" id="csub-${c.id}">${c.name.includes('/')?c.name:c.name+' · '+typeLabel}</div>
+      </div>
+    </div>
+    <div class="card-right">
+      <div class="ch-icons">
+        <div class="chi tg on" id="ci-tg-${c.id}"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#ico-tg"/></svg></div>
+        <div class="chi wx on" id="ci-wx-${c.id}"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#ico-wx"/></svg></div>
+      </div>
+      <button class="tgl on" id="ctog-${c.id}" onclick="togCoin('${c.id}')" aria-label="开关"></button>
+    </div>
+  </div>
+  <div class="card-price">
+    <div class="price-main">
+      <div class="price-val" id="pv-${c.id}">—</div>
+      <span class="change-tag up" id="ct-${c.id}">+0.00%</span>
+    </div>
+    <div class="price-meta">
+      <span class="price-hl" id="hi-${c.id}">H:—</span>
+      <span class="price-hl" id="lo-${c.id}">L:—</span>
+      <span class="last-fire" id="lf-${c.id}"></span>
+    </div>
+  </div>
+  <div class="range-wrap">
+    <div class="range-labels"><span>低</span><span>24H 区间</span><span>高</span></div>
+    <div class="range-bar"><div class="range-fill"></div><div class="range-cur" id="rf-${c.id}" style="left:50%"></div></div>
+  </div>
+  <button class="card-expand-btn" id="expbtn-${c.id}" onclick="togExpand('${c.id}')">
+    <span id="expbtn-label-${c.id}">▾ 展开设置</span>
+  </button>
+  <div class="card-settings" id="cs-${c.id}">
+
+    <!-- 固定梯度 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">📏 固定梯度播报</span>
+      <button class="tgl on" id="tog-fixed-${c.id}" onclick="togAlertMode('${c.id}','fixed')" aria-label="固定梯度开关"></button>
+    </div>
+    <div id="mb-fixed-${c.id}" style="margin-bottom:14px">
+      <div class="presets" id="ps-${c.id}">
+        ${c.presets.map(p=>`<button class="preset${p===c.defStep?' sel':''}" onclick="setFixed('${c.id}',${p})">${p}</button>`).join('')}
+        <button class="preset" onclick="document.getElementById('si-${c.id}').focus()">自定义</button>
+      </div>
+      <div class="step-row">
+        <input class="step-inp" type="number" id="si-${c.id}" value="${c.defStep}" min="0.01" inputmode="decimal" onchange="setFixed('${c.id}',parseFloat(this.value))">
+        <span class="step-unit">USDT / 次</span>
+      </div>
+      <div class="next-lvls" id="nl-${c.id}"></div>
+    </div>
+
+    <div style="height:1px;background:var(--bd);margin-bottom:12px"></div>
+
+    <!-- 目标价 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">🎯 目标价临近播报</span>
+      <button class="tgl on" id="tog-target-${c.id}" onclick="togAlertMode('${c.id}','target')" aria-label="目标价开关"></button>
+    </div>
+    <div id="mb-target-${c.id}">
+      <div class="tgt-grid">
+        <div class="tgt-field"><label>目标价</label><input type="number" id="tp-${c.id}"  value="${s.target}"   inputmode="decimal" onchange="setTP('${c.id}','target',parseFloat(this.value))"></div>
+        <div class="tgt-field"><label>远端步进</label><input type="number" id="tfs-${c.id}" value="${s.farStep}"  inputmode="decimal" onchange="setTP('${c.id}','farStep',parseFloat(this.value))"></div>
+        <div class="tgt-field"><label>临近范围</label><input type="number" id="tnd-${c.id}" value="${s.nearDist}" inputmode="decimal" onchange="setTP('${c.id}','nearDist',parseFloat(this.value))"></div>
+        <div class="tgt-field"><label>临近步进</label><input type="number" id="tns-${c.id}" value="${s.nearStep}" inputmode="decimal" onchange="setTP('${c.id}','nearStep',parseFloat(this.value))"></div>
+      </div>
+      <div class="zone-info" id="zi-${c.id}">等待行情…</div>
+    </div>
+
+    <div style="height:1px;background:var(--bd);margin-bottom:12px;margin-top:12px"></div>
+
+    <!-- 定时播报 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">⏱ 定时播报</span>
+      <button class="tgl" id="tog-timer-${c.id}" onclick="togAlertMode('${c.id}','timer')" aria-label="定时播报开关"></button>
+    </div>
+    <div id="mb-timer-${c.id}" style="opacity:0.4;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:7px">每隔固定时间自动播报当前价格</div>
+      <div class="presets" id="tp-presets-${c.id}">
+        <button class="preset" onclick="setTimer('${c.id}',1)">1分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',5)">5分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',15)">15分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',30)">30分钟</button>
+        <button class="preset" onclick="setTimer('${c.id}',60)">1小时</button>
+        <button class="preset" onclick="document.getElementById('ti-${c.id}').focus()">自定义</button>
+      </div>
+      <div class="step-row" style="margin-top:7px">
+        <input class="step-inp" type="number" id="ti-${c.id}" value="5" min="0.1" step="0.1" inputmode="decimal"
+          onchange="setTimer('${c.id}',parseFloat(this.value))">
+        <span class="step-unit" id="ti-unit-${c.id}">分钟 / 次</span>
+      </div>
+      <div id="timer-status-${c.id}" style="font-size:11px;color:var(--tx3);margin-top:6px"></div>
+    </div>
+
+    <div style="height:1px;background:var(--bd);margin-bottom:12px"></div>
+
+    <!-- 定点播报 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--tx2)">📌 定点价格播报</span>
+      <button class="tgl" id="tog-point-${c.id}" onclick="togAlertMode('${c.id}','point')" aria-label="定点播报开关"></button>
+    </div>
+    <div id="mb-point-${c.id}" style="opacity:0.4">
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">设置特定价格，到达时重复播报指定次数</div>
+      <div id="point-list-${c.id}">
+        ${[1,2,3,4,5].map(i=>`
+        <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
+          <input type="number" id="pp-${c.id}-${i}" placeholder="价格 ${i}" inputmode="decimal"
+            style="padding:7px 8px;font-size:12px;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none"
+            onblur="savePointPrice('${c.id}',${i},parseFloat(this.value))"
+            onchange="savePointPrice('${c.id}',${i},parseFloat(this.value))">
+          <div style="display:flex;align-items:center;gap:3px">
+            <span style="font-size:11px;color:var(--tx3)">重复</span>
+            <input type="number" id="pr-${c.id}-${i}" value="3" min="1" max="10" inputmode="numeric"
+              style="width:40px;padding:7px 4px;font-size:12px;text-align:center;font-family:var(--mono);border:1px solid var(--bd);border-radius:8px;background:var(--bg3);color:var(--tx);outline:none"
+              onchange="savePointRepeat('${c.id}',${i},parseInt(this.value))">
+            <span style="font-size:11px;color:var(--tx3)">次</span>
+          </div>
+          <button onclick="clearPointPrice('${c.id}',${i})" style="background:var(--rd);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:6px 8px;font-size:12px;cursor:pointer">×</button>
+        </div>`).join('')}
+      </div>
+      <div id="point-status-${c.id}" style="font-size:11px;color:var(--tx3);margin-top:4px"></div>
+    </div>
+
+  </div>
+</div>`;
+  }).join('');
+}
+
+function togExpand(id){
+  const cs=document.getElementById('cs-'+id);
+  const lbl=document.getElementById('expbtn-label-'+id);
+  const open=cs.classList.toggle('open');
+  lbl.textContent=open?'▴ 收起设置':'▾ 展开设置';
+  if(open){ updateNextLvls(id); updateZone(id); }
+}
+
+// 定点播报相关
+const timerIntervals = {}; // 定时器实例
+const pointFired = {}; // 记录已触发的定点，防止重复
+
+function savePointPrice(id, idx, val) {
+  if (!state[id].points) state[id].points = [{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3}];
+  state[id].points[idx-1].price = isNaN(val) ? 0 : val;
+  saveSettings();
+  // 显示已保存确认
+  const st = document.getElementById('point-status-'+id);
+  if (st && val > 0) {
+    const active = state[id].points.filter(p=>p.price>0);
+    st.style.color = 'var(--tx3)';
+    st.textContent = `已设定 ${active.length} 个定点价格`;
+  }
+}
+
+function savePointRepeat(id, idx, val) {
+  if (!state[id].points) return;
+  state[id].points[idx-1].repeat = Math.max(1, Math.min(10, val||3));
+  saveSettings();
+}
+
+function clearPointPrice(id, idx) {
+  if (!state[id].points) return;
+  state[id].points[idx-1].price = 0;
+  const el = document.getElementById(`pp-${id}-${idx}`);
+  if (el) el.value = '';
+  saveSettings();
+}
+
+async function firePointAlert(id, price, pointPrice, repeat) {
+  const coin = getCoinVoiceName(id);
+  const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  console.log('[定点播报] 触发', id, pointPrice, '重复', repeat, '次');
+  console.log('[定点播报] soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
+
+  // 更新状态栏
+  const st = document.getElementById('point-status-'+id);
+  if (st) { st.style.color='var(--amber)'; st.textContent=`⚡ 已触发 ${fmt(id,pointPrice)} ${getCoinQuote(id)}，正在播报 ${repeat} 次`; }
+  setTimeout(()=>{ 
+    if(st) { 
+      const active = state[id].points?.filter(p=>p.price>0)||[];
+      st.style.color='var(--tx3)'; 
+      st.textContent=active.length>0?`已设定 ${active.length} 个定点价格`:'';
+    }
+  }, repeat*5000+2000);
+
+  // 重复播报 — 等每次语音说完再播下一次
+  for (let i=0; i<repeat; i++) {
+    console.log('[定点播报] 第', i+1, '次，soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
+    if (cfg.soundOn) { console.log('[定点播报] 播放beep'); playBeep(price >= pointPrice); }
+    if (cfg.voiceOn) {
+      const txt = `${coin}到达定点价格${fmt(id,pointPrice)}，第${i+1}次提醒`;
+      console.log('[定点播报] 语音:', txt);
+      await speakAndWait(txt);
+      await new Promise(r=>setTimeout(r, 2000)); // 说完后再等2秒
+    } else {
+      await new Promise(r=>setTimeout(r, 1500));
+    }
+  }
+
+  // 推送
+  const tgMsg = `📌 ${id}/USDT 定点价格触发\n到达价：${fmt(id,pointPrice)}\n当前价：${fmt(id,price)}\n播报 ${repeat} 次\n🕐 ${timeStr}`;
+  const wxTitle = `📌 ${id}/USDT 定点触发 ${fmt(id,pointPrice)}`;
+  const wxDesp  = `到达：$${fmt(id,pointPrice)}\n当前：$${fmt(id,price)}\n${timeStr}`;
+
+  const chs = [];
+  if (cfg.soundOn) chs.push('snd');
+  try {
+    const [tr, wr] = await Promise.all([
+      cfg.tgOn && cfg.tgToken && cfg.tgChatId
+        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
+        : Promise.resolve('skip'),
+      cfg.wxOn && cfg.wxToken
+        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> 当前：$${fmt(id,price)}\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
+        : Promise.resolve('skip')
+    ]);
+    if (tr==='ok') chs.push('tg');
+    if (wr==='ok') chs.push('wx');
+  } catch(_) { chs.push('err'); }
+  logs.unshift({t:timeStr, id, price, isUp:true, level:pointPrice, mode:'point', chs});
+  if(logs.length>80) logs.pop();
+  renderLog();
+}
+
+function togAlertMode(id, type) {
+  const s = state[id];
+  if (type === 'fixed') {
+    s.fixedOn = !s.fixedOn;
+    document.getElementById('tog-fixed-'+id).className = 'tgl'+(s.fixedOn?' on':'');
+    const panel = document.getElementById('mb-fixed-'+id);
+    if (panel) panel.style.opacity = s.fixedOn ? '1' : '0.4';
+  } else if (type === 'target') {
+    s.targetOn = !s.targetOn;
+    document.getElementById('tog-target-'+id).className = 'tgl'+(s.targetOn?' on':'');
+    const panel = document.getElementById('mb-target-'+id);
+    if (panel) panel.style.opacity = s.targetOn ? '1' : '0.4';
+  } else if (type === 'timer') {
+    s.timerOn = !s.timerOn;
+    document.getElementById('tog-timer-'+id).className = 'tgl'+(s.timerOn?' on':'');
+    const panel = document.getElementById('mb-timer-'+id);
+    if (panel) panel.style.opacity = s.timerOn ? '1' : '0.4';
+    if (s.timerOn) startTimer(id);
+    else stopTimer(id);
+  } else if (type === 'point') {
+    s.pointOn = !s.pointOn;
+    document.getElementById('tog-point-'+id).className = 'tgl'+(s.pointOn?' on':'');
+    const panel = document.getElementById('mb-point-'+id);
+    if (panel) panel.style.opacity = s.pointOn ? '1' : '0.4';
+    if (!s.pointOn) {
+      const st = document.getElementById('point-status-'+id);
+      if (st) st.textContent = '';
+    }
+  }
+  saveSettings();
+}
+
+function setTimer(id, minutes) {
+  if (isNaN(minutes)||minutes<0.1) return;
+  // 保留1位小数
+  minutes = Math.round(minutes * 10) / 10;
+  const s = state[id];
+  s.timerMin = minutes;
+  const inp = document.getElementById('ti-'+id);
+  if (inp) inp.value = minutes;
+  // 单位显示换算
+  const unitEl = document.getElementById('ti-unit-'+id);
+  if (unitEl) {
+    const secs = Math.round(minutes * 60);
+    if (secs < 60) unitEl.textContent = `= ${secs}秒 / 次`;
+    else if (secs % 60 === 0) unitEl.textContent = `分钟 / 次`;
+    else unitEl.textContent = `= ${Math.floor(secs/60)}分${secs%60}秒 / 次`;
+  }
+  // 更新预设按钮高亮
+  const presets = document.querySelectorAll(`#tp-presets-${id} .preset`);
+  const labelMap = {1:'1分钟',5:'5分钟',15:'15分钟',30:'30分钟',60:'1小时'};
+  presets.forEach(b => {
+    b.className = 'preset' + (b.textContent===labelMap[minutes]?' sel':'');
+  });
+  if (s.timerOn) { stopTimer(id); startTimer(id); }
+  saveSettings();
+}
+
+function startTimer(id) {
+  stopTimer(id);
+  const s = state[id];
+  const ms = s.timerMin * 60 * 1000;
+  console.log('[定时器] 启动', id, '间隔', ms, 'ms =', s.timerMin, '分钟');
+  updateTimerStatus(id);
+  timerIntervals[id] = setInterval(() => {
+    console.log('[定时器] 触发', id, 'paused=', paused, 'timerOn=', s.timerOn, 'enabled=', s.enabled);
+    if (!paused && s.timerOn && s.enabled) {
+      fireTimerAlert(id);
+    }
+  }, ms);
+  console.log('[定时器] interval ID=', timerIntervals[id]);
+}
+
+function stopTimer(id) {
+  if (timerIntervals[id]) {
+    clearInterval(timerIntervals[id]);
+    delete timerIntervals[id];
+  }
+  const el = document.getElementById('timer-status-'+id);
+  if (el) el.textContent = '';
+}
+
+function updateTimerStatus(id) {
+  const s = state[id];
+  const el = document.getElementById('timer-status-'+id);
+  if (!el) return;
+  if (s.timerOn) {
+    const secs = Math.round((s.timerMin||5) * 60);
+    let label;
+    if (secs < 60)         label = `${secs}秒`;
+    else if (secs===3600)  label = '1小时';
+    else if (secs%60===0)  label = `${secs/60}分钟`;
+    else                   label = `${Math.floor(secs/60)}分${secs%60}秒`;
+    el.textContent = `⏱ 每 ${label} 播报一次`;
+    el.style.color = 'var(--green)';
+  } else {
+    el.textContent = '';
+  }
+}
+
+async function fireTimerAlert(id) {
+  const price = mkt[id]?.price;
+  if (!price) return;
+  const timeStr = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const coin = getCoinVoiceName(id);
+  const s = state[id];
+
+  // 更新最后播报
+  const lfe = document.getElementById('lf-'+id);
+  if (lfe) lfe.textContent = `⏱ ${fmt(id,price)} ${getCoinQuote(id)} ${timeStr}`;
+
+  // 声音/语音 — 每次都播
+  if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
+  if (cfg.voiceOn) speak(`${coin}当前价格${fmt(id,price)}`);
+
+  // 推送 — 跟随定时器间隔，不额外限制
+  const chs = [];
+  if (cfg.soundOn) chs.push('snd');
+
+  const tgMsg = `⏱ ${id}/USDT 定时播报\n当前价：${fmt(id,price)}\n24H涨跌：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
+  const wxTitle = `⏱ ${id}/USDT 定时播报`;
+  const wxDesp = `当前：$${fmt(id,price)}\n24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n${timeStr}`;
+
+  try {
+    const [tr, wr] = await Promise.all([
+      cfg.tgOn && cfg.tgToken && cfg.tgChatId
+        ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
+        : Promise.resolve('skip'),
+      cfg.wxOn && cfg.wxToken
+        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT 定时播报**\n> 当前：$${fmt(id,price)}\n> 24H：${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
+        : Promise.resolve('skip')
+    ]);
+    if (tr==='ok') chs.push('tg');
+    if (wr==='ok') chs.push('wx');
+  } catch(_) {}
+  logs.unshift({t:timeStr, id, price, isUp:mkt[id].change24h>=0, level:price, mode:'timer', chs});
+  if (logs.length>80) logs.pop();
+  renderLog();
+}
+
+// 保留 setMode 兼容旧存档
+function setMode(id, mode) {
+  // 旧版存档迁移：固定=只开fixed，目标=两个都开
+  if (mode === 'fixed') { state[id].fixedOn=true; state[id].targetOn=false; }
+  else { state[id].fixedOn=true; state[id].targetOn=true; }
+  const tfEl = document.getElementById('tog-fixed-'+id);
+  const ttEl = document.getElementById('tog-target-'+id);
+  if (tfEl) tfEl.className = 'tgl'+(state[id].fixedOn?' on':'');
+  if (ttEl) ttEl.className = 'tgl'+(state[id].targetOn?' on':'');
+}
+function setFixed(id,v){
+  if(isNaN(v)||v<=0) return;
+  state[id].fixedStep=v;
+  state[id].lastFixedLevel=Math.round((mkt[id].price||0)/v)*v;
+  const inp=document.getElementById('si-'+id); if(inp) inp.value=v;
+  document.querySelectorAll(`#ps-${id} .preset`).forEach(b=>b.className='preset'+(parseFloat(b.textContent)===v?' sel':''));
+  updateNextLvls(id);
+  saveSettings();
+}
+function setTP(id,key,v){ if(!isNaN(v)&&v>0){ state[id][key]=v; updateZone(id); saveSettings(); } }
+
+// ── Alert fire ────────────────────────────────────────────────────
+async function fireAlert(id, price, isUp, level, mode){
+  const key=`${id}_${Math.round(level*1000)}_${mode}`;
+  const now=Date.now();
+  if(lastFired[key]&&now-lastFired[key]<4000) return;
+  lastFired[key]=now;
+  const s=state[id];
+  const near=mode==='target'&&isNear(id,price);
+  const timeStr=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const lfe=document.getElementById('lf-'+id);
+  if(lfe) lfe.textContent=`${isUp?'↑':'↓'}${fmt(id,level)} ${getCoinQuote(id)} ${timeStr}`;
+  const card=document.getElementById('card-'+id);
+  if(card){
+    card.className='card flash-'+(isUp?'up':'down')+(near?' near-target':'');
+    setTimeout(()=>card.className='card'+(near?' near-target':''),2500);
+  }
+  const chs=[];
+  if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }
+  if(cfg.voiceOn){
+    const name=getCoinVoiceName(id);
+    // 目标价触发时才播报距离，固定梯度只报价格
+    const dist=Math.abs(price-s.target);
+    const distTxt = (mode==='target'||mode==='near') && s.target>0 ? `，距目标还有${fmtDist(id,dist,price)}` : '';
+    speak(`${name}${isUp?'上穿':'下穿'}${fmt(id,level)}${distTxt}`);
+  }
+  // TG/微信推送，失败不影响日志记录
+  try {
+    const [tr,wr]=await Promise.all([
+      cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
+      cfg.wxOn?sendWx(id,price,isUp,level,near):Promise.resolve('skip')
+    ]);
+    if(tr==='ok') chs.push('tg');
+    if(wr==='ok') chs.push('wx');
+  } catch(_) { chs.push('err'); }
+  // 无论推送是否成功，日志必须写入
+  logs.unshift({t:timeStr,id,price,isUp,level,mode:near?'target':'fixed',chs});
+  if(logs.length>80) logs.pop();
+  renderLog();
+  // badge on log tab
+  const logTab=document.getElementById('tab-log');
+  if(logTab&&!logTab.className.includes('active')){
+    logTab.style.color='var(--amber)';
+    setTimeout(()=>{ if(!logTab.className.includes('active')) logTab.style.color=''; },3000);
+  }
+}
+
+// ── Audio ─────────────────────────────────────────────────────────
+// iOS 需要用户交互后才能播放音频，用一个无声节点提前解锁
+let audioCtxUnlocked = false;
+function unlockAudio() {
+  if (audioCtxUnlocked) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    audioCtxUnlocked = true;
+  } catch(_) {}
+}
+// 页面任意点击时解锁
+function unlockAudioAndVoice() {
+  unlockAudio();
+  // 静默初始化语音合成，让后续播报无需先点测试
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+    // 预加载语音列表
+    window.speechSynthesis.getVoices();
+    if (window.speechSynthesis.onvoiceschanged === null) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+  }
+}
+document.addEventListener('touchstart', unlockAudioAndVoice, { once: true });
+document.addEventListener('click', unlockAudioAndVoice, { once: true });
+
+function playBeep(up) {
+  unlockAudio();
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[up?660:440,0],[up?880:330,.13]].forEach(([f,d]) => {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=f; o.type='sine';
+      const t=ctx.currentTime+d;
+      g.gain.setValueAtTime(.25 * (cfg.volume||0.8),t);
+      g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.start(t); o.stop(t+.4);
+    });
+  } catch(_) {}
+}
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = 1.0;
+  u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
+  if (cfg.voiceGender === 'male') u.pitch = 0.5;
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+  if (zhVoice) u.voice = zhVoice;
+  window.speechSynthesis.speak(u);
+}
+
+// 说完才 resolve，用于定点重复播报
+function speakAndWait(text) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-CN';
+    u.rate = 1.0;
+    u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
+    if (cfg.voiceGender === 'male') u.pitch = 0.5;
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+    if (zhVoice) u.voice = zhVoice;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    // 保险：最多等10秒
+    setTimeout(resolve, 10000);
+    window.speechSynthesis.speak(u);
+  });
+}
+
+function setVoiceGender(gender) {
+  cfg.voiceGender = gender;
+  document.getElementById('voiceGenderF').className = 'seg-btn' + (gender==='female'?' active':'');
+  document.getElementById('voiceGenderM').className = 'seg-btn' + (gender==='male'?' active':'');
+  saveSettings();
+  // 播放示例
+  if (cfg.voiceOn) speak(gender==='female' ? '女声播报已选择' : '男声播报已选择');
+}
+
+function testSound() {
+  unlockAudio();
+  playBeep(true);
+  const msg = document.getElementById('audioTestMsg');
+  msg.style.display = 'block';
+  msg.style.color = 'var(--green)';
+  msg.textContent = '✅ 声音正常（听到两声提示音）';
+  setTimeout(() => msg.style.display='none', 3000);
+}
+
+function testVoice() {
+  unlockAudio();
+  const msg = document.getElementById('audioTestMsg');
+  msg.style.display = 'block';
+  msg.style.color = 'var(--tx3)';
+  msg.textContent = '正在播报…';
+  // 等待语音列表加载（iOS 首次加载可能为空）
+  function doSpeak() {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance('比特币上穿一千，请注意');
+    u.lang = 'zh-CN'; u.rate = 1.0; u.volume = 1.0;
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+    if (zhVoice) { u.voice = zhVoice; }
+    u.onstart  = () => { msg.style.color='var(--green)'; msg.textContent='🎙 语音播报中…'; };
+    u.onend    = () => { msg.style.color='var(--green)'; msg.textContent='✅ 语音正常'; setTimeout(()=>msg.style.display='none',2000); };
+    u.onerror  = (e) => { msg.style.color='var(--red)'; msg.textContent='❌ 语音失败：'+e.error+' — 请检查静音开关和辅助功能→朗读内容→中文语音包'; };
+    window.speechSynthesis.speak(u);
+  }
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged=null; doSpeak(); };
+    // 部分 iOS 不触发 onvoiceschanged，延迟兜底
+    setTimeout(() => { if(msg.textContent==='正在播报…') doSpeak(); }, 500);
+  } else {
+    doSpeak();
+  }
+}
+
+// ── Push ──────────────────────────────────────────────────────────
+async function sendTg(id,price,isUp,level,near){
+  if(!cfg.tgToken||!cfg.tgChatId) return 'skip';
+  const s=state[id],sym=isUp?'📈':'📉',dist=Math.abs(price-s.target);
+  const _eq=getCoinQuote(id);
+  const extra=near?`\n🎯 目标 ${fmt(id,s.target)} ${_eq} · 距离 ${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}`:'';
+  const text=`${sym} ${id}/USDT ${isUp?'上穿':'下穿'} ${fmt(id,level)}\n当前：${fmt(id,price)}${extra}\n🕐 ${new Date().toLocaleTimeString('zh-CN')}`;
+  try{
+    const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text})});
+    const d=await r.json();return d.ok?'ok':'err:'+d.description;
+  }catch(e){return 'err:'+e.message;}
+}
+async function sendWx(id,price,isUp,level,near){
+  if(!cfg.wxToken) return 'skip';
+  const s=state[id], dist=Math.abs(price-s.target);
+  const content=`${isUp?'📈':'📉'} **${id}/USDT** ${isUp?'上穿':'下穿'} **${fmt(id,level)} ${getCoinQuote(id)}**\n> 当前价：${fmt(id,price)} ${getCoinQuote(id)}${near?`\n> ⚠️ 临近目标 ${fmt(id,s.target)}`:''}
+> ${new Date().toLocaleTimeString('zh-CN')}`;
+  try{
+    const r=await fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content}})});
+    const d=await r.json();return d.errcode===0?'ok':'err:'+d.errmsg;
+  }catch(e){return 'err:'+e.message;}
+}
+async function testTg(){
+  if(!cfg.tgToken||!cfg.tgChatId){showMsg('tgMsg','err','请填写 Token 和 Chat ID');return;}
+  showMsg('tgMsg','loading','发送中…');
+  const r=await sendTg('BTC',103200,true,103000,false);
+  showMsg('tgMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查 Telegram':'❌ '+r);
+}
+async function testWx(){
+  if(!cfg.wxToken){showMsg('wxMsg','err','请填写企业微信机器人 Webhook 地址');return;}
+  showMsg('wxMsg','loading','发送中…');
+  const r=await sendWx('BTC',103200,true,103000,false);
+  showMsg('wxMsg',r==='ok'?'ok':'err',r==='ok'?'✅ 发送成功，请检查企业微信':'❌ '+r);
+}
+function showMsg(id,type,text){const e=document.getElementById(id);e.className='smsg '+type;e.textContent=text;}
+
+// ── Log ───────────────────────────────────────────────────────────
+function renderLog(){
+  const el=document.getElementById('logList');
+  if(!logs.length){el.innerHTML='<div class="log-empty">等待价格触发播报…</div>';return;}
+  el.innerHTML=logs.map(l=>`
+    <div class="log-row">
+      <span class="lt">${l.t}</span>
+      <span class="lc">${l.id}</span>
+      <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
+      <span class="lp">${fmt(l.id,l.level)}→${fmt(l.id,l.price)}</span>
+      <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':l.mode==='point'?'📌':'固定'}</span>
+      <div class="lchs">${l.chs.filter(c=>c!=='err').map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':''}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+// ── Nav / Drawer ──────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.nav-tab').forEach(b=>{ b.className='nav-tab'; b.style.color=''; });
+  document.getElementById('tab-'+tab).className='nav-tab active';
+  const sa=document.getElementById('scrollArea');
+  if(tab==='market'){
+    document.getElementById('cardsWrap').style.display='flex';
+    document.getElementById('logPanel').style.display='none';
+    document.querySelector('.mkt-bar').style.display='flex';
+  } else if(tab==='log'){
+    document.getElementById('cardsWrap').style.display='none';
+    document.getElementById('logPanel').style.display='block';
+    document.querySelector('.mkt-bar').style.display='none';
+    renderLog();
+  }
+}
+
+function openDrawer(){
+  updateCoinCountLabel();
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+// ── 币种管理 ──────────────────────────────────────────────────────
+function openCoinManager() {
+  renderActiveCoinList();
+  renderPresetGrid();
+  document.getElementById('coinDrawer').classList.add('open');
+  document.getElementById('coinOverlay').classList.add('open');
+  setTimeout(initPairSelector, 100);
+}
+function closeCoinManager() {
+  document.getElementById('coinDrawer').classList.remove('open');
+  document.getElementById('coinOverlay').classList.remove('open');
+}
+
+function renderActiveCoinList() {
+  const el = document.getElementById('activeCoinList');
+  if (!COINS.length) { el.innerHTML='<div style="color:var(--tx3);font-size:12px;text-align:center;padding:12px">暂无监控币种</div>'; return; }
+  el.innerHTML = COINS.map((c,i) => `
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:10px 12px">
+      <div style="width:28px;height:28px;border-radius:50%;background:${c.bg};color:${c.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${c.id.slice(0,2)}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--tx)">${c.name.includes('/')?c.name:c.id+'/USDT'}</div>
+        <div style="font-size:10px;color:var(--tx3)">${c.name} · 步进 ${c.defStep} ${c.quote||getCoinQuote(c.id)||'USDT'}</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        ${i>0?`<button onclick="moveCoin(${i},-1)" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer">↑</button>`:''}
+        ${i<COINS.length-1?`<button onclick="moveCoin(${i},1)" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer">↓</button>`:''}
+        <button onclick="removeCoin('${c.id}')" style="background:var(--rd);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer">×</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderPresetGrid() {
+  const el = document.getElementById('presetCoinGrid');
+  const activeIds = COINS.map(c => c.id);
+  el.innerHTML = COIN_PRESETS.map(c => {
+    const active = activeIds.includes(c.id);
+    return `<button onclick="togglePresetCoin('${c.id}')"
+      style="padding:8px 4px;border-radius:8px;border:1px solid ${active?'var(--green)':'var(--bd)'};
+      background:${active?'var(--gd)':'var(--bg3)'};color:${active?'var(--green)':'var(--tx3)'};
+      font-size:11px;font-weight:600;cursor:pointer;font-family:var(--mono)">${active?'✓ ':''}${c.id}</button>`;
+  }).join('');
+}
+
+function togglePresetCoin(id) {
+  if (COINS.find(c => c.id===id)) removeCoin(id);
+  else { const p=COIN_PRESETS.find(c=>c.id===id); if(p) addCoin(p); }
+}
+
+function moveCoin(index, dir) {
+  const ni = index+dir;
+  if (ni<0||ni>=COINS.length) return;
+  [COINS[index],COINS[ni]]=[COINS[ni],COINS[index]];
+  saveActiveCoins(); renderActiveCoinList(); renderPresetGrid(); rebuildAllCards();
+}
+
+function removeCoin(id) {
+  if (COINS.length<=1) { alert('至少保留一个监控币种'); return; }
+  COINS = COINS.filter(c=>c.id!==id);
+  saveActiveCoins(); updateCoinCountLabel();
+  renderActiveCoinList(); renderPresetGrid(); rebuildAllCards(); resubscribeWS();
+}
+
+function addCoin(coinDef) {
+  if (COINS.find(c=>c.id===coinDef.id)) return;
+  if (COINS.length>=12) { alert('最多同时监控12个币种'); return; }
+  COINS.push(coinDef);
+  initCoinState(coinDef);
+  saveActiveCoins(); updateCoinCountLabel();
+  renderActiveCoinList(); renderPresetGrid(); rebuildAllCards(); resubscribeWS();
+}
+
+// ── 配对选择器逻辑 ────────────────────────────────────────────────
+function initPairSelector() {
+  const baseEl  = document.getElementById('pairBase');
+  const quoteEl = document.getElementById('pairQuote');
+  if (!baseEl||!quoteEl) return;
+  function updatePreview() {
+    const base  = baseEl.value==='CUSTOM'  ? (document.getElementById('pairBaseCustom')?.value||'???')  : baseEl.value;
+    const quote = quoteEl.value==='CUSTOM' ? (document.getElementById('pairQuoteCustom')?.value||'???') : quoteEl.value;
+    const prev = document.getElementById('pairPreview');
+    if (prev) prev.textContent = `${base}/${quote}`;
+    autoSuggestStep(base, quote);
+  }
+  baseEl.addEventListener('change', () => {
+    const c=document.getElementById('pairBaseCustom');
+    if(c) c.style.display=baseEl.value==='CUSTOM'?'block':'none';
+    updatePreview();
+  });
+  quoteEl.addEventListener('change', () => {
+    const c=document.getElementById('pairQuoteCustom');
+    if(c) c.style.display=quoteEl.value==='CUSTOM'?'block':'none';
+    updatePreview();
+  });
+  document.getElementById('pairBaseCustom')?.addEventListener('input', updatePreview);
+  document.getElementById('pairQuoteCustom')?.addEventListener('input', updatePreview);
+}
+
+function autoSuggestStep(base, quote) {
+  const el=document.getElementById('pairStep'); if(!el||el.value) return;
+  if (['BTC','ETH'].includes(quote))   { el.placeholder='如：0.001'; return; }
+  if (['BTC','ETH'].includes(base))    { el.placeholder='如：500'; return; }
+  if (['SOL','AVAX','LINK','UNI','DOT','ATOM','NEAR','APT','INJ','OP','ARB','LTC','BCH'].includes(base)) { el.placeholder='如：1'; return; }
+  if (['XRP','ADA','DOGE','MATIC','SUI','TIA','WLD','FET','SEI','JUP'].includes(base)) { el.placeholder='如：0.01'; return; }
+  el.placeholder='如：1';
+}
+
+async function addPairCoin() {
+  const baseEl  = document.getElementById('pairBase');
+  const quoteEl = document.getElementById('pairQuote');
+  if (!baseEl||!quoteEl) return;
+  const base  = baseEl.value==='CUSTOM'  ? document.getElementById('pairBaseCustom').value.trim().toUpperCase()  : baseEl.value;
+  const quote = quoteEl.value==='CUSTOM' ? document.getElementById('pairQuoteCustom').value.trim().toUpperCase() : quoteEl.value;
+  function showPairMsg(type,text){ const el=document.getElementById('pairMsg'); if(!el) return; el.style.display='block'; el.style.color=type==='ok'?'var(--green)':type==='err'?'var(--red)':'var(--tx3)'; el.textContent=text; }
+  if (!base||!quote) { showPairMsg('err','请选择基础币和计价货币'); return; }
+  const sym = base+quote;
+  if (COINS.find(c=>c.sym===sym)) { showPairMsg('err',`${base}/${quote} 已在监控列表中`); return; }
+  // 直接添加，不做验证（各交易所跨域限制不同，验证意义不大）
+  // 若交易对在当前交易所不存在，行情卡片会显示"—"，用户可自行判断
+  // 根据币种自动推算默认步进
+  const step = autoDefaultStep(base, quote);
+  const colors=['#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ffd93d','#fd79a8','#6c5ce7','#a29bfe'];
+  addCoin({ id:sym, name:`${base}/${quote}`, sym, quote, color:colors[COINS.length%colors.length], bg:'#111',
+    presets:[step,step*2,step*5,step*10], defStep:step, defTarget:step*100,
+    defFarStep:step, defNearStep:step/5, defNearDist:step*10 });
+  showPairMsg('ok',`✅ ${base}/${quote} 已添加，请在主页卡片设置步进`);
+}
+
+function autoDefaultStep(base, quote) {
+  if (['BTC','ETH'].includes(quote)) return 0.001;
+  if (base==='BTC')  return 500;
+  if (base==='ETH')  return 20;
+  if (['SOL','AVAX','LINK','UNI','DOT','ATOM','NEAR','APT','INJ','OP','ARB','LTC','BCH'].includes(base)) return 1;
+  if (['XRP','ADA','DOGE','MATIC','SUI','TIA','WLD','FET','SEI','JUP'].includes(base)) return 0.01;
+  return 1;
+}
+
+async function addCustomCoin() { await addPairCoin(); }
+
+function showCustomMsg(type,text){
+  const el=document.getElementById('pairMsg')||document.getElementById('customCoinMsg');
+  if(!el) return;
+  el.style.display='block';
+  el.style.color=type==='ok'?'var(--green)':type==='err'?'var(--red)':'var(--tx3)';
+  el.textContent=text;
+}
+
+function updateCoinCountLabel(){
+  const el=document.getElementById('coinCountLabel');
+  if(el) el.textContent=`当前监控 ${COINS.length} 个币种`;
+  const chips=document.getElementById('activeCoinChips');
+  if(chips) chips.innerHTML=COINS.map(c=>
+    `<span style="padding:4px 10px;background:var(--bg3);border:1px solid var(--bd);border-radius:99px;font-size:11px;font-family:var(--mono);color:var(--tx2)">${c.id}</span>`
+  ).join('');
+}
+
+function rebuildAllCards(){
+  updateCoinCountLabel(); buildCards(); loadSettings();
+}
+
+// 语音朗读币种名称映射 — 有中文名用中文，没有则逐字母读
+const COIN_VOICE_NAME = {
+  // 顶级主流
+  BTC:'比特币', ETH:'以太坊', SOL:'索拉纳', BNB:'币安币', XRP:'瑞波币',
+  DOGE:'狗狗币', ADA:'艾达币', AVAX:'雪崩', TRX:'波场', TON:'通',
+  SHIB:'柴犬', LINK:'链接', DOT:'波卡', BCH:'比特现金', LTC:'莱特币',
+  UNI:'优尼', NEAR:'尼尔', ATOM:'科斯莫斯', XLM:'恒星', MATIC:'马蹄',
+  // Layer2 / DeFi
+  ARB:'阿比', OP:'乐观', SUI:'穗', APT:'阿普托斯', INJ:'注入',
+  AAVE:'阿维', MKR:'制造者', CRV:'曲线', LDO:'利多', RUNE:'符文',
+  SNX:'合成', COMP:'复合',
+  // AI / 新叙事
+  TAO:'比特张量', FET:'飞特', RENDER:'渲染', WLD:'世界币', AGIX:'奇点', OCEAN:'海洋',
+  // Meme
+  PEPE:'佩佩', FLOKI:'弗洛基', BONK:'邦克', WIF:'威夫', MEME:'迷因',
+  // 公链
+  TIA:'天体', FTM:'幻影', ALGO:'阿尔格', ICP:'互联网计算机', FIL:'文件币',
+  ETC:'以太经典', EOS:'柚子', HBAR:'哈希图', VET:'唯链', MINA:'米娜',
+  ROSE:'玫瑰', KSM:'草间弥生', CFX:'冲突', CELO:'赛罗',
+  // 游戏/NFT
+  AXS:'轴无穷', SAND:'沙盒', MANA:'曼纳', ENJ:'恩金', GALA:'盖拉',
+  APE:'猿猴', IMX:'不可变', GMT:'步行', NOT:'诺特',
+  // 美股代币
+  NVDA:'英伟达', TSLA:'特斯拉', AAPL:'苹果', MSFT:'微软',
+  COIN:'coinbase', AMZN:'亚马逊', GOOGL:'谷歌', META:'元宇宙', MSTR:'微策略',
+};
+function getCoinVoiceName(id) {
+  // 先尝试原始 id（如 BTC）
+  if (COIN_VOICE_NAME[id]) return COIN_VOICE_NAME[id];
+  // 自定义币 id 可能是完整交易对如 XRPUSDT，去掉稳定币后缀取 base
+  const base = id.replace(/USDT$|BUSD$|USDC$|BTC$|ETH$/i, '').toUpperCase();
+  if (base && base !== id && COIN_VOICE_NAME[base]) return COIN_VOICE_NAME[base];
+  // 没有中文名：用 base（去掉后缀后的部分）逐字母读
+  const readId = base || id;
+  return readId.split('').join(' ');
+}
+function onMoreExSelect(exId) {
+  if (!exId) return;
+  if (EXCHANGES[exId]) {
+    // 手动更新 currentExchange（绕过 switchExchange 的 same-check）
+    const prev = currentExchange;
+    currentExchange = exId;
+    localStorage.setItem('current_exchange', exId);
+    syncExchangeUI(exId);
+    if (prev !== exId) {
+      // 重连
+      wsAlive=false; connMode='ws'; wsFailCount=0;
+      clearInterval(pingTimer); clearTimeout(reconnTimer); clearInterval(restTimer);
+      try{if(ws) ws.close();}catch(_){}
+      updateCardSubtitles();
+      saveSettings();
+      setTimeout(startConnection, 400);
+    }
+    return;
+  }
+  showToast(`${exId} 暂时使用 REST 轮询模式`);
+  switchExchange('binance');
+}
+
+// 用价格的小数位格式化距离（距离比价格小，不能用距离本身决定小数位）
+function fmtDist(id, dist, price) {
+  if (!dist && dist !== 0) return '—';
+  // 根据当前价格大小决定小数位，和界面显示一致
+  if (price >= 10000) return Math.round(dist).toLocaleString('en-US');
+  if (price >= 1000)  return dist.toFixed(1);
+  if (price >= 100)   return dist.toFixed(2);
+  if (price >= 10)    return dist.toFixed(3);
+  return dist.toFixed(4);
+}
+
+function resubscribeWS(){
+  if(!wsAlive||!ws||ws.readyState!==1) return;
+  const ex = EXCHANGES[currentExchange];
+  const subMsg = ex.subscribe(COINS, mktType);
+  if(subMsg) ws.send(subMsg);
+}
+
+// 币种抽屉手势关闭
+document.addEventListener('DOMContentLoaded',()=>{
+  const cd=document.getElementById('coinDrawer');
+  if(!cd) return;
+  let sy=0;
+  cd.addEventListener('touchstart',e=>sy=e.touches[0].clientY,{passive:true});
+  // coin manager also uses close button - disable swipe to prevent accidents
+  // cd.addEventListener('touchmove',e=>{if(e.touches[0].clientY-sy>60)closeCoinManager();},{passive:true});
+});
+
+// swipe disabled on settings drawer - use close button instead
+let touchStartY=0;
+// Only track touch for potential future use, no auto-close
+document.getElementById('drawer').addEventListener('touchstart',e=>touchStartY=e.touches[0].clientY,{passive:true});
+document.getElementById('drawer').addEventListener('touchmove',e=>{
+  // Swipe-to-close disabled: use the ✕ close button
+  void 0;
+},{passive:true});
+
+function pushTab(btn,id){
+  document.querySelectorAll('.push-tabs .ptab').forEach(b=>b.className='ptab');
+  document.querySelectorAll('.pbody').forEach(b=>b.className='pbody');
+  btn.className='ptab active';
+  document.getElementById('pb-'+id).className='pbody active';
+}
+
+// ── Market switch ─────────────────────────────────────────────────
+function switchMkt(type){
+  if(mktType===type) return;
+  mktType=type;
+  // update bar buttons
+  document.getElementById('mktSpot').className    = 'mkt-btn'+(type==='SPOT'?' active':'');
+  document.getElementById('mktFutures').className = 'mkt-btn'+(type==='USDT-FUTURES'?' active':'');
+  updateSegBtns();
+  // update card subtitles
+  const label=type==='USDT-FUTURES'?'永续合约':'现货';
+  COINS.forEach(c=>{
+    const el=document.getElementById('csub-'+c.id);
+    if(el) el.textContent=c.name+' · '+label;
+    mkt[c.id]={price:0,prevPrice:0,change24h:0,high24h:0,low24h:0,open24h:0,loaded:false};
+    const pv=document.getElementById('pv-'+c.id); if(pv) pv.textContent='—';
+    const ct=document.getElementById('ct-'+c.id); if(ct){ct.textContent='+0.00%';ct.className='change-tag up';}
+    const hi=document.getElementById('hi-'+c.id); if(hi) hi.textContent='H:—';
+    const lo=document.getElementById('lo-'+c.id); if(lo) lo.textContent='L:—';
+    const lf=document.getElementById('lf-'+c.id); if(lf) lf.textContent='';
+  });
+  wsAlive=false; connMode='ws'; wsFailCount=0;
+  clearInterval(pingTimer); clearTimeout(reconnTimer); clearInterval(restTimer);
+  try{if(ws) ws.close();}catch(_){}
+  updateCardSubtitles();
+  saveSettings();
+  setTimeout(startConnection, 400);
+}
+function updateSegBtns(){
+  document.getElementById('segSpot').className    = 'seg-btn'+(mktType==='SPOT'?' active':'');
+  document.getElementById('segFutures').className = 'seg-btn'+(mktType==='USDT-FUTURES'?' active':'');
+}
+
+// ── Controls ─────────────────────────────────────────────────────
+// ── Screen Wake Lock（防锁屏）────────────────────────────────────
+let wakeLockSentinel = null;
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return false;
+  try {
+    wakeLockSentinel = await navigator.wakeLock.request('screen');
+    wakeLockSentinel.addEventListener('release', () => {
+      // 页面重新可见时自动重新申请
+      if (cfg.wakeLock) requestWakeLock();
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+function releaseWakeLock() {
+  if (wakeLockSentinel) { wakeLockSentinel.release(); wakeLockSentinel = null; }
+}
+
+// 页面从后台切回来时，若开启了常亮则重新申请
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && cfg.wakeLock) requestWakeLock();
+});
+
+function togCoin(id){
+  state[id].enabled=!state[id].enabled;
+  document.getElementById('ctog-'+id).className='tgl'+(state[id].enabled?' on':'');
+  saveSettings();
+}
+function togCtrl(t){
+  if(t==='sound'){cfg.soundOn=!cfg.soundOn;document.getElementById('togSound').className='tgl'+(cfg.soundOn?' on':'');}
+  if(t==='voice'){cfg.voiceOn=!cfg.voiceOn;document.getElementById('togVoice').className='tgl'+(cfg.voiceOn?' on':'');}
+  if(t==='tg'){cfg.tgOn=!cfg.tgOn;document.getElementById('togTg').className='tgl'+(cfg.tgOn?' on':'');updIcons();}
+  if(t==='wx'){cfg.wxOn=!cfg.wxOn;document.getElementById('togWx').className='tgl'+(cfg.wxOn?' on':'');updIcons();}
+  if(t==='wakeLock'){
+    cfg.wakeLock=!cfg.wakeLock;
+    const btn=document.getElementById('togWakeLock');
+    btn.className='tgl'+(cfg.wakeLock?' on':'');
+    if(cfg.wakeLock){
+      requestWakeLock().then(ok=>{
+        if(!ok){
+          // 不支持 Wake Lock API，用视频兜底
+          enableVideoWakeLock();
+        }
+      });
+    } else {
+      releaseWakeLock();
+      disableVideoWakeLock();
+    }
+  }
+  saveSettings();
+}
+function updIcons(){COINS.forEach(c=>{document.getElementById('ci-tg-'+c.id).className='chi tg'+(cfg.tgOn?' on':'');document.getElementById('ci-wx-'+c.id).className='chi wx'+(cfg.wxOn?' on':'');});}
+function togPause(){
+  paused=!paused;
+  document.getElementById('togPause').className='tgl'+(paused?' on':'');
+  if (paused) {
+    // 暂停所有定时器
+    COINS.forEach(c => { if(state[c.id]?.timerOn) stopTimer(c.id); });
+  } else {
+    // 恢复所有定时器
+    COINS.forEach(c => { if(state[c.id]?.timerOn) startTimer(c.id); });
+  }
+  saveSettings();
+}
+
+// ── 视频兜底方案（兼容不支持 Wake Lock API 的旧版 Safari）────────
+let videoEl = null;
+function enableVideoWakeLock() {
+  if (videoEl) return;
+  videoEl = document.createElement('video');
+  videoEl.setAttribute('playsinline', '');
+  videoEl.setAttribute('muted', '');
+  videoEl.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;top:0;left:0;pointer-events:none';
+  // 1x1 透明 mp4（base64，极小）
+  videoEl.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAAGm1kYXQAAAGzABAHAAABthADAowdbb9/AAAC6W1vb3YAAABsbXZoZAAAAAB8JbCAfCWwgAAAA+gAAAAAAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAIVdHJhawAAAFx0a2hkAAAAD3wlsIB8JbCAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAIAAAACAAAAAABsW1kaWEAAAAgbWRoZAAAAAB8JbCAfCWwgAAAA+gAAAAAAABVxAAAAAAAAC1oZGxyAAAAAAAAAAB2aWRlAAAAAAAAAAAAAAAAVmlkZW9IYW5kbGVyAAAAAVxtaW5mAAAAFHZtaGQAAAABAAAAAAAAAAAAAAAkZGluZgAAABxkcmVmAAAAAAAAAAEAAAAMdXJsIAAAAAEAAAEcc3RibAAAALhzdHNkAAAAAAAAAAEAAACobXA0dgAAAAAAAAABAAAAAAAAAAAAAgAIAAAAAsgAAAAAAAMgZXNkcwAAAAADgICAIgACAARggICAFEAVBTAAAO0AAADtAgUEggICABaAgIABAgAAABhzdHRzAAAAAAAAAAEAAAAEAAAD6AAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAAEAAAAAQAAABRzdHN6AAAAAAAAAtAAAAQAAAATc3RjbwAAAAAAAAABAAAALAAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTUuMzMuMTAw';
+  videoEl.loop = true;
+  document.body.appendChild(videoEl);
+  videoEl.play().catch(()=>{});
+}
+function disableVideoWakeLock() {
+  if (videoEl) { videoEl.pause(); videoEl.remove(); videoEl = null; }
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+// ── 授权验证系统 ──────────────────────────────────────────────────
+const WORKER_URL = 'https://price-alert-worker.qunliang-feng.workers.dev';
+
+const LIC_KEY = 'bitget_license_v1';
+
+// ── Cookie 辅助（iOS Safari 不会清除 Cookie，比 localStorage 更持久）──
+function setCookie(name, value, days) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires};path=/;SameSite=Lax`;
+}
+function getCookie(name) {
+  const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function deleteCookie(name) {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+}
+let licenseValid = false;
+
+function getDeviceId() {
+  let id = localStorage.getItem('device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('device_id', id);
+  }
+  return id;
+}
+
+function showLicenseScreen() {
+  const app = document.getElementById('appWrap');
+  if (app) app.style.display = 'none';
+
+  const screen = document.createElement('div');
+  screen.id = 'licenseScreen';
+  screen.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px';
+  screen.innerHTML = `
+    <div style="width:100%;max-width:360px">
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="width:80px;height:80px;border-radius:20px;overflow:hidden;margin:0 auto 12px;border:2px solid #1a6496;box-shadow:0 0 0 4px rgba(26,100,150,.2)">
+          <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="font-size:20px;font-weight:700;color:var(--tx)">西本聪数字资产播报机器人</div>
+        <div style="font-size:13px;color:var(--tx3);margin-top:4px">请输入激活码以继续使用</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:20px">
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">激活码</div>
+        <input id="licInput" type="text" placeholder="XXXX-XXXX-XXXX-XXXX"
+          style="width:100%;padding:12px;font-size:15px;font-family:var(--mono);letter-spacing:.1em;border:1px solid var(--bd);border-radius:10px;background:var(--bg3);color:var(--tx);outline:none;text-transform:uppercase;margin-bottom:10px"
+          oninput="this.value=this.value.toUpperCase()">
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:5px">推荐码（选填，有推荐人请填写）</div>
+        <input id="refInput" type="text" placeholder="REF-XXXXXX"
+          style="width:100%;padding:10px;font-size:13px;font-family:var(--mono);letter-spacing:.1em;border:1px solid var(--bd);border-radius:10px;background:var(--bg3);color:var(--tx2);outline:none;text-transform:uppercase;margin-bottom:12px"
+          oninput="this.value=this.value.toUpperCase()">
+        <button onclick="doActivate()"
+          style="width:100%;padding:13px;font-size:15px;font-weight:600;background:var(--blue);color:white;border:none;border-radius:10px;cursor:pointer;font-family:var(--sans)">
+          激活
+        </button>
+        <div id="licMsg" style="font-size:12px;padding:8px 10px;border-radius:8px;margin-top:10px;display:none"></div>
+        <div style="font-size:11px;color:var(--tx3);text-align:center;margin-top:14px;line-height:1.7">
+          没有激活码？<br>
+          购买地址：<span style="color:var(--blue)">gumroad.com</span> 或 <span style="color:var(--blue)">afdian.com</span>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(screen);
+
+  // 自动从 URL 填入推荐码
+  setTimeout(() => {
+    const urlRef = getRefCodeFromUrl();
+    const refInput = document.getElementById('refInput');
+    if (urlRef && refInput) refInput.value = urlRef;
+  }, 100);
+
+  // 自动格式化激活码输入（每4位加横线）
+  document.getElementById('licInput').addEventListener('input', function() {
+    let v = this.value.replace(/[^A-Z0-9]/g,'');
+    let out = '';
+    for (let i=0; i<v.length && i<16; i++) {
+      if (i>0 && i%4===0) out+='-';
+      out+=v[i];
+    }
+    this.value = out;
+  });
+}
+
+function hideLicenseScreen() {
+  const s = document.getElementById('licenseScreen');
+  if (s) s.remove();
+  const app = document.getElementById('appWrap');
+  if (app) app.style.display = '';
+}
+
+function showLicMsg(type, text) {
+  const el = document.getElementById('licMsg');
+  el.style.display = 'block';
+  el.style.background = type==='ok' ? 'var(--gd)' : type==='warn' ? 'var(--ad)' : 'var(--rd)';
+  el.style.color = type==='ok' ? 'var(--green)' : type==='warn' ? 'var(--amber)' : 'var(--red)';
+  el.textContent = text;
+}
+
+async function doActivate() {
+  const code      = document.getElementById('licInput').value.trim();
+  const referredBy= (document.getElementById('refInput')?.value||'').trim() || getRefCodeFromUrl();
+  if (code.length < 19) { showLicMsg('err', '请输入完整的激活码'); return; }
+  showLicMsg('ok', '验证中…');
+  try {
+    const res  = await fetch(WORKER_URL+'/activate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code, deviceId:getDeviceId(), referredBy:referredBy||undefined }) });
+    const data = await res.json();
+    if (data.success) {
+      const licData = { code, plan:data.plan, expiresAt:data.expiresAt, email:data.email, refCode:data.refCode, verifiedAt:Date.now() };
+      localStorage.setItem(LIC_KEY, JSON.stringify(licData));
+      setCookie('xbc_lic', JSON.stringify(licData), 365); // Cookie 备份，1年有效
+      showLicMsg('ok', `✅ 激活成功！有效至 ${new Date(data.expiresAt).toLocaleDateString()}`);
+      setTimeout(()=>{ licenseValid=true; hideLicenseScreen(); }, 1200);
+    } else {
+      const errMap = { invalid_code:'激活码无效', expired:'激活码已过期', revoked:'激活码已停用', device_mismatch:'该码已在其他设备使用' };
+      showLicMsg('err', errMap[data.error]||'激活失败：'+data.error);
+    }
+  } catch(e) { showLicMsg('err', '网络错误，请检查连接'); }
+}
+
+async function checkLicense() {
+  // 先读本地缓存
+  // 优先读 localStorage，没有则从 Cookie 恢复
+  let cached = localStorage.getItem(LIC_KEY);
+  if (!cached) {
+    const cookieLic = getCookie('xbc_lic');
+    if (cookieLic) {
+      cached = cookieLic;
+      localStorage.setItem(LIC_KEY, cookieLic); // 写回 localStorage
+    }
+  }
+  if (!cached) { showLicenseScreen(); return; }
+
+  const lic = JSON.parse(cached);
+  const now = Date.now();
+
+  // 本地快速检查：过期直接弹激活
+  if (now > lic.expiresAt) { showLicenseScreen(); return; }
+
+  // 7天内到期提醒
+  const daysLeft = Math.ceil((lic.expiresAt - now) / 86400000);
+  if (daysLeft <= 7) showExpireWarning(daysLeft);
+
+  // ✅ 本地缓存有效，立即放行启动行情，后台再验证
+  licenseValid = true;
+  startConnection();
+
+  // 每隔24小时才联网验证一次
+  const lastCheck = parseInt(localStorage.getItem('lic_last_check') || '0');
+  if (now - lastCheck < 24 * 3600 * 1000) return;
+
+  // 后台联网验证（不阻塞行情）
+  try {
+    const res = await fetch(WORKER_URL + '/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: lic.code, deviceId: getDeviceId() })
+    });
+    const data = await res.json();
+    if (data.valid) {
+      lic.expiresAt = data.expiresAt;
+      const updatedLic = { ...lic, verifiedAt: now };
+      localStorage.setItem(LIC_KEY, JSON.stringify(updatedLic));
+      setCookie('xbc_lic', JSON.stringify(updatedLic), 365);
+      localStorage.setItem('lic_last_check', now.toString());
+      if (data.warning) showExpireWarning(data.daysLeft);
+    } else if (data.reason === 'revoked' || data.reason === 'not_found') {
+      // 只有明确被吊销或不存在才中断，过期继续用到本地过期时间
+      localStorage.removeItem(LIC_KEY);
+      deleteCookie('xbc_lic');
+      licenseValid = false;
+      wsAlive = false;
+      clearInterval(pingTimer);
+      clearInterval(restTimer);
+      try { if(ws) ws.close(); } catch(_) {}
+      showLicenseScreen();
+    } else {
+      // 其他情况（过期、网络问题等）宽松处理，更新检查时间避免频繁请求
+      localStorage.setItem('lic_last_check', now.toString());
+    }
+  } catch(e) {
+    // 网络失败宽松处理，已经在跑了不中断
+  }
+}
+
+function showExpireWarning(daysLeft) {
+  const w = document.createElement('div');
+  w.style.cssText = 'position:fixed;top:56px;left:0;right:0;z-index:98;background:var(--ad);border-bottom:1px solid #f59e0b44;padding:9px 16px;font-size:12px;color:var(--amber);display:flex;align-items:center;justify-content:space-between';
+  w.innerHTML = `<span>⚠️ 授权将在 <b>${daysLeft}</b> 天后到期，请及时续费</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--amber);font-size:16px;cursor:pointer">✕</button>`;
+  document.body.appendChild(w);
+  document.getElementById('scrollArea').style.top = (56+38)+'px';
+  setTimeout(()=>{ w.remove(); document.getElementById('scrollArea').style.top='56px'; }, 10000);
+}
+
+// ── 推荐返佣入口 ──────────────────────────────────────────────────
+function showReferralPanel() {
+  const cached = localStorage.getItem(LIC_KEY);
+  const lic = cached ? JSON.parse(cached) : null;
+
+  const panel = document.createElement('div');
+  panel.id = 'refPanel';
+  panel.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:999;overflow-y:auto;padding:20px';
+
+  // 试用码用户没有 refCode
+  if (!lic || !lic.refCode) {
+    panel.innerHTML = `
+    <div style="max-width:420px;margin:0 auto">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <button onclick="document.getElementById('refPanel').remove()" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">← 返回</button>
+        <span style="font-size:16px;font-weight:600;color:var(--tx)">💰 推荐赚钱</span>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:24px;text-align:center">
+        <div style="font-size:36px;margin-bottom:12px">🎁</div>
+        <div style="font-size:15px;font-weight:600;color:var(--tx);margin-bottom:8px">升级正式版即可开启推荐赚钱</div>
+        <div style="font-size:13px;color:var(--tx3);line-height:1.8">
+          试用期用户暂不支持推荐功能<br>
+          购买月付或年付后，激活即自动获得专属推荐码<br>
+          每成功推荐一位付费用户，获得 <b style="color:var(--amber)">30%</b> 永久佣金
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(panel);
+    return;
+  }
+  panel.innerHTML = `
+    <div style="max-width:420px;margin:0 auto">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <button onclick="document.getElementById('refPanel').remove()" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">← 返回</button>
+        <span style="font-size:16px;font-weight:600;color:var(--tx)">💰 推荐赚钱</span>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:8px">你的专属推荐码</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="flex:1;padding:12px;background:var(--bg3);border:1px solid var(--bd);border-radius:10px;font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:.15em;color:var(--tx)">${lic.refCode}</div>
+          <button onclick="copyRefCode('${lic.refCode}')" id="copyRefBtn"
+            style="padding:12px 16px;background:var(--blue-d);color:#60a5fa;border:1px solid #1e3a6e;border-radius:10px;font-size:13px;cursor:pointer;white-space:nowrap">复制</button>
+        </div>
+        <div style="font-size:12px;color:var(--tx3);line-height:1.8">
+          朋友激活时输入你的推荐码，你将获得其付款金额的 <b style="color:var(--amber)">30%</b> 佣金<br>
+          月付赚 <b style="color:var(--green)">$2.7</b> · 年付赚 <b style="color:var(--green)">$17.7</b> · 买断赚 <b style="color:var(--green)">$44.7</b>
+        </div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:12px">
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:12px">分享链接（朋友点击后自动填入推荐码）</div>
+        <div style="padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;font-size:11px;color:var(--tx2);word-break:break-all;font-family:var(--mono)" id="refLink">加载中…</div>
+        <button onclick="copyRefLink()" style="width:100%;margin-top:10px;padding:10px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;font-size:13px;cursor:pointer">复制分享链接</button>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:18px" id="refStatsPanel">
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:12px">我的收益</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:12px">
+          <div><div style="font-size:22px;font-weight:600;color:var(--tx)" id="rsTotalRef">—</div><div style="font-size:11px;color:var(--tx3)">推荐人数</div></div>
+          <div><div style="font-size:22px;font-weight:600;color:var(--amber)" id="rsPending">—</div><div style="font-size:11px;color:var(--tx3)">待结算($)</div></div>
+          <div><div style="font-size:22px;font-weight:600;color:var(--green)" id="rsSettled">—</div><div style="font-size:11px;color:var(--tx3)">已到账($)</div></div>
+        </div>
+        <div id="rsDetail" style="font-size:11px;color:var(--tx3)">加载中…</div>
+      </div>
+    </div>`;
+  document.body.appendChild(panel);
+
+  // 设置分享链接
+  const shareLink = `${location.href.split('?')[0]}?ref=${lic.refCode}`;
+  const linkEl = document.getElementById('refLink');
+  if (linkEl) linkEl.textContent = shareLink;
+
+  // 加载收益数据
+  loadRefStats(lic.code);
+}
+
+async function loadRefStats(licCode) {
+  try {
+    const res  = await fetch(WORKER_URL+'/ref/info', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:licCode}) });
+    const data = await res.json();
+    const rsTR = document.getElementById('rsTotalRef');
+    const rsP  = document.getElementById('rsPending');
+    const rsS  = document.getElementById('rsSettled');
+    const rsDet= document.getElementById('rsDetail');
+    if (rsTR) rsTR.textContent = data.totalReferrals || 0;
+    if (rsP)  rsP.textContent  = (data.pendingAmount||0).toFixed(2);
+    if (rsS)  rsS.textContent  = (data.settledAmount||0).toFixed(2);
+    if (rsDet) {
+      const refs = data.referrals||[];
+      rsDet.innerHTML = refs.length
+        ? refs.map(r=>`<span style="display:inline-block;margin:2px 4px;padding:2px 8px;background:${r.settled?'var(--gd)':'var(--ad)'};color:${r.settled?'var(--green)':'var(--amber)'};border-radius:99px">${r.plan} +$${r.amount.toFixed(2)}${r.settled?' ✓':''}</span>`).join('')
+        : '还没有推荐记录，快去分享吧！';
+    }
+  } catch(e) {}
+}
+
+function copyRefCode(code) {
+  navigator.clipboard.writeText(code).then(()=>{
+    const btn=document.getElementById('copyRefBtn');
+    if(btn){btn.textContent='已复制 ✓';setTimeout(()=>btn.textContent='复制',2000);}
+  });
+}
+function copyRefLink() {
+  const el=document.getElementById('refLink');
+  if(el) navigator.clipboard.writeText(el.textContent).then(()=>{
+    const btn=event.target; btn.textContent='已复制 ✓'; setTimeout(()=>btn.textContent='复制分享链接',2000);
+  });
+}
+
+// 从 URL 自动读取推荐码
+function getRefCodeFromUrl() {
+  return new URLSearchParams(location.search).get('ref') || '';
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+// 先从 localStorage 恢复 state，再 buildCards，确保卡片用正确的状态渲染
+(function preloadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    // 恢复 cfg
+    if (data.cfg) Object.assign(cfg, data.cfg);
+    // 恢复 mktType
+    if (data.mktType) mktType = data.mktType;
+    // 恢复 exchange
+    if (data.exchange) currentExchange = data.exchange;
+    // 恢复 coinStates 到 state 对象
+    if (data.coinStates) {
+      Object.keys(data.coinStates).forEach(id => {
+        if (state[id]) Object.assign(state[id], data.coinStates[id]);
+      });
+    }
+  } catch(_) {}
+})();
+buildCards();
+updateCoinCountLabel();
+// 初始化交易所按钮高亮（与 currentExchange 保持一致）
+syncExchangeUI(currentExchange);
+loadSettings();
+
+// 包裹整个 app，方便激活界面覆盖
+const appEl = document.getElementById('appWrap');
+
+// 检测 file:// 协议
+if (location.protocol === 'file:') {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:56px;left:0;right:0;z-index:99;background:#2d1f06;border-bottom:1px solid #f59e0b44;padding:10px 16px;font-size:12px;color:#f59e0b;line-height:1.6;display:flex;align-items:flex-start;gap:10px';
+  banner.innerHTML = `<span style="font-size:16px;flex-shrink:0">⚠️</span><div><b>iPhone 需要通过 HTTPS 访问</b><br>本地文件无法连接网络。请将文件上传到 GitHub Pages 后用 Safari 打开链接。<button onclick="this.parentElement.parentElement.parentElement.remove()" style="margin-left:8px;background:#f59e0b22;border:1px solid #f59e0b55;color:#f59e0b;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:var(--sans)">知道了</button></div>`;
+  document.body.appendChild(banner);
+  document.getElementById('scrollArea').style.top = '106px';
+  setWS('error');
+  document.getElementById('wsText').textContent = '需要HTTPS';
+  licenseValid = true; // file:// 调试时跳过验证
+  startConnection();
+} else {
+  // 先验证授权，checkLicense 内部会调用 startConnection
+  checkLicense();
+}
+
+</script>
+</body>
+</html>

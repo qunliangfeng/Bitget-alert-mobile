@@ -3217,22 +3217,22 @@ function showReferralPanel() {
         </div>
         <div style="font-size:12px;color:var(--tx3);line-height:1.8">
           朋友激活时输入你的推荐码，你将获得其付款金额的 <b style="color:var(--amber)">30%</b> 佣金<br>
-          月付赚 <b style="color:var(--green)">$2.7</b> · 年付赚 <b style="color:var(--green)">$17.7</b> · 买断赚 <b style="color:var(--green)">$44.7</b>
+
         </div>
       </div>
 
       <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:12px">
         <div style="font-size:12px;color:var(--tx3);margin-bottom:12px">分享链接（朋友点击后自动填入推荐码）</div>
         <div style="padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;font-size:11px;color:var(--tx2);word-break:break-all;font-family:var(--mono)" id="refLink">加载中…</div>
-        <button onclick="copyRefLink()" style="width:100%;margin-top:10px;padding:10px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;font-size:13px;cursor:pointer">复制分享链接</button>
+        <button onclick="copyRefLink()" id="copyRefLinkBtn" style="width:100%;margin-top:10px;padding:10px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;font-size:13px;cursor:pointer">复制分享链接</button>
       </div>
 
       <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:18px" id="refStatsPanel">
         <div style="font-size:12px;color:var(--tx3);margin-bottom:12px">我的收益</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:12px">
           <div><div style="font-size:22px;font-weight:600;color:var(--tx)" id="rsTotalRef">—</div><div style="font-size:11px;color:var(--tx3)">推荐人数</div></div>
-          <div><div style="font-size:22px;font-weight:600;color:var(--amber)" id="rsPending">—</div><div style="font-size:11px;color:var(--tx3)">待结算($)</div></div>
-          <div><div style="font-size:22px;font-weight:600;color:var(--green)" id="rsSettled">—</div><div style="font-size:11px;color:var(--tx3)">已到账($)</div></div>
+          <div><div style="font-size:22px;font-weight:600;color:var(--amber)" id="rsPending">—</div><div style="font-size:11px;color:var(--tx3)">待结算(USDT)</div></div>
+          <div><div style="font-size:22px;font-weight:600;color:var(--green)" id="rsSettled">—</div><div style="font-size:11px;color:var(--tx3)">已到账(USDT)</div></div>
         </div>
         <div id="rsDetail" style="font-size:11px;color:var(--tx3)">加载中…</div>
       </div>
@@ -3276,8 +3276,18 @@ function copyRefCode(code) {
 }
 function copyRefLink() {
   const el=document.getElementById('refLink');
-  if(el) navigator.clipboard.writeText(el.textContent).then(()=>{
-    const btn=event.target; btn.textContent='已复制 ✓'; setTimeout(()=>btn.textContent='复制分享链接',2000);
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent.trim()).then(()=>{
+    const btn=document.getElementById('copyRefLinkBtn');
+    if(btn){
+      btn.textContent='✓ 已复制！';
+      btn.style.color='var(--green)';
+      btn.style.borderColor='var(--green)';
+      setTimeout(()=>{btn.textContent='复制分享链接';btn.style.color='';btn.style.borderColor='';},2000);
+    }
+  }).catch(()=>{
+    const btn=document.getElementById('copyRefLinkBtn');
+    if(btn){btn.textContent='复制失败，请手动复制';setTimeout(()=>btn.textContent='复制分享链接',2000);}
   });
 }
 

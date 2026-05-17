@@ -914,7 +914,10 @@ function saveSettings() {
 // 上传设置到 Worker KV
 async function syncSettingsToCloud(data) {
   try {
-    const licenseCode = localStorage.getItem('license_code');
+    const licRaw = localStorage.getItem(LIC_KEY) || getCookie('xbc_lic');
+    if (!licRaw) return;
+    const licObj = JSON.parse(licRaw);
+    const licenseCode = licObj.code;
     if (!licenseCode) return;
     await fetch(`${WORKER_URL}/settings/save`, {
       method: 'POST',
@@ -927,7 +930,11 @@ async function syncSettingsToCloud(data) {
 // 从云端拉取设置
 async function loadSettingsFromCloud() {
   try {
-    const licenseCode = localStorage.getItem('license_code');
+    // 从正确的 key 读取激活码
+    const licRaw = localStorage.getItem(LIC_KEY) || getCookie('xbc_lic');
+    if (!licRaw) return null;
+    const licObj = JSON.parse(licRaw);
+    const licenseCode = licObj.code;
     if (!licenseCode) return null;
     const res = await fetch(`${WORKER_URL}/settings/load`, {
       method: 'POST',
@@ -953,13 +960,19 @@ async function loadSettings() {
     }
     if (raw) applySettings(JSON.parse(raw));
 
-    // 再从云端拉取最新设置（可能比本地更新）
+    // 从云端拉取设置（无论本地是否有数据都执行，确保恢复最新设置）
     const cloudData = await loadSettingsFromCloud();
     if (cloudData && cloudData.savedAt) {
       const localSavedAt = raw ? (JSON.parse(raw).savedAt || 0) : 0;
-      if (cloudData.savedAt > localSavedAt) {
-        // 云端更新，覆盖本地
+      if (cloudData.savedAt >= localSavedAt) {
+        // 云端数据更新或本地为空，覆盖本地
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+        setCookie('xbc_settings', JSON.stringify({
+          cfg: cloudData.cfg,
+          mktType: cloudData.mktType,
+          exchange: cloudData.exchange,
+          savedAt: cloudData.savedAt
+        }), 365);
         applySettings(cloudData);
       }
     }

@@ -3099,6 +3099,11 @@ async function doActivate(force) {
       localStorage.setItem(LIC_KEY, JSON.stringify(licData));
       setCookie('xbc_lic', JSON.stringify(licData), 365);
       showLicMsg('ok', `✅ 激活成功！有效至 ${new Date(data.expiresAt).toLocaleDateString()}`);
+      // 激活成功后立即从云端拉取设置，确保切换设备时设置不丢失
+      try {
+        const cloudData = await loadSettingsFromCloud();
+        if (cloudData) applySettings(cloudData);
+      } catch(_) {}
       setTimeout(()=>{ licenseValid=true; hideLicenseScreen(); }, 1200);
     } else if (data.error === 'device_switch') {
       // 付费码已在其他设备，弹确认框
@@ -3106,7 +3111,13 @@ async function doActivate(force) {
       const confirmBtn = document.createElement('button');
       confirmBtn.textContent = '确认切换（退出另一台设备）';
       confirmBtn.style.cssText = 'width:100%;margin-top:8px;padding:10px;background:var(--amber);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer';
-      confirmBtn.onclick = () => { confirmBtn.remove(); doActivate(true); };
+      confirmBtn.onclick = async () => {
+        confirmBtn.textContent = '切换中…';
+        confirmBtn.disabled = true;
+        // 切换前先同步一次云端设置（保证设置不丢失）
+        try { await syncSettingsToCloud(JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')); } catch(_) {}
+        doActivate(true);
+      };
       const msgEl = document.getElementById('licMsg');
       if (msgEl) msgEl.after(confirmBtn);
     } else {
@@ -3145,7 +3156,7 @@ async function checkLicense() {
 
   // 每隔24小时才联网验证一次
   const lastCheck = parseInt(localStorage.getItem('lic_last_check') || '0');
-  if (now - lastCheck < 24 * 3600 * 1000) return;
+  if (now - lastCheck < 10 * 60 * 1000) return; // 10分钟检查一次
 
   // 后台联网验证（不阻塞行情）
   try {
@@ -3162,6 +3173,31 @@ async function checkLicense() {
       setCookie('xbc_lic', JSON.stringify(updatedLic), 365);
       localStorage.setItem('lic_last_check', now.toString());
       if (data.warning) showExpireWarning(data.daysLeft);
+    } else if (data.error === 'device_mismatch') {
+      // 设备已被切换，先弹通知再退出
+      localStorage.removeItem(LIC_KEY);
+      deleteCookie('xbc_lic');
+      licenseValid = false;
+      wsAlive = false;
+      clearInterval(pingTimer);
+      clearInterval(restTimer);
+      try { if(ws) ws.close(); } catch(_) {}
+      // 弹出醒目通知
+      const notice = document.createElement('div');
+      notice.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px';
+      notice.innerHTML = `
+        <div style="background:var(--bg2);border:2px solid var(--amber);border-radius:16px;padding:28px 24px;max-width:340px;text-align:center">
+          <div style="font-size:36px;margin-bottom:12px">📱</div>
+          <div style="font-size:16px;font-weight:700;color:var(--amber);margin-bottom:10px">设备已切换</div>
+          <div style="font-size:13px;color:var(--tx2);line-height:1.7;margin-bottom:20px">
+            此激活码已在另一台设备上登录<br>当前设备已退出
+          </div>
+          <button onclick="this.closest('div[style*=fixed]').remove();showLicenseScreen();"
+            style="width:100%;padding:12px;background:var(--amber);color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">
+            重新激活
+          </button>
+        </div>`;
+      document.body.appendChild(notice);
     } else if (data.reason === 'revoked' || data.reason === 'not_found') {
       // 只有明确被吊销或不存在才中断，过期继续用到本地过期时间
       localStorage.removeItem(LIC_KEY);

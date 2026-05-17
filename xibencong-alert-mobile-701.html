@@ -3373,8 +3373,18 @@ function showWithdrawModal() {
     '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:16px;padding:24px;width:100%;max-width:360px;box-sizing:border-box">' +
       '<div style="font-size:15px;font-weight:600;color:var(--tx);margin-bottom:6px">💸 提现到钱包</div>' +
       '<div style="font-size:12px;color:var(--tx3);margin-bottom:14px">可提现余额：<b style="color:var(--amber)">' + pending.toFixed(2) + ' USDT</b>（最低 5 USDT）</div>' +
-      '<div style="font-size:12px;color:var(--tx3);margin-bottom:5px">USDT 钱包地址（TRC20）</div>' +
-      '<input id="wdWallet" placeholder="T开头的TRC20地址" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box;margin-bottom:10px">' +
+      '<div style="font-size:12px;color:var(--tx3);margin-bottom:6px">选择网络</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">' +
+        '<button onclick="_selectNetwork(this,\'TRC20\')" class="netBtn" style="padding:8px 4px;background:var(--bg3);border:2px solid var(--blue);border-radius:8px;color:var(--tx);font-size:12px;cursor:pointer;text-align:center"><div style="font-weight:600">TRC20</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">波场</div></button>' +
+        '<button onclick="_selectNetwork(this,\'ERC20\')" class="netBtn" style="padding:8px 4px;background:var(--bg3);border:2px solid var(--bd);border-radius:8px;color:var(--tx);font-size:12px;cursor:pointer;text-align:center"><div style="font-weight:600">ERC20</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">以太坊</div></button>' +
+        '<button onclick="_selectNetwork(this,\'BEP20\')" class="netBtn" style="padding:8px 4px;background:var(--bg3);border:2px solid var(--bd);border-radius:8px;color:var(--tx);font-size:12px;cursor:pointer;text-align:center"><div style="font-weight:600">BEP20</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">币安链</div></button>' +
+        '<button onclick="_selectNetwork(this,\'Polygon\')" class="netBtn" style="padding:8px 4px;background:var(--bg3);border:2px solid var(--bd);border-radius:8px;color:var(--tx);font-size:12px;cursor:pointer;text-align:center"><div style="font-weight:600">Polygon</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">MATIC</div></button>' +
+        '<button onclick="_selectNetwork(this,\'Solana\')" class="netBtn" style="padding:8px 4px;background:var(--bg3);border:2px solid var(--bd);border-radius:8px;color:var(--tx);font-size:12px;cursor:pointer;text-align:center"><div style="font-weight:600">Solana</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">SOL</div></button>' +
+        '<button onclick="_selectNetwork(this,\'TON\')" class="netBtn" style="padding:8px 4px;background:var(--bg3);border:2px solid var(--bd);border-radius:8px;color:var(--tx);font-size:12px;cursor:pointer;text-align:center"><div style="font-weight:600">TON</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">Telegram</div></button>' +
+      '</div>' +
+      '<div id="wdNetHint" style="font-size:11px;color:var(--tx3);margin-bottom:8px">已选：<b id="wdNetSelected" style="color:var(--amber)">TRC20（波场）</b></div>' +
+      '<div style="font-size:12px;color:var(--tx3);margin-bottom:5px">USDT 钱包地址</div>' +
+      '<input id="wdWallet" placeholder="请输入对应网络的钱包地址" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box;margin-bottom:10px">' +
       '<div style="font-size:12px;color:var(--tx3);margin-bottom:5px">提现金额（USDT）</div>' +
       '<input id="wdAmount" type="number" placeholder="最低 5 USDT" value="' + (pending >= 5 ? pending.toFixed(2) : '') + '" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box;margin-bottom:10px">' +
       '<div id="wdMsg" style="font-size:12px;color:var(--red);min-height:18px;margin-bottom:8px"></div>' +
@@ -3384,24 +3394,36 @@ function showWithdrawModal() {
       '</div>' +
     '</div>';
   document.body.appendChild(el);
+  window._selectedNetwork = 'TRC20';
+}
+
+var _networkNames = { TRC20:'TRC20（波场）', ERC20:'ERC20（以太坊）', BEP20:'BEP20（币安链）', Polygon:'Polygon（MATIC）', Solana:'Solana（SOL）', TON:'TON（Telegram）' };
+
+function _selectNetwork(btn, network) {
+  window._selectedNetwork = network;
+  document.querySelectorAll('.netBtn').forEach(function(b){ b.style.borderColor='var(--bd)'; });
+  btn.style.borderColor = '#60a5fa';
+  var el = document.getElementById('wdNetSelected');
+  if (el) el.textContent = _networkNames[network] || network;
 }
 
 async function _submitWithdraw(licCode) {
   var wallet = (document.getElementById('wdWallet') || {}).value.trim();
   var amount = parseFloat((document.getElementById('wdAmount') || {}).value || '0');
+  var network = window._selectedNetwork || 'TRC20';
   var msg = document.getElementById('wdMsg');
-  if (!wallet || wallet[0] !== 'T') { if(msg) msg.textContent='请输入有效的TRC20钱包地址'; return; }
+  if (!wallet) { if(msg) msg.textContent='请输入钱包地址'; return; }
   if (amount < 5) { if(msg) msg.textContent='最低提现金额为 5 USDT'; return; }
   if(msg) msg.textContent='提交中…';
   try {
     var res = await fetch(WORKER_URL+'/ref/withdraw', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ code: licCode, wallet: wallet, amount: amount })
+      body: JSON.stringify({ code: licCode, wallet: '['+network+'] '+wallet, amount: amount })
     });
     var data = await res.json();
     if (data.success) {
       document.getElementById('withdrawModal').remove();
-      alert('✅ 提现申请已提交！\n金额：' + amount + ' USDT\n我们将在 1-3 个工作日内打款。');
+      alert('✅ 提现申请已提交！\n网络：' + network + '\n金额：' + amount + ' USDT\n我们将在 1-3 个工作日内打款。');
       loadRefStats(licCode);
     } else {
       var errMap = { insufficient_balance:'余额不足', min_amount:'低于最低提现金额(5 USDT)', invalid_license:'激活码无效' };

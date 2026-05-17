@@ -967,7 +967,7 @@ async function loadSettings() {
     }
 
     // 从云端拉取设置（无论本地是否有数据都执行，确保恢复最新设置）
-    const cloudData = await loadSettingsFromCloud();
+    const cloudData = await Promise.race([loadSettingsFromCloud(), new Promise(r=>setTimeout(()=>r(null),3000))]);
     console.log('[loadSettings] cloud data:', cloudData ? 'EXISTS savedAt='+cloudData.savedAt : 'NULL');
     if (cloudData && cloudData.savedAt) {
       const localSavedAt = raw ? (JSON.parse(raw).savedAt || 0) : 0;

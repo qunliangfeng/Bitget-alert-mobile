@@ -3236,6 +3236,11 @@ function showReferralPanel() {
         </div>
         <div id="rsDetail" style="font-size:11px;color:var(--tx3)">加载中…</div>
       </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <button onclick="showWithdrawModal()" style="padding:12px;background:var(--bg2);border:1px solid var(--bd);color:var(--amber);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer">💸 提现到钱包</button>
+        <button onclick="showDeductModal()" style="padding:12px;background:var(--bg2);border:1px solid var(--bd);color:var(--blue);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer">🎟️ 抵扣续费</button>
+      </div>
     </div>`;
   document.body.appendChild(panel);
 
@@ -3262,7 +3267,10 @@ async function loadRefStats(licCode) {
     if (rsDet) {
       const refs = data.referrals||[];
       rsDet.innerHTML = refs.length
-        ? refs.map(r=>`<span style="display:inline-block;margin:2px 4px;padding:2px 8px;background:${r.settled?'var(--gd)':'var(--ad)'};color:${r.settled?'var(--green)':'var(--amber)'};border-radius:99px">${r.plan} +$${r.amount.toFixed(2)}${r.settled?' ✓':''}</span>`).join('')
+        ? refs.map(r=>{
+            const planName = r.plan === 'yearly' ? '年付' : r.plan === 'monthly' ? '月付' : r.plan;
+            return `<span style="display:inline-block;margin:2px 4px;padding:2px 8px;background:${r.settled?'var(--gd)':'var(--ad)'};color:${r.settled?'var(--green)':'var(--amber)'};border-radius:99px">${planName} +${r.amount.toFixed(2)} USDT${r.settled?' ✓':''}</span>`;
+          }).join('')
         : '还没有推荐记录，快去分享吧！';
     }
   } catch(e) {}
@@ -3291,9 +3299,142 @@ function copyRefLink() {
   });
 }
 
-// 从 URL 自动读取推荐码
-function getRefCodeFromUrl() {
-  return new URLSearchParams(location.search).get('ref') || '';
+// 提现弹窗
+function showWithdrawModal() {
+  const pending = parseFloat(document.getElementById('rsPending')?.textContent || '0');
+  const lic = getLicenseData();
+  if (!lic) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'withdrawModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:16px;padding:24px;width:100%;max-width:380px">
+      <div style="font-size:15px;font-weight:600;color:var(--tx);margin-bottom:6px">💸 提现到钱包</div>
+      <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">可提现余额：<b style="color:var(--amber)">${pending.toFixed(2)} USDT</b>（最低提现 5 USDT）</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:6px">USDT 钱包地址（TRC20）</div>
+        <input id="wdWallet" placeholder="T开头的TRC20地址" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:6px">提现金额（USDT）</div>
+        <input id="wdAmount" type="number" placeholder="最低 5 USDT" value="${pending >= 5 ? pending.toFixed(2) : ''}" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box">
+      </div>
+      <div id="wdMsg" style="font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="document.getElementById('withdrawModal').remove()" style="padding:10px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;font-size:13px;cursor:pointer">取消</button>
+        <button onclick="submitWithdraw('${lic.code}')" style="padding:10px;background:var(--blue-d);color:#60a5fa;border:1px solid #1e3a6e;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">确认提现</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function submitWithdraw(licCode) {
+  const wallet = document.getElementById('wdWallet')?.value.trim();
+  const amount = parseFloat(document.getElementById('wdAmount')?.value || '0');
+  const msg = document.getElementById('wdMsg');
+  if (!wallet || !wallet.startsWith('T')) { if(msg) msg.textContent='请输入有效的TRC20钱包地址'; return; }
+  if (amount < 5) { if(msg) msg.textContent='最低提现金额为 5 USDT'; return; }
+  if(msg) msg.textContent='提交中…';
+  try {
+    const res = await fetch(WORKER_URL+'/ref/withdraw', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code: licCode, wallet, amount })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('withdrawModal')?.remove();
+      alert(`✅ 提现申请已提交！\n金额：${amount} USDT\n我们将在 1-3 个工作日内打款，请留意钱包到账。`);
+      loadRefStats(licCode); // 刷新余额显示
+    } else {
+      const errMap = { insufficient_balance:'余额不足', min_amount:'低于最低提现金额(5 USDT)', invalid_license:'激活码无效' };
+      if(msg) msg.textContent = errMap[data.error] || data.error;
+    }
+  } catch(e) { if(msg) msg.textContent='网络错误，请重试'; }
+}
+
+// 抵扣续费弹窗
+function showDeductModal() {
+  const pending = parseFloat(document.getElementById('rsPending')?.textContent || '0');
+  const lic = getLicenseData();
+  if (!lic) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'deductModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:16px;padding:24px;width:100%;max-width:380px">
+      <div style="font-size:15px;font-weight:600;color:var(--tx);margin-bottom:6px">🎟️ 余额抵扣续费</div>
+      <div style="font-size:12px;color:var(--tx3);margin-bottom:16px">可用余额：<b style="color:var(--amber)">${pending.toFixed(2)} USDT</b></div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:8px">选择续费套餐</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="selectDeductPlan(this,'monthly',11.88)" id="dPlanMonthly"
+            style="padding:14px 8px;background:var(--bg3);border:2px solid var(--bd);border-radius:10px;color:var(--tx);font-size:13px;cursor:pointer;text-align:center">
+            <div style="font-weight:600">月付</div><div style="color:var(--amber);font-size:12px;margin-top:4px">11.88 USDT</div>
+          </button>
+          <button onclick="selectDeductPlan(this,'yearly',68.88)" id="dPlanYearly"
+            style="padding:14px 8px;background:var(--bg3);border:2px solid var(--bd);border-radius:10px;color:var(--tx);font-size:13px;cursor:pointer;text-align:center">
+            <div style="font-weight:600">年付</div><div style="color:var(--amber);font-size:12px;margin-top:4px">68.88 USDT</div>
+          </button>
+        </div>
+      </div>
+      <div id="deductInfo" style="font-size:12px;color:var(--tx3);background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:12px;display:none"></div>
+      <div id="ddMsg" style="font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="document.getElementById('deductModal').remove()" style="padding:10px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;font-size:13px;cursor:pointer">取消</button>
+        <button onclick="submitDeduct('${lic.code}')" id="deductConfirmBtn" style="padding:10px;background:var(--blue-d);color:#60a5fa;border:1px solid #1e3a6e;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" disabled>确认抵扣</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  window._deductPlan = null;
+}
+
+function selectDeductPlan(btn, plan, price) {
+  document.querySelectorAll('#dPlanMonthly,#dPlanYearly').forEach(b => b.style.borderColor = 'var(--bd)');
+  btn.style.borderColor = 'var(--blue)';
+  window._deductPlan = { plan, price };
+  const pending = parseFloat(document.getElementById('rsPending')?.textContent || '0');
+  const info = document.getElementById('deductInfo');
+  const confirmBtn = document.getElementById('deductConfirmBtn');
+  if (info) {
+    info.style.display = 'block';
+    if (pending >= price) {
+      info.innerHTML = `余额充足 ✅<br>扣除 <b style="color:var(--amber)">${price} USDT</b>，剩余 <b>${(pending-price).toFixed(2)} USDT</b><br>系统将自动生成新激活码发送给你`;
+      info.style.color = 'var(--tx2)';
+      confirmBtn.removeAttribute('disabled');
+    } else {
+      info.innerHTML = `余额不足 ❌<br>需要 ${price} USDT，当前 ${pending.toFixed(2)} USDT<br>差额 ${(price-pending).toFixed(2)} USDT`;
+      info.style.color = 'var(--red)';
+      confirmBtn.setAttribute('disabled', true);
+    }
+  }
+}
+
+async function submitDeduct(licCode) {
+  const d = window._deductPlan;
+  if (!d) return;
+  const msg = document.getElementById('ddMsg');
+  if(msg) msg.textContent = '处理中…';
+  try {
+    const res = await fetch(WORKER_URL+'/ref/withdraw', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code: licCode, wallet: 'DEDUCT:'+d.plan, amount: d.price })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('deductModal')?.remove();
+      alert(`✅ 抵扣申请已提交！\n套餐：${d.plan === 'monthly' ? '月付 11.88 USDT' : '年付 68.88 USDT'}\n新激活码将通过 Telegram 发送给你，请注意查收。`);
+      loadRefStats(licCode);
+    } else {
+      const errMap = { insufficient_balance:'余额不足', min_amount:'余额不足以抵扣该套餐', invalid_license:'激活码无效' };
+      if(msg) msg.textContent = errMap[data.error] || data.error;
+    }
+  } catch(e) { if(msg) msg.textContent='网络错误，请重试'; }
+}
+
+function getLicenseData() {
+  try { return JSON.parse(localStorage.getItem('bitget_license_v1') || getCookie('xbc_lic') || '{}'); } catch(e) { return null; }
 }
 
 // ── Init ──────────────────────────────────────────────────────────

@@ -1968,7 +1968,7 @@ function buildCards(){
         <div class="chi tg on" id="ci-tg-${c.id}"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#ico-tg"/></svg></div>
         <div class="chi wx on" id="ci-wx-${c.id}"><svg width="13" height="13" viewBox="0 0 24 24"><use href="#ico-wx"/></svg></div>
       </div>
-      <button class="tgl on" id="ctog-${c.id}" onclick="togCoin('${c.id}')" aria-label="开关"></button>
+      <button class="${s.enabled!==false?'tgl on':'tgl'}" id="ctog-${c.id}" onclick="togCoin('${c.id}')" aria-label="开关"></button>
     </div>
   </div>
   <div class="card-price">

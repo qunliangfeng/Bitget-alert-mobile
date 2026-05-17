@@ -972,16 +972,26 @@ async function loadSettings() {
     if (cloudData && cloudData.savedAt) {
       const localSavedAt = raw ? (JSON.parse(raw).savedAt || 0) : 0;
       console.log('[loadSettings] cloud savedAt:', cloudData.savedAt, 'local savedAt:', localSavedAt);
-      if (cloudData.savedAt >= localSavedAt) {
-        // 云端数据更新或本地为空，覆盖本地
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+      // 只有云端比本地严格更新超过5秒，才用云端覆盖（防止快速刷新时云端旧数据覆盖本地新数据）
+      const cloudIsNewer = cloudData.savedAt > localSavedAt + 5000;
+      // 如果本地为空（iOS清除后），任何云端数据都恢复
+      const localEmpty = !raw;
+      if (localEmpty || cloudIsNewer) {
+        console.log('[loadSettings] applying cloud data, reason:', localEmpty ? 'local empty' : 'cloud newer');
+        // 合并：云端的 cfg/mktType/exchange + 本地的 coinStates（本地更新的话保留本地coin设置）
+        const localParsed = raw ? JSON.parse(raw) : {};
+        const merged = {
+          ...cloudData,
+          coinStates: cloudIsNewer ? cloudData.coinStates : (localParsed.coinStates || cloudData.coinStates),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         setCookie('xbc_settings', JSON.stringify({
-          cfg: cloudData.cfg,
-          mktType: cloudData.mktType,
-          exchange: cloudData.exchange,
-          savedAt: cloudData.savedAt
+          cfg: merged.cfg,
+          mktType: merged.mktType,
+          exchange: merged.exchange,
+          savedAt: merged.savedAt
         }), 365);
-        applySettings(cloudData);
+        applySettings(merged);
       }
     }
   } catch(_) {}

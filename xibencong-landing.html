@@ -674,6 +674,7 @@ function renderTrialForm() {
     <input class="pay-input" id="tTg" placeholder="@your_username">
     <label class="pay-label" style="color:#556677">邮箱（选填，仅供记录）</label>
     <input class="pay-input" id="tEmail" type="email" placeholder="your@email.com" style="opacity:0.6">
+    <div style="font-size:11px;color:#556677;margin-top:5px">如仅使用邮箱接收，激活码将在 60 分钟内发送到您的邮箱</div>
     <button class="pay-submit" onclick="submitTrial()">获取免费激活码</button>
     <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">每人限领一次 · 无需付款</div>
   `;
@@ -695,6 +696,7 @@ function renderPayForm() {
     <input class="pay-input" id="pTg" placeholder="@your_username">
     <label class="pay-label" style="color:#556677">邮箱（选填，仅供记录）</label>
     <input class="pay-input" id="pEmail" type="email" placeholder="your@email.com" style="opacity:0.6">
+    <div style="font-size:11px;color:#556677;margin-top:5px">如仅使用邮箱接收，激活码将在 60 分钟内发送到您的邮箱</div>
     <button class="pay-submit" id="pBtn" onclick="createPayment()">生成付款地址</button>
     <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">支持 USDT TRC20 / ERC20 · 由 NOWPayments 安全处理</div>
   `;

@@ -168,10 +168,12 @@ async function doActivateForce() {
     });
     const data = await res.json();
     if (data.success) {
-      // 先清除旧的激活码缓存，防止跳转后触发设备冲突
+      // 先清除旧的激活码缓存（localStorage + Cookie），防止跳转后触发设备冲突
       localStorage.removeItem('bitget_license_v1');
       localStorage.removeItem('lic_last_check');
+      document.cookie = 'xbc_lic=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax';
       document.cookie = 'xbc_lic=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      document.cookie = 'xbc_settings=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax';
 
       const licData = { code: licCode, plan: data.plan, expiresAt: data.expiresAt, email: data.email||'', refCode: data.refCode||'', verifiedAt: Date.now() };
       localStorage.setItem('bitget_license_v1', JSON.stringify(licData));

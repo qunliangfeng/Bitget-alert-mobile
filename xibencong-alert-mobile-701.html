@@ -3427,7 +3427,6 @@ if (location.protocol === 'file:') {
 
   // 每5分钟定期验证一次，确保设备切换后旧设备能及时被踢出
   setInterval(() => {
-    localStorage.removeItem('lic_last_check'); // 清除缓存时间，强制重新验证
     checkLicense();
   }, 5 * 60 * 1000);
 

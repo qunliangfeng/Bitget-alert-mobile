@@ -898,7 +898,8 @@ function saveActiveCoins() {
 function initCoinState(c) {
   if (!mkt[c.id]) mkt[c.id] = { price:0, prevPrice:0, change24h:0, high24h:0, low24h:0, open24h:0, loaded:false };
   if (!state[c.id]) state[c.id] = {
-    enabled:true, fixedOn:true, targetOn:true, timerOn:false, timerMin:5, pointOn:false,
+    enabled: c.id === 'BTC', // 默认只开启比特币
+    fixedOn:true, targetOn:true, timerOn:false, timerMin:5, pointOn:false,
     points: [{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3},{price:0,repeat:3}],
     fixedStep: c.defStep, lastFixedLevel:0,
     target: c.defTarget, farStep: c.defFarStep,
@@ -906,7 +907,7 @@ function initCoinState(c) {
   };
 }
 
-const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:false, wakeLock:false, voiceGender:'female', volume:0.8 };
+const cfg = { tgToken:'', tgChatId:'', tgOn:true, wxToken:'', wxUid:'', wxOn:true, soundOn:true, voiceOn:true, wakeLock:true, voiceGender:'female', volume:0.8 };
 const mkt = {};
 const state = {};
 let paused = false;
@@ -3697,8 +3698,26 @@ function triggerPwaInstall() {
       _pwaPrompt = null;
     });
   } else {
-    // 没有安装提示（可能已安装或不支持），提示用户
-    alert('请使用浏览器菜单中的"添加到主屏幕"或"安装应用"选项');
+    // 没有自动安装提示，显示分平台引导
+    const isEdge = /Edg\//.test(navigator.userAgent);
+    const isMac = /Mac/.test(navigator.platform);
+    let guide = '';
+    if (isIos()) {
+      guide = '点底部工具栏分享按钮 ⎙\n→ 滑动找到「添加到主屏幕」\n→ 点右上角「添加」确认';
+    } else if (isEdge) {
+      guide = '点右上角 ··· 菜单\n→ 选择「应用」\n→ 点「将此站点安装为应用」';
+    } else {
+      guide = '点地址栏最右边的安装图标 ⊕\n或点右上角菜单 ⋮\n→ 选择「投放/保存/分享」\n→ 点「安装西本聪播报」';
+    }
+    // 在按钮下方显示引导，不用 alert
+    const box = document.getElementById('pwaInstallBox');
+    const existing = document.getElementById('pwaDesktopGuide');
+    if (existing) existing.remove();
+    const guideEl = document.createElement('div');
+    guideEl.id = 'pwaDesktopGuide';
+    guideEl.style.cssText = 'margin-top:10px;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--tx2);line-height:1.9;white-space:pre-line';
+    guideEl.textContent = guide;
+    if (box) box.appendChild(guideEl);
   }
 }
 

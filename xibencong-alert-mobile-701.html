@@ -3156,7 +3156,7 @@ async function checkLicense() {
 
   // 每隔24小时才联网验证一次
   const lastCheck = parseInt(localStorage.getItem('lic_last_check') || '0');
-  if (now - lastCheck < 10 * 60 * 1000) return; // 10分钟检查一次
+  if (now - lastCheck < 4 * 60 * 1000) return; // 4分钟内不重复请求
 
   // 后台联网验证（不阻塞行情）
   try {
@@ -3402,6 +3402,12 @@ if (location.protocol === 'file:') {
 } else {
   // 先验证授权，checkLicense 内部会调用 startConnection
   checkLicense();
+
+  // 每5分钟定期验证一次，确保设备切换后旧设备能及时被踢出
+  setInterval(() => {
+    localStorage.removeItem('lic_last_check'); // 清除缓存时间，强制重新验证
+    checkLicense();
+  }, 5 * 60 * 1000);
 
   // 填充关于页面的激活码信息
   setTimeout(() => {

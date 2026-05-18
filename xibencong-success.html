@@ -38,6 +38,11 @@
     <div class="code" id="codeEl">加载中…</div>
   </div>
 
+  <div style="margin-bottom:16px">
+    <div style="font-size:11px;color:#475569;margin-bottom:6px">推荐码（选填，有推荐人请填写）</div>
+    <input id="refInput" placeholder="REF-XXXXXX" style="width:100%;padding:10px;background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;color:#e2e8f0;font-size:13px;box-sizing:border-box;font-family:'JetBrains Mono',monospace;letter-spacing:.05em">
+  </div>
+
   <button class="btn-activate" id="btnActivate" onclick="doActivate()" disabled>
     🚀 立即激活进入播报器
   </button>
@@ -75,6 +80,13 @@ function init() {
   document.getElementById('codeEl').textContent = code;
   document.getElementById('btnActivate').disabled = false;
   document.getElementById('btnCopy').disabled = false;
+
+  // 自动填入推荐码（如果 URL 里有）
+  const ref = params.get('ref');
+  if (ref) {
+    const refInput = document.getElementById('refInput');
+    if (refInput) refInput.value = ref;
+  }
 }
 
 async function doActivate() {
@@ -89,10 +101,11 @@ async function doActivate() {
   try {
     // 生成设备ID
     const deviceId = getDeviceId();
+    const referredBy = (document.getElementById('refInput')?.value || '').trim() || undefined;
     const res = await fetch(WORKER_URL + '/activate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: licCode, deviceId })
+      body: JSON.stringify({ code: licCode, deviceId, referredBy })
     });
     const data = await res.json();
 
@@ -155,6 +168,11 @@ async function doActivateForce() {
     });
     const data = await res.json();
     if (data.success) {
+      // 先清除旧的激活码缓存，防止跳转后触发设备冲突
+      localStorage.removeItem('bitget_license_v1');
+      localStorage.removeItem('lic_last_check');
+      document.cookie = 'xbc_lic=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+
       const licData = { code: licCode, plan: data.plan, expiresAt: data.expiresAt, email: data.email||'', refCode: data.refCode||'', verifiedAt: Date.now() };
       localStorage.setItem('bitget_license_v1', JSON.stringify(licData));
       const expires = new Date(Date.now() + 365 * 864e5).toUTCString();

@@ -1952,7 +1952,7 @@ function updateCardUI(id, prev, cur) {
   updateZone(id);
   const card=document.getElementById('card-'+id);
   if(card&&s.targetOn&&!card.className.includes('flash'))
-    card.className='card'+(isNear(id,cur)?' near-target':'');
+    card.className='card'+(state[id].enabled?' coin-active':'')+(isNear(id,cur)?' near-target':'');
 }
 
 // ── Helpers ───────────────────────────────────────────────────────

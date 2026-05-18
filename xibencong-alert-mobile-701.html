@@ -116,6 +116,8 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 }
 .card.flash-up { border-color: var(--green); box-shadow: 0 0 0 1px #22c55e33, 0 0 16px #22c55e18; }
 .card.flash-down { border-color: var(--red); box-shadow: 0 0 0 1px #ef444433, 0 0 16px #ef444418; }
+.card.coin-active.flash-up { border-color: #f59e0b; box-shadow: 0 0 0 1px #f59e0b33, 0 0 16px #f59e0b28; }
+.card.coin-active.flash-down { border-color: #f59e0b; box-shadow: 0 0 0 1px #f59e0b33, 0 0 16px #f59e0b28; }
 .card.near-target { border-color: var(--amber) !important; box-shadow: 0 0 0 1px #f59e0b33, 0 0 16px #f59e0b18 !important; }
 
 /* card top row */
@@ -2420,8 +2422,9 @@ async function fireAlert(id, price, isUp, level, mode){
   if(lfe) lfe.textContent=`${isUp?'↑':'↓'}${fmt(id,level)} ${getCoinQuote(id)} ${timeStr}`;
   const card=document.getElementById('card-'+id);
   if(card){
-    card.className='card flash-'+(isUp?'up':'down')+(near?' near-target':'');
-    setTimeout(()=>card.className='card'+(near?' near-target':''),2500);
+    const isActive = card.classList.contains('coin-active');
+    card.className='card'+(isActive?' coin-active':'')+' flash-'+(isUp?'up':'down')+(near?' near-target':'');
+    setTimeout(()=>{ card.className='card'+(isActive?' coin-active':'')+(near?' near-target':''); },2500);
   }
   const chs=[];
   if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }

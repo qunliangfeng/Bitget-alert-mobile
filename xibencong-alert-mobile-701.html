@@ -974,17 +974,17 @@ async function loadSettings() {
       applySettings(JSON.parse(raw));
     }
 
-    // 从云端拉取设置（无论本地是否有数据都执行，确保恢复最新设置）
+    // 从云端拉取设置（云端比本地新则覆盖，确保设备切换时同步最新设置）
     const cloudData = await Promise.race([loadSettingsFromCloud(), new Promise(r=>setTimeout(()=>r(null),3000))]);
     console.log('[loadSettings] cloud data:', cloudData ? 'EXISTS savedAt='+cloudData.savedAt : 'NULL');
     if (cloudData && cloudData.savedAt) {
       const localSavedAt = raw ? (JSON.parse(raw).savedAt || 0) : 0;
       console.log('[loadSettings] cloud savedAt:', cloudData.savedAt, 'local savedAt:', localSavedAt);
-      // 策略：本地有数据就用本地，本地为空才用云端（iOS清缓存恢复场景）
-      const localEmpty = !raw;
-      if (localEmpty) {
-        // 本地为空（iOS清了缓存），从云端完整恢复
-        console.log('[loadSettings] local empty, restoring from cloud');
+      if (cloudData.savedAt > localSavedAt) {
+        // 云端更新（设备切换或iOS清缓存），用云端数据覆盖本地
+        console.log('[loadSettings] cloud is newer, restoring from cloud');
+        console.log('[loadSettings] cloud coinStates:', JSON.stringify(cloudData.coinStates).substring(0,200));
+        console.log('[loadSettings] cloud cfg.voiceOn:', cloudData.cfg?.voiceOn, 'exchange:', cloudData.exchange);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
         setCookie('xbc_settings', JSON.stringify({
           cfg: cloudData.cfg,
@@ -993,9 +993,10 @@ async function loadSettings() {
           savedAt: cloudData.savedAt
         }), 365);
         applySettings(cloudData);
+        console.log('[loadSettings] applySettings done, currentExchange=', currentExchange);
+      } else {
+        console.log('[loadSettings] local is newer or equal, keeping local');
       }
-      // 本地有数据时不用云端覆盖，本地数据永远优先
-      // （云端只是备份，防止iOS清缓存）
     }
   } catch(_) {}
 }
@@ -1631,6 +1632,14 @@ function connectWS() {
     if (ex.ping) {
       pingTimer = setInterval(() => { try{ if(ws.readyState===1) ws.send(typeof ex.ping==='function'?ex.ping():ex.ping); }catch(e){} }, 20000);
     }
+    // WebSocket 连上后重启所有定时器（确保刷新后定时播报正常）
+    setTimeout(() => {
+      COINS.forEach(c => {
+        if (state[c.id]?.timerOn && state[c.id]?.enabled) {
+          startTimer(c.id);
+        }
+      });
+    }, 1000);
   };
   ws.onmessage = e => {
     try {
@@ -1823,7 +1832,7 @@ function handleTick(sym, d) {
   m.prevPrice=prev; m.price=price;
   if(open) m.open24h=open; if(high) m.high24h=high; if(low) m.low24h=low;
   m.change24h = m.open24h ? (price-m.open24h)/m.open24h*100 : 0;
-  if(!m.loaded){ m.loaded=true; s.lastFixedLevel=Math.round(price/s.fixedStep)*s.fixedStep; }
+  if(!m.loaded){ m.loaded=true; s.lastFixedLevel=Math.round(price/s.fixedStep)*s.fixedStep; showVoiceUnlockPrompt(); }
   updateCardUI(coin.id, prev, price);
   if(s.enabled) checkAlert(coin.id, prev, price);
 }
@@ -3099,10 +3108,17 @@ async function doActivate(force) {
       localStorage.setItem(LIC_KEY, JSON.stringify(licData));
       setCookie('xbc_lic', JSON.stringify(licData), 365);
       showLicMsg('ok', `✅ 激活成功！有效至 ${new Date(data.expiresAt).toLocaleDateString()}`);
-      // 激活成功后立即从云端拉取设置，确保切换设备时设置不丢失
+      // 激活成功后强制从云端拉取最新设置并写入本地（切换设备时同步参数）
       try {
         const cloudData = await loadSettingsFromCloud();
-        if (cloudData) applySettings(cloudData);
+        if (cloudData && cloudData.savedAt) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
+          setCookie('xbc_settings', JSON.stringify({
+            cfg: cloudData.cfg, mktType: cloudData.mktType,
+            exchange: cloudData.exchange, savedAt: cloudData.savedAt
+          }), 365);
+          applySettings(cloudData);
+        }
       } catch(_) {}
       setTimeout(()=>{ licenseValid=true; hideLicenseScreen(); }, 1200);
     } else if (data.error === 'device_switch') {
@@ -3114,8 +3130,7 @@ async function doActivate(force) {
       confirmBtn.onclick = async () => {
         confirmBtn.textContent = '切换中…';
         confirmBtn.disabled = true;
-        // 切换前先同步一次云端设置（保证设置不丢失）
-        try { await syncSettingsToCloud(JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')); } catch(_) {}
+        // 直接强制激活，激活成功后会从云端拉取原设备的设置
         doActivate(true);
       };
       const msgEl = document.getElementById('licMsg');
@@ -3514,6 +3529,30 @@ async function _submitWithdraw(licCode) {
       if(msg) msg.textContent = errMap[data.error] || data.error;
     }
   } catch(e) { if(msg) msg.textContent='网络错误，请重试'; }
+}
+
+let _voiceUnlocked = false;
+let _voiceUnlockShown = false;
+
+function showVoiceUnlockPrompt() {
+  if (_voiceUnlockShown || _voiceUnlocked) return;
+  if (!cfg.voiceOn) return;
+  _voiceUnlockShown = true;
+  const el = document.createElement('div');
+  el.id = 'voiceUnlockBanner';
+  el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9000;background:var(--bg2);border:1px solid var(--amber);border-radius:12px;padding:10px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.4);cursor:pointer;white-space:nowrap';
+  el.innerHTML = '<span style="font-size:18px">🔊</span><span style="font-size:13px;color:var(--tx)">点击此处解锁语音播报</span>';
+  el.onclick = () => {
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    }
+    _voiceUnlocked = true;
+    el.remove();
+  };
+  document.body.appendChild(el);
+  setTimeout(() => { if(el.parentNode) el.remove(); }, 30000);
 }
 
 var _deductPlan = null;

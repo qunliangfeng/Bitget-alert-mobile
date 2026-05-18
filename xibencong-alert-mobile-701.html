@@ -554,9 +554,10 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
     <div class="dsec-lbl">配置说明</div>
     <div class="help-text">
       <b>Telegram Bot</b><br>
-      1. 搜索 <span class="cm">@BotFather</span> → 发送 <span class="cm">/newbot</span><br>
-      2. 搜索 <span class="cm">@userinfobot</span> 获取 Chat ID<br>
-      3. 先给 bot 发 <span class="cm">/start</span><br><br>
+      1. 搜索 <span class="cm">@BotFather</span> → 发送 <span class="cm">/newbot</span>，根据提示给机器人命名，获取 Bot Token<br>
+      2. 搜索 <span class="cm">@IDBot</span> → 发送 <span class="cm">/start</span>，根据提示发送你的 Telegram 用户名，获取 Chat ID<br>
+      3. 将 Bot Token 和 Chat ID 填入上方栏目<br>
+      详细教程可访问官网或联系客服获取<br><br>
       <b>企业微信机器人</b><br>
       1. 下载企业微信，注册企业（免费）<br>
       2. 建群 → 添加机器人 → 新建机器人<br>
@@ -574,7 +575,7 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
         </div>
         <div>
           <div style="font-size:14px;font-weight:700;color:var(--tx)">西本聪数字资产播报机器人</div>
-          <div style="font-size:11px;color:var(--tx3);margin-top:2px">Version 6.11 · © 2026 西本聪</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:2px">Version 6.11 · © 2026 Xstarship Global Trading Limited</div>
         </div>
       </div>
 
@@ -609,27 +610,30 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-        <a href="https://t.me/xibencong" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
+        <a href="https://t.me/qunliangfeng" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
           <span style="font-size:18px">✈️</span>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx)">Telegram 频道 / 群</div>
-            <div style="font-size:11px;color:var(--tx3)">@xibencong</div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">Telegram 客服</div>
+            <div style="font-size:11px;color:var(--tx3)">@qunliangfeng</div>
           </div>
         </a>
         <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px">
           <span style="font-size:18px">💬</span>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx)">微信群</div>
-            <div style="font-size:11px;color:var(--tx3)">扫码加入 · 搜索「西本聪」</div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">微信客服</div>
+            <div style="font-size:11px;color:var(--tx3)">xibencongbot</div>
           </div>
         </div>
-        <a href="https://xibencong.com" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
-          <span style="font-size:18px">🌐</span>
+        <a href="mailto:xibencongbot@gmail.com" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
+          <span style="font-size:18px">📧</span>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx)">官网</div>
-            <div style="font-size:11px;color:var(--tx3)">xibencong.com</div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">客服邮箱</div>
+            <div style="font-size:11px;color:var(--tx3)">xibencongbot@gmail.com</div>
           </div>
         </a>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);text-align:center;padding:8px 0">
+        © 2026 Xstarship Global Trading Limited
       </div>
 
       <!-- 免责声明 -->
@@ -1159,6 +1163,12 @@ function applySettings(data) {
         // 恢复开关
         const ctog = document.getElementById('ctog-'+c.id);
         if (ctog) ctog.className = 'tgl'+(saved.enabled?' on':'');
+        // 同步更新卡片边框
+        const card = document.getElementById('card-'+c.id);
+        if (card) {
+          if (saved.enabled) card.classList.add('coin-active');
+          else card.classList.remove('coin-active');
+        }
       });
     }
   } catch(_) {}

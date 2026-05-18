@@ -581,32 +581,24 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       </div>
 
       <!-- 添加到主屏幕 -->
-      <div id="pwaInstallBox" style="background:linear-gradient(135deg,#1e3a5f,#1a2744);border:1px solid #2563eb55;border-radius:12px;padding:14px;margin-bottom:12px;display:none">
+      <div id="pwaInstallBox" style="background:linear-gradient(135deg,#1e3a5f,#1a2744);border:1px solid #2563eb55;border-radius:12px;padding:14px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           <span style="font-size:24px">📲</span>
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--tx)">添加到主屏幕</div>
-            <div style="font-size:11px;color:var(--tx3)">像 App 一样快速打开，不会丢失</div>
+            <div style="font-size:11px;color:var(--tx3)" id="pwaInstallSubtitle">像 App 一样快速打开，不会丢失</div>
           </div>
         </div>
-        <button id="pwaInstallBtn" onclick="triggerPwaInstall()" style="width:100%;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
-          📲 立即安装到主屏幕
-        </button>
-      </div>
-
-      <!-- iOS 引导（Safari 不支持自动安装提示） -->
-      <div id="pwaIosBox" style="background:linear-gradient(135deg,#1e3a5f,#1a2744);border:1px solid #2563eb55;border-radius:12px;padding:14px;margin-bottom:12px;display:none">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:24px">📲</span>
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx)">添加到主屏幕</div>
-            <div style="font-size:11px;color:var(--tx3)">iOS Safari 手动添加步骤</div>
-          </div>
+        <div id="pwaInstallBtnWrap">
+          <button id="pwaInstallBtn" onclick="triggerPwaInstall()" style="width:100%;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
+            📲 立即安装到主屏幕
+          </button>
         </div>
-        <div style="font-size:12px;color:var(--tx2);line-height:1.8">
+        <!-- iOS 引导 -->
+        <div id="pwaIosGuide" style="display:none;font-size:12px;color:var(--tx2);line-height:1.9">
           1. 点底部工具栏的 <b>分享</b> 按钮 <span style="font-size:14px">⎙</span><br>
-          2. 滑动找到 <b>添加到主屏幕</b><br>
-          3. 点右上角 <b>添加</b> 确认
+          2. 滑动菜单找到 <b>添加到主屏幕</b><br>
+          3. 点右上角 <b>添加</b> 确认完成
         </div>
       </div>
 
@@ -3679,18 +3671,6 @@ async function _submitDeduct(licCode) {
 // ── PWA 安装逻辑 ──────────────────────────────────────────────────
 let _pwaPrompt = null;
 
-// 监听安装事件（Android Chrome / 桌面）
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  _pwaPrompt = e;
-  // 显示关于页里的安装按钮
-  const box = document.getElementById('pwaInstallBox');
-  if (box) box.style.display = 'block';
-  // 显示首次访问横幅
-  showPwaBanner();
-});
-
-// iOS 检测
 function isIos() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
@@ -3698,17 +3678,27 @@ function isInStandaloneMode() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 }
 
+// 监听安装事件（Android Chrome / 桌面）
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // 不用修改按钮，已默认显示安装按钮
+});
+
 function triggerPwaInstall() {
   if (_pwaPrompt) {
     _pwaPrompt.prompt();
     _pwaPrompt.userChoice.then((result) => {
       if (result.outcome === 'accepted') {
-        const box = document.getElementById('pwaInstallBox');
-        if (box) box.style.display = 'none';
+        const btn = document.getElementById('pwaInstallBtn');
+        if (btn) { btn.textContent = '✅ 已添加到主屏幕'; btn.disabled = true; }
         hidePwaBanner();
       }
       _pwaPrompt = null;
     });
+  } else {
+    // 没有安装提示（可能已安装或不支持），提示用户
+    alert('请使用浏览器菜单中的"添加到主屏幕"或"安装应用"选项');
   }
 }
 
@@ -3717,21 +3707,23 @@ function showPwaBanner() {
   if (isInStandaloneMode()) return;
   const existing = document.getElementById('pwaBanner');
   if (existing) return;
+  const isIosDev = isIos();
   const banner = document.createElement('div');
   banner.id = 'pwaBanner';
   banner.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:8000;background:#1e3a5f;border:1px solid #2563eb;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:320px;width:calc(100% - 32px)';
+  const subtitle = isIosDev ? '点底部分享 ⎙ → 添加到主屏幕' : '像 App 一样随时打开';
+  const actionBtn = isIosDev ? '' : '<button onclick="triggerPwaInstall();hidePwaBanner()" style="padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">安装</button>';
   banner.innerHTML =
     '<span style="font-size:24px;flex-shrink:0">📲</span>' +
     '<div style="flex:1">' +
       '<div style="font-size:13px;font-weight:600;color:#f1f5f9">添加到主屏幕</div>' +
-      '<div style="font-size:11px;color:#94a3b8">像 App 一样随时打开</div>' +
+      '<div style="font-size:11px;color:#94a3b8">' + subtitle + '</div>' +
     '</div>' +
     '<div style="display:flex;gap:6px;flex-shrink:0">' +
-      '<button onclick="triggerPwaInstall();hidePwaBanner()" style="padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">安装</button>' +
+      actionBtn +
       '<button onclick="hidePwaBanner()" style="padding:6px 10px;background:transparent;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:12px;cursor:pointer">✕</button>' +
     '</div>';
   document.body.appendChild(banner);
-  // 10秒后自动消失
   setTimeout(hidePwaBanner, 10000);
 }
 
@@ -3741,30 +3733,25 @@ function hidePwaBanner() {
   localStorage.setItem('pwa_banner_dismissed', '1');
 }
 
-// 页面加载时初始化 PWA 状态
 window.addEventListener('load', () => {
-  if (isInStandaloneMode()) return; // 已经是 App 模式，不显示
+  if (isInStandaloneMode()) {
+    // 已是 App 模式，隐藏安装区域
+    const box = document.getElementById('pwaInstallBox');
+    if (box) box.style.display = 'none';
+    return;
+  }
   if (isIos()) {
-    // iOS：显示关于页里的 iOS 引导
-    const box = document.getElementById('pwaIosBox');
-    if (box) box.style.display = 'block';
-    // iOS 首次访问也显示横幅（只显示引导，不显示安装按钮）
-    if (!localStorage.getItem('pwa_banner_dismissed')) {
-      setTimeout(() => {
-        const banner = document.createElement('div');
-        banner.id = 'pwaBanner';
-        banner.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:8000;background:#1e3a5f;border:1px solid #2563eb;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:320px;width:calc(100% - 32px)';
-        banner.innerHTML =
-          '<span style="font-size:24px;flex-shrink:0">📲</span>' +
-          '<div style="flex:1">' +
-            '<div style="font-size:13px;font-weight:600;color:#f1f5f9">添加到主屏幕</div>' +
-            '<div style="font-size:11px;color:#94a3b8">点底部分享 ⎙ → 添加到主屏幕</div>' +
-          '</div>' +
-          '<button onclick="hidePwaBanner()" style="padding:6px 10px;background:transparent;color:#94a3b8;border:1px solid #334155;border-radius:8px;font-size:12px;cursor:pointer;flex-shrink:0">✕</button>';
-        document.body.appendChild(banner);
-        setTimeout(hidePwaBanner, 10000);
-      }, 3000);
-    }
+    // iOS：显示 iOS 引导，隐藏安装按钮
+    const btnWrap = document.getElementById('pwaInstallBtnWrap');
+    const iosGuide = document.getElementById('pwaIosGuide');
+    const subtitle = document.getElementById('pwaInstallSubtitle');
+    if (btnWrap) btnWrap.style.display = 'none';
+    if (iosGuide) iosGuide.style.display = 'block';
+    if (subtitle) subtitle.textContent = 'iOS Safari 手动添加步骤';
+  }
+  // 首次访问显示横幅（3秒后）
+  if (!localStorage.getItem('pwa_banner_dismissed')) {
+    setTimeout(showPwaBanner, 3000);
   }
 });
 

@@ -120,6 +120,8 @@ async function doActivate() {
         verifiedAt: Date.now()
       };
       localStorage.setItem('bitget_license_v1', JSON.stringify(licData));
+      // 设置验证时间戳，防止播报器加载后立即触发 verify 造成设备冲突
+      localStorage.setItem('lic_last_check', Date.now().toString());
       // Cookie 备份
       const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
       document.cookie = `xbc_lic=${encodeURIComponent(JSON.stringify(licData))};expires=${expires};path=/;SameSite=Lax`;
@@ -177,6 +179,7 @@ async function doActivateForce() {
 
       const licData = { code: licCode, plan: data.plan, expiresAt: data.expiresAt, email: data.email||'', refCode: data.refCode||'', verifiedAt: Date.now() };
       localStorage.setItem('bitget_license_v1', JSON.stringify(licData));
+      localStorage.setItem('lic_last_check', Date.now().toString());
       const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
       document.cookie = `xbc_lic=${encodeURIComponent(JSON.stringify(licData))};expires=${expires};path=/;SameSite=Lax`;
       status.className = 'status ok';

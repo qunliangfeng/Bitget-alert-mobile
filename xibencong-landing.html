@@ -110,6 +110,7 @@ body::before {
 .b-blue  { background: rgba(41,128,185,.15); color: #5dade2; border-color: rgba(41,128,185,.4); }
 .b-green { background: rgba(39,174,96,.15);  color: #58d68d; border-color: rgba(39,174,96,.4); }
 .b-gold  { background: rgba(243,156,18,.15); color: var(--gold); border-color: rgba(243,156,18,.4); }
+.b-purple { background: rgba(155,89,182,.15); color: #bb8fce; border-color: rgba(155,89,182,.4); }
 
 .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
 .btn-buy {
@@ -224,7 +225,7 @@ body::before {
   color: var(--blue2); margin-bottom: 10px; font-weight: 500;
 }
 
-.modes-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+.modes-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
 @media(max-width:600px){ .modes-grid{grid-template-columns:1fr} }
 .mode-card {
   background: var(--navy2); border: 1px solid rgba(26,100,150,.3);
@@ -334,23 +335,34 @@ footer p { font-size: 12px; color: #445566; }
       <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" alt="西本聪">
     </div>
     <div class="brand-en">XiBenCong · 西本聪</div>
+    <div style="margin-bottom:18px;text-align:center">
+      <span style="
+        display:inline-block;
+        font-size:28px;
+        font-weight:900;
+        letter-spacing:.12em;
+        background:linear-gradient(90deg,#f5b942,#f9d423,#f5b942);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text;
+        text-shadow:none;
+        filter:drop-shadow(0 0 12px rgba(245,185,66,.5));
+      ">币圈神器 · 发财必备</span>
+    </div>
     <h1 class="hero-title">
       <span class="gold">西本聪</span><br>
       <span class="blue">加密币智能播报</span><br>机器人
     </h1>
-    <p class="hero-sub">实时监控主流币种价格，穿越关口自动语音播报，Telegram 同步推送。接入 Bitget、Binance、OKX、Bybit、Kraken、Coinbase，无需安装，手机即用。</p>
+    <p class="hero-sub">实时毫秒级监控海量币种价格，多种模式设定自动语音播报，Telegram / 微信同步推送。接入 Bitget、Binance、OKX、Bybit、Kraken、Coinbase 等多家交易所，无需安装，手机 / 电脑即用。</p>
     <div class="badge-row">
       <span class="badge b-blue">📡 实时行情</span>
       <span class="badge b-green">🔊 中文语音</span>
       <span class="badge b-gold">📲 双渠道推送</span>
+      <span class="badge b-purple">⚡ 多模式预警</span>
     </div>
     <div class="cta-row">
-      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/crypto-universal-alert-mobile.html">
-        <button class="btn-buy">🚀 立即购买</button>
-      </a>
-      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/">
-        <button class="btn-trial">🎁 免费试用 7 天</button>
-      </a>
+      <button class="btn-buy" onclick="openPayModal('monthly')">🚀 立即购买</button>
+      <button class="btn-trial" onclick="openPayModal('trial')">🎁 免费试用 7 天</button>
     </div>
     <p class="hero-note">无需安装 · 手机 / 电脑均可使用 · 数据直连交易所官方 API</p>
   </section>
@@ -410,8 +422,30 @@ footer p { font-size: 12px; color: #445566; }
     </div>
 
     <div class="feats-side">
-      <h2>盯盘更轻松<br>关键价位不错过</h2>
-      <p>价格穿越关口，自动语音播报「比特币上穿十万美元」，手机不用一直盯着屏幕。</p>
+      <h2>盯盘更轻松<br><span style="color:#f59e0b">关键价位不错过</span></h2>
+      <p style="color:#94a3b8;line-height:1.8;margin-bottom:20px">价格穿越关口，自动中文语音播报「比特币上穿十万美元」<br>解放双眼双手，再也不用一直盯着屏幕。</p>
+
+      <!-- 痛点 vs 解决 -->
+      <div style="background:#1a0808;border:1px solid #ef444433;border-radius:12px;padding:14px;margin-bottom:12px">
+        <div style="font-size:12px;color:#ef4444;font-weight:700;margin-bottom:8px">😰 没有西本聪，你可能正在经历：</div>
+        <div style="font-size:12px;color:#94a3b8;line-height:2">
+          ❌ 眼睛盯屏幕，偏偏关键时刻去了趟厕所<br>
+          ❌ 睡着了/开会时价格大幅波动，醒来才发现<br>
+          ❌ 手滑错过止盈点，眼睁睁看利润缩水<br>
+          ❌ 爆仓来不及反应，损失已无法挽回
+        </div>
+      </div>
+
+      <div style="background:#061a08;border:1px solid #22c55e33;border-radius:12px;padding:14px;margin-bottom:20px">
+        <div style="font-size:12px;color:#22c55e;font-weight:700;margin-bottom:8px">✅ 用了西本聪，从此不同：</div>
+        <div style="font-size:12px;color:#94a3b8;line-height:2">
+          🔊 穿越关口必播报，该干嘛干嘛不分心<br>
+          😴 睡觉也能监控，价位到了自动叫醒你<br>
+          🎯 临近目标价加密播报，绝不错过止盈点<br>
+          📱 Telegram 同步推送，随时随地掌握行情
+        </div>
+      </div>
+
       <div class="feat-list">
         <div class="feat-item">
           <div class="feat-emoji">⏱</div>
@@ -426,9 +460,38 @@ footer p { font-size: 12px; color: #445566; }
           <div><div class="feat-name">屏幕常亮模式</div><div class="feat-desc">防止锁屏，持续保持语音播报</div></div>
         </div>
         <div class="feat-item">
-          <div class="feat-emoji">🔗</div>
-          <div><div class="feat-name">自由配对任意币对</div><div class="feat-desc">BTC/ETH、ETH/BNB，30+ 种组合</div></div>
+          <div class="feat-emoji">📌</div>
+          <div><div class="feat-name">定点价格播报</div><div class="feat-desc">预设关键价位，到达时重复播报提醒</div></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── 截图展示 ── -->
+  <section style="padding:60px 24px;max-width:900px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:40px">
+      <div class="label">真实界面</div>
+      <h2 style="font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px">所见即所得，开箱即用</h2>
+      <p style="color:var(--light);font-size:14px">无需注册，无需下载，激活即用</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;justify-items:center">
+      <div style="text-align:center">
+        <img src="IMG_0483.PNG" style="width:100%;max-width:180px;border-radius:16px;border:1px solid #1e293b;box-shadow:0 8px 32px rgba(0,0,0,.4)" alt="行情界面">
+        <div style="font-size:11px;color:#64748b;margin-top:8px">实时行情监控</div>
+      </div>
+      <div style="text-align:center">
+        <img src="IMG_0484.PNG" style="width:100%;max-width:180px;border-radius:16px;border:1px solid #1e293b;box-shadow:0 8px 32px rgba(0,0,0,.4)" alt="播报设置">
+        <div style="font-size:11px;color:#64748b;margin-top:8px">多模式播报设置</div>
+      </div>
+      <div style="text-align:center">
+        <img src="IMG_0485.PNG" style="width:100%;max-width:180px;border-radius:16px;border:1px solid #1e293b;box-shadow:0 8px 32px rgba(0,0,0,.4)" alt="播报记录">
+        <div style="font-size:11px;color:#64748b;margin-top:8px">完整播报记录</div>
+      </div>
+      <div style="text-align:center">
+        <img src="IMG_0486.PNG" style="width:100%;max-width:180px;border-radius:16px;border:1px solid #1e293b;box-shadow:0 8px 32px rgba(0,0,0,.4)" alt="系统设置">
+        <div style="font-size:11px;color:#64748b;margin-top:8px">灵活系统设置</div>
       </div>
     </div>
   </section>
@@ -459,9 +522,9 @@ footer p { font-size: 12px; color: #445566; }
         <div class="mode-desc">每隔 1 分钟 / 5 分钟 / 自定义秒数，定时播报当前价格，保持价格感知。</div>
       </div>
       <div class="mode-card">
-        <div class="mode-icon">☁️</div>
-        <div class="mode-title">云端监控播报</div>
-        <div class="mode-desc">无需保持页面开启，云端持续监控价格，穿越关口自动推送 Telegram 通知。</div>
+        <div class="mode-icon">📌</div>
+        <div class="mode-title">定点价格播报</div>
+        <div class="mode-desc">预设多个关键价格点，价格到达时立即播报并重复提醒，不错过任何重要价位。</div>
       </div>
     </div>
   </section>
@@ -481,6 +544,7 @@ footer p { font-size: 12px; color: #445566; }
       <div class="ex-card"><div class="ex-dot" style="background:#5b67f8"></div>Kraken</div>
       <div class="ex-card"><div class="ex-dot" style="background:#0052ff"></div>Coinbase</div>
     </div>
+    <p style="color:var(--light);font-size:12px;margin-top:14px;opacity:.7">支持大量主流交易所，包括并不限于以上 · 持续接入更多</p>
   </section>
 
   <div class="divider"></div>
@@ -499,7 +563,7 @@ footer p { font-size: 12px; color: #445566; }
         <div class="price-cny">7 天全功能体验</div>
         <div class="price-list">
           <span>✓</span>全部播报功能<br>
-          <span>✓</span>无限币种监控<br>
+          <span>✓</span>海量币种监控<br>
           <span>✓</span>无需信用卡
         </div>
         <button class="btn-trial" style="width:100%;margin-top:20px;padding:12px" onclick="openPayModal('trial')">免费领取激活码</button>
@@ -509,7 +573,7 @@ footer p { font-size: 12px; color: #445566; }
         <div class="price-plan">月付</div>
         <div class="price-amount"><sup></sup>11.88<sub>USDT/月</sub></div>
         <div class="price-list">
-          <span>✓</span>无限币种监控<br>
+          <span>✓</span>海量币种监控<br>
           <span>✓</span>全部四种播报模式<br>
           <span>✓</span>云端监控（关屏不漏价）<br>
           <span>✓</span>专属推荐码 · 返佣 30%
@@ -521,7 +585,7 @@ footer p { font-size: 12px; color: #445566; }
         <div class="price-amount"><sup></sup>68.88<sub>USDT/年</sub></div>
         <div class="price-cny">省 45%，约 4.9U/月</div>
         <div class="price-list">
-          <span>✓</span>无限币种监控<br>
+          <span>✓</span>海量币种监控<br>
           <span>✓</span>全部四种播报模式<br>
           <span>✓</span>云端监控（关屏不漏价）<br>
           <span>✓</span>专属推荐码 · 返佣 30%
@@ -554,7 +618,7 @@ footer p { font-size: 12px; color: #445566; }
     <div class="stats-grid">
       <div class="stat-box"><div class="stat-num">18+</div><div class="stat-lbl">接入交易所</div></div>
       <div class="stat-box"><div class="stat-num">100+</div><div class="stat-lbl">预设币种</div></div>
-      <div class="stat-box"><div class="stat-num">3</div><div class="stat-lbl">播报模式</div></div>
+      <div class="stat-box"><div class="stat-num">4</div><div class="stat-lbl">播报模式</div></div>
       <div class="stat-box"><div class="stat-num">9</div><div class="stat-lbl">支持语言</div></div>
     </div>
   </section>

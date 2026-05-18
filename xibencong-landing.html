@@ -681,6 +681,7 @@ function renderTrialForm() {
 }
 
 function renderPayForm() {
+  const refFromUrl = new URLSearchParams(location.search).get('ref') || '';
   document.getElementById('payContent').innerHTML = `
     <div style="font-size:20px;font-weight:700;margin-bottom:6px">订阅 ${curPlan.name}</div>
     <div style="font-size:13px;color:#8899aa;margin-bottom:16px">USDT 付款，链上确认后自动发送激活码</div>
@@ -697,6 +698,8 @@ function renderPayForm() {
     <input class="pay-input" id="pTg" placeholder="@your_username">
     <label class="pay-label" style="color:#556677">邮箱（选填，仅供记录）</label>
     <input class="pay-input" id="pEmail" type="email" placeholder="your@email.com" style="opacity:0.6">
+    <label class="pay-label" style="color:#556677">推荐码（选填，有推荐人请填写）</label>
+    <input class="pay-input" id="pRef" placeholder="REF-XXXXXX" value="${refFromUrl}" style="opacity:0.8">
     <button class="pay-submit" id="pBtn" onclick="createPayment()">生成付款地址</button>
     <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">支持 USDT TRC20 / ERC20 · 由 NOWPayments 安全处理</div>
   `;
@@ -749,6 +752,7 @@ async function submitTrial() {
 async function createPayment() {
   const tg = document.getElementById('pTg').value.trim();
   const email = document.getElementById('pEmail').value.trim();
+  const ref = (document.getElementById('pRef')?.value || '').trim();
   if(!tg && !email) { alert('请填写 Telegram 或邮箱以接收激活码'); return; }
   const btn = document.getElementById('pBtn');
   btn.disabled = true;
@@ -773,12 +777,12 @@ async function createPayment() {
         price_currency: 'usdttrc20',
         pay_currency: 'usdttrc20',
         order_id: `xbc_${Date.now()}`,
-        order_description: `西本聪 ${curPlan.name} | TG:${tg} | Email:${email}`,
+        order_description: `西本聪 ${curPlan.name} | TG:${tg} | Email:${email}${ref ? ' | Ref:'+ref : ''}`,
         ipn_callback_url: 'https://price-alert-worker.qunliang-feng.workers.dev/nowpayments-webhook',
       })
     });
     const data = await res.json();
-    if(data.pay_address) renderAddress(data, tg||email);
+    if(data.pay_address) renderAddress(data, tg||email, ref);
     else throw new Error(data.message||'创建失败');
   } catch(e) {
     btn.disabled=false; btn.textContent='重试';
@@ -786,7 +790,7 @@ async function createPayment() {
   }
 }
 
-function renderAddress(data, contact) {
+function renderAddress(data, contact, ref) {
   let sec = 3600;
   document.getElementById('payContent').innerHTML = `
     <div style="font-size:18px;font-weight:700;margin-bottom:6px">💳 完成付款</div>
@@ -832,7 +836,8 @@ function renderAddress(data, contact) {
         const el = document.getElementById('payStatusEl');
         if(el) { el.textContent = '✅ 付款确认成功！正在跳转…'; el.style.color='#27ae60'; }
         setTimeout(() => {
-          window.location.href = `https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-success.html?code=${result.code}`;
+          const successUrl = `https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-success.html?code=${result.code}${ref ? '&ref='+encodeURIComponent(ref) : ''}`;
+          window.location.href = successUrl;
         }, 1500);
       }
     } catch(_) {}

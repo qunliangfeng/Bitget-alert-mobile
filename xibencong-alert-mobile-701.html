@@ -3320,8 +3320,8 @@ function showReferralPanel() {
     </div>`;
   document.body.appendChild(panel);
 
-  // 设置分享链接
-  const shareLink = `${location.href.split('?')[0]}?ref=${lic.refCode}`;
+  // 设置分享链接（指向落地页，让朋友先了解产品再购买）
+  const shareLink = `https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-landing.html?ref=${lic.refCode}`;
   const linkEl = document.getElementById('refLink');
   if (linkEl) linkEl.textContent = shareLink;
 

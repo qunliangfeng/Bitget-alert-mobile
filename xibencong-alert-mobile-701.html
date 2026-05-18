@@ -895,7 +895,10 @@ COINS.forEach(initCoinState);
 const STORAGE_KEY = 'bitget_alert_settings_v1';
 let cloudSaveTimer = null;
 
+let _skipSave = false; // 从云端恢复时禁止保存，防止覆盖云端时间戳
+
 function saveSettings() {
+  if (_skipSave) return;
   try {
     const data = {
       cfg: { ...cfg },
@@ -985,6 +988,7 @@ async function loadSettings() {
         console.log('[loadSettings] cloud is newer, restoring from cloud');
         console.log('[loadSettings] cloud coinStates:', JSON.stringify(cloudData.coinStates).substring(0,200));
         console.log('[loadSettings] cloud cfg.voiceOn:', cloudData.cfg?.voiceOn, 'exchange:', cloudData.exchange);
+        _skipSave = true; // 禁止保存，防止覆盖云端时间戳
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
         setCookie('xbc_settings', JSON.stringify({
           cfg: cloudData.cfg,
@@ -993,6 +997,7 @@ async function loadSettings() {
           savedAt: cloudData.savedAt
         }), 365);
         applySettings(cloudData);
+        _skipSave = false; // 恢复保存
         console.log('[loadSettings] applySettings done, currentExchange=', currentExchange);
       } else {
         console.log('[loadSettings] local is newer or equal, keeping local');
@@ -3112,12 +3117,14 @@ async function doActivate(force) {
       try {
         const cloudData = await loadSettingsFromCloud();
         if (cloudData && cloudData.savedAt) {
+          _skipSave = true;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudData));
           setCookie('xbc_settings', JSON.stringify({
             cfg: cloudData.cfg, mktType: cloudData.mktType,
             exchange: cloudData.exchange, savedAt: cloudData.savedAt
           }), 365);
           applySettings(cloudData);
+          _skipSave = false;
         }
       } catch(_) {}
       setTimeout(()=>{ licenseValid=true; hideLicenseScreen(); }, 1200);

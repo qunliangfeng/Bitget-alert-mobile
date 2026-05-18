@@ -801,14 +801,37 @@ function renderAddress(data, contact) {
       <button onclick="copyAddress()" style="margin-top:8px;background:#152744;border:1px solid #1e3a5f;color:#8899aa;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer" id="copyBtn">复制地址</button>
     </div>
     <div style="font-size:12px;color:#556677;margin-bottom:6px">激活码将发送至：${contact}</div>
+    <div style="font-size:12px;color:#27ae60;margin-bottom:6px" id="payStatusEl">⏳ 等待付款确认中…</div>
     <div style="font-size:12px;color:#556677" id="countdownEl">剩余时间：60:00</div>
   `;
+  // 倒计时
   const timer = setInterval(()=>{
     sec--;
     const el = document.getElementById('countdownEl');
     if(el) { const m=String(Math.floor(sec/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0'); el.textContent=`剩余时间：${m}:${s}`; }
     if(sec<=0) clearInterval(timer);
   },1000);
+
+  // 轮询付款结果，每10秒查一次
+  const pollTimer = setInterval(async () => {
+    try {
+      const res = await fetch('https://price-alert-worker.qunliang-feng.workers.dev/payment/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId: data.payment_id })
+      });
+      const result = await res.json();
+      if (result.ready && result.code) {
+        clearInterval(pollTimer);
+        clearInterval(timer);
+        const el = document.getElementById('payStatusEl');
+        if(el) { el.textContent = '✅ 付款确认成功！正在跳转…'; el.style.color='#27ae60'; }
+        setTimeout(() => {
+          window.location.href = `https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-success.html?code=${result.code}`;
+        }, 1500);
+      }
+    } catch(_) {}
+  }, 10000);
 }
 
 function copyAddress() {

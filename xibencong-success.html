@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>付款成功 · 西本聪播报机器人</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0e1a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:#111827;border:1px solid #1e293b;border-radius:20px;padding:36px 28px;max-width:420px;width:100%;text-align:center}
+  .icon{font-size:56px;margin-bottom:16px}
+  h1{font-size:22px;font-weight:700;margin-bottom:8px;color:#f1f5f9}
+  .sub{font-size:14px;color:#64748b;margin-bottom:28px;line-height:1.6}
+  .code-box{background:#0f172a;border:1px solid #1e3a5f;border-radius:12px;padding:16px;margin-bottom:24px}
+  .code-label{font-size:11px;color:#475569;margin-bottom:8px}
+  .code{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#60a5fa;letter-spacing:.1em;word-break:break-all}
+  .btn-activate{width:100%;padding:16px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:12px;transition:.2s}
+  .btn-activate:hover{opacity:.9}
+  .btn-activate:disabled{opacity:.5;cursor:not-allowed}
+  .btn-copy{width:100%;padding:12px;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:12px;font-size:14px;cursor:pointer;margin-bottom:20px}
+  .status{font-size:13px;min-height:20px;margin-bottom:12px}
+  .status.ok{color:#22c55e}
+  .status.err{color:#ef4444}
+  .status.loading{color:#60a5fa}
+  .divider{border:none;border-top:1px solid #1e293b;margin:20px 0}
+  .hint{font-size:12px;color:#475569;line-height:1.7}
+  .hint a{color:#60a5fa;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon" id="iconEl">🎉</div>
+  <h1 id="titleEl">付款成功！</h1>
+  <p class="sub" id="subEl">你的激活码已准备好，点击下方按钮立即激活进入播报器</p>
+
+  <div class="code-box" id="codeBox">
+    <div class="code-label">你的激活码</div>
+    <div class="code" id="codeEl">加载中…</div>
+  </div>
+
+  <button class="btn-activate" id="btnActivate" onclick="doActivate()" disabled>
+    🚀 立即激活进入播报器
+  </button>
+  <button class="btn-copy" id="btnCopy" onclick="copyCode()">复制激活码</button>
+
+  <div class="status" id="statusEl"></div>
+
+  <hr class="divider">
+  <div class="hint">
+    激活码同时已发送到你的 Telegram<br>
+    如需手动激活，请前往 <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-alert-mobile-701.html" target="_blank">播报器页面</a> 输入激活码<br><br>
+    有问题请联系 <a href="https://t.me/xibencong" target="_blank">@xibencong</a>
+  </div>
+</div>
+
+<script>
+const WORKER_URL = 'https://price-alert-worker.qunliang-feng.workers.dev';
+const PLAYER_URL = 'https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-alert-mobile-701.html';
+
+let licCode = '';
+
+function init() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code');
+  if (!code) {
+    document.getElementById('iconEl').textContent = '❌';
+    document.getElementById('titleEl').textContent = '链接无效';
+    document.getElementById('subEl').textContent = '未找到激活码，请检查链接或联系客服';
+    document.getElementById('codeBox').style.display = 'none';
+    document.getElementById('btnActivate').style.display = 'none';
+    document.getElementById('btnCopy').style.display = 'none';
+    return;
+  }
+  licCode = code;
+  document.getElementById('codeEl').textContent = code;
+  document.getElementById('btnActivate').disabled = false;
+  document.getElementById('btnCopy').disabled = false;
+}
+
+async function doActivate() {
+  if (!licCode) return;
+  const btn = document.getElementById('btnActivate');
+  const status = document.getElementById('statusEl');
+  btn.disabled = true;
+  btn.textContent = '激活中…';
+  status.className = 'status loading';
+  status.textContent = '正在验证激活码…';
+
+  try {
+    // 生成设备ID
+    const deviceId = getDeviceId();
+    const res = await fetch(WORKER_URL + '/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: licCode, deviceId })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      // 存入 localStorage 供播报器直接使用
+      const licData = {
+        code: licCode,
+        plan: data.plan,
+        expiresAt: data.expiresAt,
+        email: data.email || '',
+        refCode: data.refCode || '',
+        verifiedAt: Date.now()
+      };
+      localStorage.setItem('bitget_license_v1', JSON.stringify(licData));
+      // Cookie 备份
+      const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
+      document.cookie = `xbc_lic=${encodeURIComponent(JSON.stringify(licData))};expires=${expires};path=/;SameSite=Lax`;
+
+      status.className = 'status ok';
+      status.textContent = '✅ 激活成功！正在跳转到播报器…';
+      btn.textContent = '✅ 激活成功，跳转中…';
+
+      setTimeout(() => {
+        window.location.href = PLAYER_URL;
+      }, 1500);
+    } else if (data.error === 'device_switch') {
+      // 已在其他设备激活，提示用户
+      status.className = 'status err';
+      status.textContent = '此激活码已在另一台设备使用';
+      btn.disabled = false;
+      btn.textContent = '强制切换到此设备激活';
+      btn.onclick = () => doActivateForce();
+    } else {
+      const errMap = { invalid_code:'激活码无效', expired:'激活码已过期', revoked:'激活码已停用' };
+      status.className = 'status err';
+      status.textContent = errMap[data.error] || '激活失败：' + data.error;
+      btn.disabled = false;
+      btn.textContent = '🚀 重试激活';
+    }
+  } catch(e) {
+    status.className = 'status err';
+    status.textContent = '网络错误，请重试';
+    btn.disabled = false;
+    btn.textContent = '🚀 重试激活';
+  }
+}
+
+async function doActivateForce() {
+  const btn = document.getElementById('btnActivate');
+  const status = document.getElementById('statusEl');
+  btn.disabled = true;
+  btn.textContent = '切换中…';
+  status.className = 'status loading';
+  status.textContent = '正在切换设备…';
+  try {
+    const res = await fetch(WORKER_URL + '/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: licCode, deviceId: getDeviceId(), force: true })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const licData = { code: licCode, plan: data.plan, expiresAt: data.expiresAt, email: data.email||'', refCode: data.refCode||'', verifiedAt: Date.now() };
+      localStorage.setItem('bitget_license_v1', JSON.stringify(licData));
+      const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
+      document.cookie = `xbc_lic=${encodeURIComponent(JSON.stringify(licData))};expires=${expires};path=/;SameSite=Lax`;
+      status.className = 'status ok';
+      status.textContent = '✅ 切换成功！正在跳转…';
+      setTimeout(() => { window.location.href = PLAYER_URL; }, 1500);
+    } else {
+      status.className = 'status err';
+      status.textContent = '切换失败：' + data.error;
+      btn.disabled = false;
+      btn.textContent = '重试';
+      btn.onclick = doActivateForce;
+    }
+  } catch(e) {
+    status.className = 'status err';
+    status.textContent = '网络错误，请重试';
+    btn.disabled = false;
+    btn.onclick = doActivateForce;
+  }
+}
+
+function copyCode() {
+  if (!licCode) return;
+  navigator.clipboard.writeText(licCode).then(() => {
+    const btn = document.getElementById('btnCopy');
+    btn.textContent = '已复制 ✓';
+    btn.style.color = '#22c55e';
+    setTimeout(() => { btn.textContent = '复制激活码'; btn.style.color = ''; }, 2000);
+  });
+}
+
+function getDeviceId() {
+  let id = localStorage.getItem('xbc_device_id');
+  if (!id) {
+    id = 'D' + Math.random().toString(36).substr(2,9).toUpperCase() + Date.now().toString(36).toUpperCase();
+    localStorage.setItem('xbc_device_id', id);
+  }
+  return id;
+}
+
+init();
+</script>
+</body>
+</html>

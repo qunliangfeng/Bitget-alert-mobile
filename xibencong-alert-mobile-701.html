@@ -164,13 +164,15 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
 
 /* expand toggle */
 .card-expand-btn {
-  width: 100%; padding: 8px 14px;
-  background: none; border: none; border-top: 1px solid var(--bd);
-  color: var(--tx3); font-size: 12px; font-family: var(--sans);
+  width: 100%; padding: 9px 14px;
+  background: linear-gradient(to right, #1e3a5f, #1e3a6e);
+  border: none; border-top: 1px solid #2563eb44;
+  color: #93c5fd; font-size: 12px; font-weight: 500; font-family: var(--sans);
   cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
-  transition: background .15s;
+  letter-spacing: .04em;
+  transition: opacity .15s;
 }
-.card-expand-btn:active { background: var(--bg3); }
+.card-expand-btn:active { opacity: .8; }
 
 /* expandable settings */
 .card-settings { display: none; border-top: 1px solid var(--bd); padding: 12px 14px; }

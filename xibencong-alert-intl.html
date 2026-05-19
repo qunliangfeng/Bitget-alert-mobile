@@ -1088,11 +1088,12 @@ function applyLang(langCode) {
     <!-- Language Selector -->
     <div style="position:relative">
       <button id="langBtn" onclick="toggleLangMenu()"
-        style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:4px 8px;font-size:13px;cursor:pointer;color:var(--tx);display:flex;align-items:center;gap:4px">
-        <span id="langFlag">🇬🇧</span>
-        <span style="font-size:10px">▾</span>
+        style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--tx);display:flex;align-items:center;gap:5px;min-width:64px">
+        <span style="font-size:15px">🌐</span>
+        <span id="langFlag" style="font-size:15px">🇬🇧</span>
+        <span style="font-size:10px;color:var(--tx2)">▾</span>
       </button>
-      <div id="langMenu" style="display:none;position:absolute;right:0;top:110%;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;z-index:999;min-width:160px;box-shadow:0 4px 20px #0008;overflow:hidden">
+      <div id="langMenu" style="display:none;position:absolute;right:0;top:110%;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;z-index:9999;min-width:180px;box-shadow:0 8px 30px #000a;overflow:hidden">
         <div id="langMenuItems"></div>
       </div>
     </div>
@@ -4628,14 +4629,19 @@ function selectLang(code) {
   buildLangMenu();
 }
 
-// Init language on load
-(function initLang() {
+// Init language after DOM is ready
+function initLang() {
   const saved = localStorage.getItem('xbc_lang') || 'en';
   currentLang = saved;
   const flag = document.getElementById('langFlag');
   if (flag) flag.textContent = LANGS[saved]?.flag || '🇬🇧';
   applyLang(saved);
-})();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLang);
+} else {
+  initLang();
+}
 </script>
 
 </body>

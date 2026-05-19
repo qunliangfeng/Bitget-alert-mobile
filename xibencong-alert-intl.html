@@ -2563,9 +2563,9 @@ function setWS(s) {
   const p=document.getElementById('wsPill'), d=document.getElementById('wsDot'), t=document.getElementById('wsText');
   const ex = EXCHANGES[currentExchange];
   const exName = ex ? ex.name : '';
-  if(s==='connected'){ p.className='ws-pill connected'; d.className='dot'; t.textContent=exName+' 实时'; }
-  else if(s==='rest'){  p.className='ws-pill connected'; d.className='dot'; t.textContent=exName+' 轮询'; }
-  else if(s==='connecting'){ p.className='ws-pill connecting'; d.className='dot warn'; t.textContent=exName+' 连接中…'; }
+  if(s==='connected'){ p.className='ws-pill connected'; d.className='dot'; t.textContent=exName+' Live'; }
+  else if(s==='rest'){  p.className='ws-pill connected'; d.className='dot'; t.textContent=exName+' Polling'; }
+  else if(s==='connecting'){ p.className='ws-pill connecting'; d.className='dot warn'; t.textContent=exName+' Connecting…'; }
   else { p.className='ws-pill error'; d.className='dot off'; t.textContent='Disconnected'; }
 }
 
@@ -3269,14 +3269,20 @@ function speak(text) {
   if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  const langData = LANGS[currentLang];
-  u.lang = langData?.speechLang || 'zh-CN';
+  const langData = LANGS[currentLang] || LANGS['en'];
+  const speechLang = langData.speechLang || 'en-US';
+  const langPrefix = speechLang.split('-')[0];
+  u.lang = speechLang;
   u.rate = 1.0;
   u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
-  if (cfg.voiceGender === 'male') u.pitch = 0.5;
   const voices = window.speechSynthesis.getVoices();
-  const zhVoice = voices.find(v => v.lang.startsWith('zh'));
-  if (zhVoice) u.voice = zhVoice;
+  // Try to find a voice matching language and gender
+  const isFemale = cfg.voiceGender !== 'male';
+  let voice = voices.find(v => v.lang === speechLang && (isFemale ? /female|woman|girl/i.test(v.name) : /male|man|boy/i.test(v.name)));
+  if (!voice) voice = voices.find(v => v.lang === speechLang);
+  if (!voice) voice = voices.find(v => v.lang.startsWith(langPrefix));
+  if (voice) u.voice = voice;
+  if (!isFemale && !voice?.name.match(/male|man/i)) u.pitch = 0.5;
   window.speechSynthesis.speak(u);
 }
 
@@ -3286,13 +3292,19 @@ function speakAndWait(text) {
     if (!('speechSynthesis' in window)) { resolve(); return; }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'zh-CN';
+    const _ld = LANGS[currentLang] || LANGS['en'];
+    const _sl = _ld.speechLang || 'en-US';
+    const _lp = _sl.split('-')[0];
+    u.lang = _sl;
     u.rate = 1.0;
     u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
-    if (cfg.voiceGender === 'male') u.pitch = 0.5;
-    const voices = window.speechSynthesis.getVoices();
-    const zhVoice = voices.find(v => v.lang.startsWith('zh'));
-    if (zhVoice) u.voice = zhVoice;
+    const _voices = window.speechSynthesis.getVoices();
+    const _isFem = cfg.voiceGender !== 'male';
+    let _voice = _voices.find(v => v.lang === _sl && (_isFem ? /female|woman|girl/i.test(v.name) : /male|man|boy/i.test(v.name)));
+    if (!_voice) _voice = _voices.find(v => v.lang === _sl);
+    if (!_voice) _voice = _voices.find(v => v.lang.startsWith(_lp));
+    if (_voice) u.voice = _voice;
+    if (!_isFem && !_voice?.name.match(/male|man/i)) u.pitch = 0.5;
     u.onend = () => resolve();
     u.onerror = () => resolve();
     // 保险：最多等10秒
@@ -3330,11 +3342,16 @@ function testVoice() {
   function doSpeak() {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance('Bitcoin crossed one thousand, attention');
-    const langData = (typeof LANGS !== 'undefined' && LANGS[currentLang]) || {speechLang:'en-US'};
-    u.lang = langData.speechLang; u.rate = 1.0; u.volume = 1.0;
-    const voices = window.speechSynthesis.getVoices();
-    const matchVoice = voices.find(v => v.lang.startsWith(u.lang.split('-')[0]));
-    if (matchVoice) { u.voice = matchVoice; }
+    const _tld = (typeof LANGS !== 'undefined' && LANGS[currentLang]) || {speechLang:'en-US'};
+    const _tsl = _tld.speechLang || 'en-US';
+    u.lang = _tsl; u.rate = 1.0; u.volume = 1.0;
+    const _tvs = window.speechSynthesis.getVoices();
+    const _tisFem = cfg.voiceGender !== 'male';
+    let _tv = _tvs.find(v => v.lang === _tsl && (_tisFem ? /female|woman|girl/i.test(v.name) : /male|man|boy/i.test(v.name)));
+    if (!_tv) _tv = _tvs.find(v => v.lang === _tsl);
+    if (!_tv) _tv = _tvs.find(v => v.lang.startsWith(_tsl.split('-')[0]));
+    if (_tv) { u.voice = _tv; }
+    if (!_tisFem && !_tv?.name.match(/male|man/i)) u.pitch = 0.5;
     u.onstart  = () => { msg.style.color='var(--green)'; msg.textContent='🎙 Playing…'; };
     u.onend    = () => { msg.style.color='var(--green)'; msg.textContent='✅ Voice OK'; setTimeout(()=>msg.style.display='none',2000); };
     u.onerror  = (e) => {
@@ -4257,7 +4274,7 @@ if (location.protocol === 'file:') {
   document.body.appendChild(banner);
   document.getElementById('scrollArea').style.top = '106px';
   setWS('error');
-  document.getElementById('wsText').textContent = '需要HTTPS';
+  document.getElementById('wsText').textContent = 'HTTPS Required';
   licenseValid = true; // file:// 调试时跳过验证
   startConnection();
 } else {
@@ -4642,6 +4659,13 @@ function initLang() {
   currentLang = saved;
   const flag = document.getElementById('langFlag');
   if (flag) flag.textContent = LANGS[saved]?.flag || '🇬🇧';
+  // Pre-load voices so they're available immediately
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices();
+    if (window.speechSynthesis.onvoiceschanged === null) {
+      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; };
+    }
+  }
   applyLang(saved);
 }
 if (document.readyState === 'loading') {

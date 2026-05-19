@@ -496,6 +496,9 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
         oninput="setVolume(this.value)">
     </div>
     <div class="drow"><span class="drow-name">🎙 中文语音播报</span><button class="tgl" id="togVoice" onclick="togCtrl('voice')"></button></div>
+    <div style="padding:4px 4px 8px;font-size:10px;color:var(--tx3);line-height:1.6">
+      ⚠️ 语音播报需 Chrome 或 Safari。小米/华为部分机型如提示失败，请到「设置→辅助功能→朗读内容」安装中文语音包。TG 推送不受影响。
+    </div>
     <div class="drow" id="voiceGenderRow" style="padding-left:4px">
       <span class="drow-name" style="font-size:12px;color:var(--tx3)">语音音色</span>
       <div style="display:flex;gap:6px">
@@ -2588,7 +2591,21 @@ function testVoice() {
     if (zhVoice) { u.voice = zhVoice; }
     u.onstart  = () => { msg.style.color='var(--green)'; msg.textContent='🎙 语音播报中…'; };
     u.onend    = () => { msg.style.color='var(--green)'; msg.textContent='✅ 语音正常'; setTimeout(()=>msg.style.display='none',2000); };
-    u.onerror  = (e) => { msg.style.color='var(--red)'; msg.textContent='❌ 语音失败：'+e.error+' — 请检查静音开关和辅助功能→朗读内容→中文语音包'; };
+    u.onerror  = (e) => {
+      msg.style.color='var(--red)';
+      const err = e.error || '';
+      let tip = '';
+      if (err === 'interrupted' || err === 'canceled') {
+        tip = '❌ 语音被系统打断（小米/华为常见）\n请尝试：设置 → 辅助功能 → 朗读内容 → 开启并安装中文语音包；或关闭后台省电限制后重试';
+      } else if (err === 'not-allowed') {
+        tip = '❌ 语音权限被拒绝，请先点击页面任意位置解锁，或检查浏览器权限设置';
+      } else if (err === 'language-unavailable' || err === 'voice-unavailable') {
+        tip = '❌ 未找到中文语音包，请到手机设置 → 辅助功能 → 朗读内容 → 下载中文（普通话）语音包';
+      } else {
+        tip = '❌ 语音失败：' + err + ' — 请检查静音开关，或使用 Chrome/Safari 浏览器';
+      }
+      msg.textContent = tip;
+    };
     window.speechSynthesis.speak(u);
   }
   if (window.speechSynthesis.getVoices().length === 0) {

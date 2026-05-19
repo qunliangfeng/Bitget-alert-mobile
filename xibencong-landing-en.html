@@ -580,7 +580,7 @@ footer p { font-size: 12px; color: #445566; }
       <div class="price-card hot">
         <div class="hot-tag">⭐ ⭐ Most Popular</div>
         <div class="price-plan">Monthly</div>
-        <div class="price-amount"><sup></sup>11.88<sub>USDT/月</sub></div>
+        <div class="price-amount"><sup></sup>19.99<sub>USDT/mo</sub></div>
         <div class="price-list">
           <span>✓</span>Coins Monitored<br>
           <span>✓</span>All four Alert Modes<br>
@@ -591,8 +591,8 @@ footer p { font-size: 12px; color: #445566; }
       </div>
       <div class="price-card">
         <div class="price-plan">Yearly</div>
-        <div class="price-amount"><sup></sup>68.88<sub>USDT/年</sub></div>
-        <div class="price-cny">Save 45% — ~4.9U/mo</div>
+        <div class="price-amount"><sup></sup>179.99<sub>USDT/yr</sub></div>
+        <div class="price-cny">Save 25% — ~15U/mo</div>
         <div class="price-list">
           <span>✓</span>Coins Monitored<br>
           <span>✓</span>All four Alert Modes<br>
@@ -622,8 +622,8 @@ footer p { font-size: 12px; color: #445566; }
         <h3>Refer Friends — 30% Lifetime Commission</h3>
         <p>Get your exclusive referral code after purchase，For every paying user you refer，Earn permanently from their subscription 30%，no limit，withdraw anytime。</p>
         <div class="ref-amounts">
-          <div class="ref-amt"><div class="num">3.56U</div><div class="lbl">Monthly/month per person</div></div>
-          <div class="ref-amt"><div class="num">20.66U</div><div class="lbl">Yearlyper person</div></div>
+          <div class="ref-amt"><div class="num">6.00U</div><div class="lbl">Monthly/month per person</div></div>
+          <div class="ref-amt"><div class="num">54.00U</div><div class="lbl">Yearlyper person</div></div>
           <div class="ref-amt"><div class="num">∞</div><div class="lbl">no limit</div></div>
         </div>
       </div>
@@ -645,7 +645,7 @@ footer p { font-size: 12px; color: #445566; }
     <h2>Start Now — Never Miss a Key Price Level</h2>
     <p>7-Day Free Trial，cancel anytime — no risk</p>
     <div class="cta-row">
-      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/crypto-universal-alert-mobile.html">
+      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-alert-intl.html">
         <button class="btn-buy" style="font-size:16px;padding:16px 40px">🚀 Get Started Now</button>
       </a>
     </div>
@@ -758,8 +758,8 @@ const NOWPAY_KEY = 'ZGX71FY-TQ7MJN4-GVXYB4S-RME2QBT';
 
 const PLANS = {
   trial:   { name:'7天Free Trial', price:0, free:true },
-  monthly: { name:'Monthly plan', price:11.88, label:'11.88 USDT / 月' },
-  yearly:  { name:'Yearly plan', price:68.88, label:'68.88 USDT / 年（省55%）' },
+  monthly: { name:'Monthly plan', price:19.99, label:'19.99 USDT / mo' },
+  yearly:  { name:'Yearly plan', price:179.99, label:'179.99 USDT / yr (save 25%)' },
 };
 let curPlan = null;
 
@@ -977,7 +977,7 @@ function renderAddress(data, contact, ref) {
         const el = document.getElementById('payStatusEl');
         if(el) { el.textContent = '✅ Payment confirmed! Redirecting...…'; el.style.color='#27ae60'; }
         setTimeout(() => {
-          const successUrl = `https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-success.html?code=${result.code}${ref ? '&ref='+encodeURIComponent(ref) : ''}`;
+          const successUrl = `https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-success.html?code=${result.code}${ref ? '&ref='+encodeURIComponent(ref) : ''}&lang=en`;
           window.location.href = successUrl;
         }, 1500);
       }

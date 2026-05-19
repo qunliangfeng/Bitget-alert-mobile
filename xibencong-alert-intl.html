@@ -3880,11 +3880,11 @@ function showLicenseScreen() {
           oninput="this.value=this.value.toUpperCase()">
         <button onclick="doActivate()"
           style="width:100%;padding:13px;font-size:15px;font-weight:600;background:var(--blue);color:white;border:none;border-radius:10px;cursor:pointer;font-family:var(--sans)">
-          激活
+          Activate
         </button>
         <div id="licMsg" style="font-size:12px;padding:8px 10px;border-radius:8px;margin-top:10px;display:none"></div>
         <div style="font-size:11px;color:var(--tx3);text-align:center;margin-top:14px;line-height:1.7">
-          没有Activation Code？<br>
+          No Activation Code?<br>
           <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-landing-en.html"
             target="_blank"
             style="display:inline-block;margin-top:6px;padding:8px 18px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">
@@ -3943,7 +3943,7 @@ async function doActivate(force) {
       const licData = { code, plan:data.plan, expiresAt:data.expiresAt, email:data.email, refCode:data.refCode, verifiedAt:Date.now() };
       localStorage.setItem(LIC_KEY, JSON.stringify(licData));
       setCookie('xbc_lic', JSON.stringify(licData), 365);
-      showLicMsg('ok', `✅ 激活成功！有效至 ${new Date(data.expiresAt).toLocaleDateString()}`);
+      showLicMsg('ok', `✅ Activated! Valid until ${new Date(data.expiresAt).toLocaleDateString()}`);
       // 激活成功后强制从云端拉取最新设置并写入本地（切换设备时同步参数）
       try {
         const cloudData = await loadSettingsFromCloud();
@@ -4131,7 +4131,7 @@ function showReferralPanel() {
             style="padding:12px 16px;background:var(--blue-d);color:#60a5fa;border:1px solid #1e3a6e;border-radius:10px;font-size:13px;cursor:pointer;white-space:nowrap">Copy</button>
         </div>
         <div style="font-size:12px;color:var(--tx3);line-height:1.8">
-          朋友激活时输入你的推荐码，你将获得其付款金额的 <b style="color:var(--amber)">30%</b> 佣金<br>
+          When friends activate with your code, you earn <b style="color:var(--amber)">30%</b> commission<br>
 
         </div>
       </div>

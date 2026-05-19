@@ -433,6 +433,10 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
       <button class="ex-btn"        data-ex="okx"     onclick="switchExchange('okx')">⚫ OKX</button>
       <button class="ex-btn"        data-ex="bybit"   onclick="switchExchange('bybit')">🟠 Bybit</button>
     </div>
+    <!-- 币安提示 -->
+    <div id="binanceNote" style="display:none;font-size:10px;color:#f59e0b;padding:4px 6px;background:#2a200a;border-radius:6px;margin-bottom:6px">
+      ⚠️ 币安连接不稳定时，建议切换至 Bitget 或 OKX
+    </div>
     <!-- 更多交易所下拉 -->
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <span style="font-size:12px;color:var(--tx3);flex-shrink:0">更多：</span>
@@ -622,12 +626,14 @@ body { background: var(--bg); color: var(--tx); font-family: var(--sans); font-s
             <div style="font-size:11px;color:var(--tx3)">@qunliangfeng</div>
           </div>
         </a>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px">
+        <div onclick="copyWechatId(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;cursor:pointer;transition:border-color .2s"
+          onmouseover="this.style.borderColor='#22c55e'" onmouseout="this.style.borderColor='var(--bd)'">
           <span style="font-size:18px">💬</span>
-          <div>
+          <div style="flex:1">
             <div style="font-size:13px;font-weight:600;color:var(--tx)">微信客服</div>
-            <div style="font-size:11px;color:var(--tx3)">xibencongbot</div>
+            <div style="font-size:11px;color:var(--tx3)" id="wxCopyHint">xibencongbot · 点击复制</div>
           </div>
+          <span style="font-size:11px;color:var(--tx3)">📋</span>
         </div>
         <a href="mailto:xibencongbot@gmail.com" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
           <span style="font-size:18px">📧</span>
@@ -1734,13 +1740,16 @@ function connectWS() {
 
 function onWSFail() {
   wsFailCount++;
-  if(wsFailCount >= 2) { connMode='rest'; setWS('rest'); startREST(); }
+  // 5次失败才降级到REST，每次重试间隔递增（1s/2s/4s/6s/8s）
+  if(wsFailCount >= 5) { connMode='rest'; setWS('rest'); startREST(); }
   else schedReconn();
 }
 
 function schedReconn() {
   clearTimeout(reconnTimer);
-  reconnTimer = setTimeout(() => { if(!wsAlive && connMode==='ws') connectWS(); }, 3000);
+  const delays = [1000, 2000, 4000, 6000, 8000];
+  const delay = delays[Math.min(wsFailCount - 1, delays.length - 1)];
+  reconnTimer = setTimeout(() => { if(!wsAlive && connMode==='ws') connectWS(); }, delay);
 }
 
 // ── REST 降级 ─────────────────────────────────────────────────────
@@ -1851,6 +1860,10 @@ function switchExchange(exId) {
   if (currentExchange === exId) return;
   currentExchange = exId;
   localStorage.setItem('current_exchange', exId);
+
+  // 币安提示
+  const binNote = document.getElementById('binanceNote');
+  if (binNote) binNote.style.display = (exId === 'binance') ? 'block' : 'none';
 
   // 更新 UI
   syncExchangeUI(exId);
@@ -2596,7 +2609,7 @@ function testVoice() {
       const err = e.error || '';
       let tip = '';
       if (err === 'interrupted' || err === 'canceled') {
-        tip = '❌ 语音被系统打断（小米/华为常见）\n请尝试：设置 → 辅助功能 → 朗读内容 → 开启并安装中文语音包；或关闭后台省电限制后重试';
+        tip = '❌ 语音被系统打断（小米/华为常见）\n小米：设置→更多设置→语言和输入法→文字转语音→下载中文语音包\n华为：设置→辅助功能→朗读内容→安装中文语音包';
       } else if (err === 'not-allowed') {
         tip = '❌ 语音权限被拒绝，请先点击页面任意位置解锁，或检查浏览器权限设置';
       } else if (err === 'language-unavailable' || err === 'voice-unavailable') {
@@ -3140,7 +3153,11 @@ function showLicenseScreen() {
         <div id="licMsg" style="font-size:12px;padding:8px 10px;border-radius:8px;margin-top:10px;display:none"></div>
         <div style="font-size:11px;color:var(--tx3);text-align:center;margin-top:14px;line-height:1.7">
           没有激活码？<br>
-          购买地址：<span style="color:var(--blue)">gumroad.com</span> 或 <span style="color:var(--blue)">afdian.com</span>
+          <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-landing.html"
+            target="_blank"
+            style="display:inline-block;margin-top:6px;padding:8px 18px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">
+            🛒 前往购买页面
+          </a>
         </div>
       </div>
     </div>`;
@@ -3838,6 +3855,18 @@ window.addEventListener('load', () => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+function copyWechatId(el) {
+  navigator.clipboard.writeText('xibencongbot').then(() => {
+    const hint = document.getElementById('wxCopyHint');
+    if (hint) { hint.textContent = '✅ 已复制！打开微信搜索添加'; hint.style.color='#22c55e'; }
+    el.style.borderColor = '#22c55e';
+    setTimeout(() => {
+      if (hint) { hint.textContent = 'xibencongbot · 点击复制'; hint.style.color=''; }
+      el.style.borderColor = 'var(--bd)';
+    }, 2500);
   });
 }
 </script>

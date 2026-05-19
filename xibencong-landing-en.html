@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xibencong · Smart Crypto Alert Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:   #0a1628;
+  --navy2:  #0f1f3d;
+  --navy3:  #152744;
+  --blue:   #1a6496;
+  --blue2:  #2980b9;
+  --gold:   #f39c12;
+  --gold2:  #e67e22;
+  --green:  #27ae60;
+  --red:    #e74c3c;
+  --white:  #f0f4f8;
+  --gray:   #8899aa;
+  --light:  #d4e5f7;
+  --serif:  'Noto Serif SC', serif;
+  --sans:   'Inter', sans-serif;
+  --mono:   'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Stars bg ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 45%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 20%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 60%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 20% 75%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 85%, rgba(255,255,255,.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 90%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 85% 85%, rgba(243,156,18,.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 15% 50%, rgba(243,156,18,.3) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+/* ── Hero ── */
+.hero {
+  text-align: center;
+  padding: 60px 20px 50px;
+  position: relative;
+}
+
+.hero-logo {
+  width: 140px; height: 140px;
+  border-radius: 32px;
+  overflow: hidden;
+  margin: 0 auto 28px;
+  border: 3px solid var(--blue);
+  box-shadow: 0 0 0 6px rgba(26,100,150,.25), 0 20px 60px rgba(0,0,0,.5);
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.hero-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+.brand-en {
+  font-size: 12px; letter-spacing: .25em; text-transform: uppercase;
+  color: var(--blue2); margin-bottom: 12px; font-weight: 500;
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(36px, 8vw, 64px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 16px;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(26,100,150,.5);
+}
+.hero-title .gold { color: var(--gold); }
+.hero-title .blue { color: #5dade2; }
+
+.hero-sub {
+  font-size: 16px; color: var(--light); line-height: 1.8;
+  max-width: 520px; margin: 0 auto 32px;
+  font-weight: 300;
+}
+
+.badge-row {
+  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 36px;
+}
+.badge {
+  padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 500;
+  border: 1px solid; display: inline-flex; align-items: center; gap: 5px;
+}
+.b-blue  { background: rgba(41,128,185,.15); color: #5dade2; border-color: rgba(41,128,185,.4); }
+.b-green { background: rgba(39,174,96,.15);  color: #58d68d; border-color: rgba(39,174,96,.4); }
+.b-gold  { background: rgba(243,156,18,.15); color: var(--gold); border-color: rgba(243,156,18,.4); }
+.b-purple { background: rgba(155,89,182,.15); color: #bb8fce; border-color: rgba(155,89,182,.4); }
+
+.cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.btn-buy {
+  padding: 14px 36px; background: var(--gold); color: var(--navy);
+  border: none; border-radius: 12px; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: var(--sans);
+  box-shadow: 0 4px 20px rgba(243,156,18,.4);
+  transition: transform .15s, box-shadow .15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-buy:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(243,156,18,.5); }
+.btn-trial {
+  padding: 14px 28px; background: transparent; color: var(--light);
+  border: 1px solid rgba(255,255,255,.2); border-radius: 12px; font-size: 15px;
+  cursor: pointer; font-family: var(--sans); transition: border-color .15s;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-trial:hover { border-color: rgba(255,255,255,.5); }
+
+.hero-note { font-size: 12px; color: var(--gray); }
+
+/* ── Divider ── */
+.divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(26,100,150,.4), transparent); margin: 10px 0; }
+
+/* ── Phone + Features ── */
+.split-section {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+  align-items: center; padding: 50px 0;
+}
+@media(max-width:600px){ .split-section{grid-template-columns:1fr} }
+
+.phone-wrap {
+  display: flex; justify-content: center;
+}
+.phone {
+  width: 200px;
+  background: #0d0f14;
+  border-radius: 28px;
+  border: 2px solid #1e2840;
+  box-shadow: 0 0 0 6px #111827, 0 30px 60px rgba(0,0,0,.6);
+  overflow: hidden;
+  position: relative;
+}
+.phone-notch {
+  width: 80px; height: 8px; background: #1e2840;
+  border-radius: 99px; margin: 10px auto 0;
+}
+.phone-head {
+  padding: 10px 14px 6px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.phone-brand { font-size: 9px; font-weight: 600; color: #e8eaf0; letter-spacing: .05em; }
+.phone-status {
+  font-size: 8px; color: #22c55e; background: rgba(34,197,94,.1);
+  padding: 2px 7px; border-radius: 99px;
+  display: flex; align-items: center; gap: 3px;
+}
+.sdot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+
+.pc {
+  margin: 4px 10px;
+  background: #13161d; border: 1px solid #252a38; border-radius: 10px; padding: 8px 10px;
+}
+.pc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+.pc-coin { display: flex; align-items: center; gap: 5px; }
+.pc-icon { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; }
+.pc-name { font-size: 9px; font-weight: 600; color: #e8eaf0; }
+.pc-tag { font-size: 7px; padding: 1px 5px; border-radius: 99px; }
+.up   { background: rgba(34,197,94,.15); color: #22c55e; }
+.dn   { background: rgba(239,68,68,.15); color: #ef4444; }
+.pc-price { font-size: 14px; font-weight: 600; color: #e8eaf0; font-family: var(--mono); letter-spacing: -.5px; }
+.pc-bar { height: 2px; border-radius: 1px; background: #1a1e28; margin-top: 3px; overflow: hidden; }
+.pc-fill { height: 100%; border-radius: 1px; background: linear-gradient(90deg,#ef4444,#22c55e); }
+
+.phone-alert {
+  margin: 4px 10px; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25);
+  border-radius: 7px; padding: 5px 8px; font-size: 8px; color: #22c55e;
+}
+.phone-nav {
+  display: flex; justify-content: space-around; padding: 6px 0 8px;
+  border-top: 1px solid #1e2840; margin-top: 6px;
+}
+.pn { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 7px; color: #555e72; }
+.pn.active { color: #3b82f6; }
+.pnd { width: 14px; height: 14px; border-radius: 3px; background: currentColor; opacity: .5; }
+
+.feats-side h2 {
+  font-family: var(--serif); font-size: 26px; font-weight: 700;
+  margin-bottom: 8px; line-height: 1.25;
+}
+.feats-side p { font-size: 14px; color: var(--light); margin-bottom: 24px; line-height: 1.7; }
+.feat-list { display: flex; flex-direction: column; gap: 12px; }
+.feat-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px; padding: 12px;
+}
+.feat-emoji { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.feat-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.feat-desc { font-size: 12px; color: var(--gray); }
+
+/* ── Modes ── */
+.modes-section { padding: 50px 0; }
+.section-head { text-align: center; margin-bottom: 36px; }
+.section-head h2 {
+  font-family: var(--serif); font-size: 32px; font-weight: 700; margin-bottom: 8px;
+}
+.section-head p { color: var(--light); font-size: 14px; font-weight: 300; }
+.label {
+  display: inline-block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--blue2); margin-bottom: 10px; font-weight: 500;
+}
+
+.modes-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+@media(max-width:600px){ .modes-grid{grid-template-columns:1fr} }
+.mode-card {
+  background: var(--navy2); border: 1px solid rgba(26,100,150,.3);
+  border-radius: 14px; padding: 20px;
+  transition: border-color .2s, transform .2s;
+}
+.mode-card:hover { border-color: var(--blue2); transform: translateY(-3px); }
+.mode-icon { font-size: 28px; margin-bottom: 12px; }
+.mode-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.mode-desc { font-size: 13px; color: var(--gray); line-height: 1.7; }
+
+/* ── Exchanges ── */
+.ex-section { padding: 40px 0; text-align: center; }
+.ex-grid { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+.ex-card {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--navy2); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px; padding: 12px 20px;
+  font-size: 15px; font-weight: 500; color: #fff;
+  transition: border-color .15s;
+}
+.ex-card:hover { border-color: rgba(255,255,255,.2); }
+.ex-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ── Pricing ── */
+.pricing-section { padding: 50px 0; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 36px; }
+@media(max-width:600px){ .pricing-grid{grid-template-columns:1fr} }
+.price-card {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px; padding: 24px 20px; text-align: center; position: relative;
+  transition: transform .2s;
+}
+.price-card:hover { transform: translateY(-3px); }
+.price-card.hot {
+  border: 2px solid var(--gold); background: rgba(243,156,18,.08);
+  box-shadow: 0 0 30px rgba(243,156,18,.15);
+}
+.hot-tag {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--gold); color: var(--navy); font-size: 11px; font-weight: 700;
+  padding: 3px 14px; border-radius: 99px; white-space: nowrap; letter-spacing: .05em;
+}
+.price-plan { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--gray); margin-bottom: 12px; }
+.price-amount { font-family: var(--mono); font-size: 36px; font-weight: 600; color: #fff; line-height: 1; }
+.price-amount sup { font-size: 18px; vertical-align: super; }
+.price-amount sub { font-size: 14px; color: var(--gray); font-family: var(--sans); }
+.price-cny { font-size: 13px; color: var(--gray); margin: 6px 0 16px; }
+.price-list { font-size: 13px; color: var(--light); line-height: 2.1; text-align: left; }
+.price-list span { color: var(--green); margin-right: 6px; }
+
+/* ── Referral ── */
+.ref-section {
+  padding: 40px 0;
+}
+.ref-box {
+  background: linear-gradient(135deg, rgba(26,100,150,.2), rgba(243,156,18,.1));
+  border: 1px solid rgba(243,156,18,.3);
+  border-radius: 20px; padding: 32px;
+  display: flex; gap: 24px; align-items: center;
+}
+@media(max-width:600px){ .ref-box{flex-direction:column;text-align:center} }
+.ref-tiger { font-size: 56px; flex-shrink: 0; }
+.ref-content h3 { font-family: var(--serif); font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.ref-content p { font-size: 14px; color: var(--light); line-height: 1.8; }
+.ref-amounts { display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; }
+.ref-amt { background: rgba(255,255,255,.07); border-radius: 8px; padding: 8px 16px; text-align: center; }
+.ref-amt .num { font-family: var(--mono); font-size: 18px; font-weight: 600; color: var(--gold); }
+.ref-amt .lbl { font-size: 11px; color: var(--gray); margin-top: 2px; }
+
+/* ── Stats ── */
+.stats-section { padding: 40px 0; }
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+@media(max-width:600px){ .stats-grid{grid-template-columns:repeat(2,1fr)} }
+.stat-box {
+  background: var(--navy2); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px; padding: 20px 14px; text-align: center;
+}
+.stat-num { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--gold); }
+.stat-lbl { font-size: 12px; color: var(--gray); margin-top: 4px; }
+
+/* ── CTA Bottom ── */
+.cta-section {
+  text-align: center; padding: 50px 0 40px;
+  background: radial-gradient(ellipse at center, rgba(26,100,150,.15) 0%, transparent 70%);
+}
+.cta-section h2 { font-family: var(--serif); font-size: 30px; font-weight: 700; margin-bottom: 10px; }
+.cta-section p { color: var(--light); font-size: 14px; margin-bottom: 28px; font-weight: 300; }
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 28px 20px; text-align: center;
+}
+.lang-row { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.lang { font-size: 11px; color: var(--gray); padding: 3px 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 99px; }
+footer p { font-size: 12px; color: #445566; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="hero-logo">
+      <img src="https://raw.githubusercontent.com/qunliangfeng/Bitget-alert-mobile/main/tiger.png" alt="Xibencong">
+    </div>
+    <div class="brand-en">XiBenCong · Xibencong</div>
+    <div style="margin-bottom:18px;text-align:center">
+      <span style="
+        display:inline-block;
+        font-size:28px;
+        font-weight:900;
+        letter-spacing:.12em;
+        background:linear-gradient(90deg,#f5b942,#f9d423,#f5b942);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text;
+        text-shadow:none;
+        filter:drop-shadow(0 0 12px rgba(245,185,66,.5));
+      ">🔥 Must-Have Crypto Tool</span>
+    </div>
+    <h1 class="hero-title">
+      <span class="gold">Xibencong</span><br>
+      <span class="blue">Smart Crypto Alert</span><br>Bot
+    </h1>
+    <p class="hero-sub">Monitor hundreds of coins in real-time，Multi-mode auto voice alerts，Telegram / WeChat push alerts。Connected Bitget、Binance、OKX、Bybit、Kraken、Coinbase &amp; more exchanges — no install, mobile &amp; desktop。</p>
+    <div class="badge-row">
+      <span class="badge b-blue">📡 📡 Live Prices</span>
+      <span class="badge b-green">🔊 🔊 Voice</span>
+      <span class="badge b-gold">📲 📲 Dual Channel Push</span>
+      <span class="badge b-purple">⚡ Multi-mode Alerts</span>
+    </div>
+    <div class="cta-row">
+      <button class="btn-buy" onclick="openPayModal('monthly')">🚀 Buy Now</button>
+      <button class="btn-trial" onclick="openPayModal('trial')">🎁 Free 7-Day Trial</button>
+    </div>
+    <p class="hero-note">No install needed · Mobile / works on desktop too · Direct official exchange API API</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Phone + Features ── -->
+  <section class="split-section">
+    <div class="phone-wrap" style="display:flex;align-items:center;justify-content:center">
+      <img src="f2.png" style="max-width:100%;max-height:520px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);object-fit:cover" alt="Support Team">
+    </div>
+
+    <div class="feats-side">
+      <h2>Easier Trading<br><span style="color:#f59e0b">Never miss key price levels</span></h2>
+      <p style="color:#94a3b8;line-height:1.8;margin-bottom:20px">Price crosses level — auto voice alert「Bitcoin crosses $100k」<br>Free your eyes and hands — No more staring at the screen。</p>
+
+      <div class="feat-list">
+        <div class="feat-item">
+          <div class="feat-emoji">⏱</div>
+          <div><div class="feat-name">Alert at any custom time interval</div><div class="feat-desc">Set any interval in seconds，stay aware of price movements</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-emoji">📏</div>
+          <div><div class="feat-name">Price step alerts</div><div class="feat-desc">Auto-alert every fixed price step，fully customizable step</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-emoji">🎯</div>
+          <div><div class="feat-name">Encrypted alerts near liquidation price</div><div class="feat-desc">Auto-increase alert frequency near target</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-emoji">☀️</div>
+          <div><div class="feat-name">Keep screen always on</div><div class="feat-desc">Prevents screen lock — keep voice alerts running</div></div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-emoji">📌</div>
+          <div><div class="feat-name">Price Point Alert</div><div class="feat-desc">pre-set key price levels，Repeat alerts when price hits level</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Screenshots ── -->
+  <!-- ── Pain Points + Screenshots ── -->
+  <section style="padding:60px 24px;max-width:960px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="label">Why Xibencong?</div>
+      <h2 style="font-family:var(--serif);font-size:32px;font-weight:700;margin-bottom:12px">
+        WithoutXibencong，you're flying blind
+      </h2>
+      <p style="color:var(--light);font-size:15px;line-height:1.8;max-width:600px;margin:0 auto">
+        Every missed breakout，Could be a missed profit opportunity<br>
+        Every sudden crash without warning，Could catch you off guard
+      </p>
+    </div>
+
+    <!-- Pain Points vs Solution -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:56px">
+      <div style="background:linear-gradient(135deg,#1a0a0a,#2a0f0f);border:1px solid #7f1d1d55;border-radius:14px;padding:20px">
+        <div style="font-size:18px;font-weight:700;color:#ef4444;margin-bottom:14px">😰 Without Xibencong</div>
+        <div style="font-size:13px;color:#94a3b8;line-height:2">
+          ❌ Eyes glued to screen all day<br>
+          ❌ Always away at the critical moment<br>
+          ❌ asleepLiquidation，wake up clueless<br>
+          ❌ missed breakout，profits slip away<br>
+          ❌ Manual alerts are tedious and unreliable
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,#0a1a0a,#0f2a0f);border:1px solid #14532d55;border-radius:14px;padding:20px">
+        <div style="font-size:18px;font-weight:700;color:#22c55e;margin-bottom:14px">🐯 With Xibencong ✅</div>
+        <div style="font-size:13px;color:#94a3b8;line-height:2">
+          ✅ Auto voice alerts — hands free<br>
+          ✅ Alert on every breakout — never miss again<br>
+          ✅ Monitor while sleeping — profits protected<br>
+          ✅ Telegram real-time push，stay informed<br>
+          ✅ 30sec setup，set it and forget it
+        </div>
+      </div>
+    </div>
+
+    <!-- Real Screenshots -->
+    <div style="text-align:center;margin-bottom:36px">
+      <div class="label">Real UI</div>
+      <h2 style="font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px">What you see is what you get — ready out of the box</h2>
+      <p style="color:var(--light);font-size:14px">No registration，No download，Activate & go</p>
+    </div>
+
+    <!-- Screenshots 2行4列，Click to enlarge -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px">
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen1.png','Real-time Market Monitor')">
+        <div style="font-size:11px;color:#f59e0b;font-weight:600;margin-bottom:6px">📊 Real-time Market Monitor</div>
+        <img src="screen1.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='#1e3a5f'" alt="Real-time Market Monitor">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen2.png','Multi-mode Alert Settings')">
+        <div style="font-size:11px;color:#f59e0b;font-weight:600;margin-bottom:6px">⚙️ Multi-mode Alert Settings</div>
+        <img src="screen2.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='#1e3a5f'" alt="Multi-mode Alert Settings">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen3.png','Encrypted Target Price Alert')">
+        <div style="font-size:11px;color:#f59e0b;font-weight:600;margin-bottom:6px">🎯 Encrypted Target Price Alert</div>
+        <img src="screen3.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='#1e3a5f'" alt="Encrypted Target Price Alert">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen4.png','Full Alert History')">
+        <div style="font-size:11px;color:#f59e0b;font-weight:600;margin-bottom:6px">📋 Full Alert History</div>
+        <img src="screen4.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='#1e3a5f'" alt="Full Alert History">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:56px">
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen5.png','Flexible System Settings')">
+        <div style="font-size:11px;color:#60a5fa;font-weight:600;margin-bottom:6px">🔧 Flexible System Settings</div>
+        <img src="screen5.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#1e3a5f'" alt="Flexible System Settings">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen6.png','One-tap Add to Home Screen')">
+        <div style="font-size:11px;color:#60a5fa;font-weight:600;margin-bottom:6px">📲 One-tap Add to Home Screen</div>
+        <img src="screen6.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#1e3a5f'" alt="One-tap Add to Home Screen">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen7.png','Dedicated Support Team')">
+        <div style="font-size:11px;color:#60a5fa;font-weight:600;margin-bottom:6px">🤝 Dedicated Support Team</div>
+        <img src="screen7.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#1e3a5f'" alt="Dedicated Support Team">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+      <div style="text-align:center;cursor:pointer" onclick="openLightbox('screen8.png','Referral & Commission System')">
+        <div style="font-size:11px;color:#60a5fa;font-weight:600;margin-bottom:6px">💰 Referral & Commission System</div>
+        <img src="screen8.png" style="width:100%;border-radius:12px;border:2px solid #1e3a5f;box-shadow:0 4px 16px rgba(0,0,0,.5);transition:.2s" onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#1e3a5f'" alt="Referral & Commission System">
+        <div style="font-size:10px;color:#475569;margin-top:5px">Click to enlarge</div>
+      </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:12px">
+      <div style="font-size:14px;color:#94a3b8" id="lightboxTitle"></div>
+      <img id="lightboxImg" style="max-height:85vh;max-width:100%;border-radius:16px;box-shadow:0 0 60px rgba(0,0,0,.8)" src="" alt="">
+      <div style="font-size:12px;color:#475569">Tap anywhere to close</div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Modes ── -->
+  <section class="modes-section">
+    <div class="section-head">
+      <div class="label">Alert Modes</div>
+      <h2>Four Modes，covers every scenario</h2>
+      <p>Run simultaneously — no interference</p>
+    </div>
+    <div class="modes-grid">
+      <div class="mode-card">
+        <div class="mode-icon">📏</div>
+        <div class="mode-title">Fixed Step Alert</div>
+        <div class="mode-desc">Alert once per fixed price step。BTC 每 500 USDT，SOL 每 1 USDT，fully customizable step。</div>
+      </div>
+      <div class="mode-card">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-title">Target Price Alert</div>
+        <div class="mode-desc">Set your liquidation target price，Auto-switch to finer steps near target，encrypted alert until breakout。</div>
+      </div>
+      <div class="mode-card">
+        <div class="mode-icon">⏱</div>
+        <div class="mode-title">Timed Alert</div>
+        <div class="mode-desc">Every 1  minutes / 5  minutes / custom seconds — Timed Alert at current price，stay price-aware。</div>
+      </div>
+      <div class="mode-card">
+        <div class="mode-icon">📌</div>
+        <div class="mode-title">Price Point Alert</div>
+        <div class="mode-desc">Pre-set multiple key price levels，Instant alert with repeat reminder at price，Never miss any important price level。</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Exchanges ── -->
+  <section class="ex-section">
+    <div class="label">Data Source</div>
+    <h2 style="font-family:var(--serif);font-size:28px;font-weight:700;margin-bottom:8px">Official Real-time Data from Top Exchanges</h2>
+    <p style="color:var(--light);font-size:14px;font-weight:300">WebSocket direct connection，latency under 200ms，auto-reconnect on disconnect</p>
+    <div class="ex-grid">
+      <div class="ex-card"><div class="ex-dot" style="background:#f7931a"></div>Bitget</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#f0b90b"></div>Binance</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#aaa"></div>OKX</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#ff6b35"></div>Bybit</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#5b67f8"></div>Kraken</div>
+      <div class="ex-card"><div class="ex-dot" style="background:#0052ff"></div>Coinbase</div>
+    </div>
+    <p style="color:var(--light);font-size:12px;margin-top:14px;opacity:.7">Supports many major exchanges, including but not limited to the above · More coming soon</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Pricing ── -->
+  <section class="pricing-section">
+    <div class="section-head">
+      <div class="label">Pricing</div>
+      <h2>Simple & Transparent — Cancel Anytime</h2>
+      <p>All plans include full features，No hidden fees</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-plan">Free Trial</div>
+        <div class="price-amount"><sup></sup>0<sub>USDT</sub></div>
+        <div class="price-cny">7-Day Full Access Trial</div>
+        <div class="price-list">
+          <span>✓</span>All alert features<br>
+          <span>✓</span>Coins Monitored<br>
+          <span>✓</span>No credit card needed
+        </div>
+        <button class="btn-trial" style="width:100%;margin-top:20px;padding:12px" onclick="openPayModal('trial')">Get Free Activation Code</button>
+      </div>
+      <div class="price-card hot">
+        <div class="hot-tag">⭐ ⭐ Most Popular</div>
+        <div class="price-plan">Monthly</div>
+        <div class="price-amount"><sup></sup>11.88<sub>USDT/月</sub></div>
+        <div class="price-list">
+          <span>✓</span>Coins Monitored<br>
+          <span>✓</span>All four Alert Modes<br>
+          <span>✓</span>Cloud Monitor (no missed prices when screen off）<br>
+          <span>✓</span>Referral code · 30% commission
+        </div>
+        <button class="btn-buy" style="width:100%;margin-top:20px;padding:12px" onclick="openPayModal('monthly')">Subscribe Now</button>
+      </div>
+      <div class="price-card">
+        <div class="price-plan">Yearly</div>
+        <div class="price-amount"><sup></sup>68.88<sub>USDT/年</sub></div>
+        <div class="price-cny">Save 45% — ~4.9U/mo</div>
+        <div class="price-list">
+          <span>✓</span>Coins Monitored<br>
+          <span>✓</span>All four Alert Modes<br>
+          <span>✓</span>Cloud Monitor (no missed prices when screen off）<br>
+          <span>✓</span>Referral code · 30% commission
+        </div>
+        <button class="btn-buy" style="width:100%;margin-top:20px;padding:12px;background:var(--navy3);border:1px solid var(--gold);color:var(--gold)" onclick="openPayModal('yearly')">Choose Yearly</button>
+      </div>
+    </div>
+    <!-- WeChat/Alipay payment note -->
+    <div style="text-align:center;margin-top:28px">
+      <div style="display:inline-flex;align-items:center;gap:14px;padding:14px 24px;background:rgba(255,255,255,.04);border:1px solid #1e293b;border-radius:14px;flex-wrap:wrap;justify-content:center">
+        <img src="wechatpay.png" style="height:36px;width:auto" alt="WeChat Pay">
+        <img src="alipay.png" style="height:36px;width:auto" alt="Alipay">
+        <span style="font-size:13px;color:#94a3b8">If you need <b style="color:#f1f5f9">WeChat</b> 或 <b style="color:#f1f5f9">Alipay</b> Payment，Scroll down to contact support</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── Referral ── -->
+  <section class="ref-section">
+    <div class="ref-box">
+      <div class="ref-tiger">🐯</div>
+      <div class="ref-content">
+        <h3>Refer Friends — 30% Lifetime Commission</h3>
+        <p>Get your exclusive referral code after purchase，For every paying user you refer，Earn permanently from their subscription 30%，no limit，withdraw anytime。</p>
+        <div class="ref-amounts">
+          <div class="ref-amt"><div class="num">3.56U</div><div class="lbl">Monthly/month per person</div></div>
+          <div class="ref-amt"><div class="num">20.66U</div><div class="lbl">Yearlyper person</div></div>
+          <div class="ref-amt"><div class="num">∞</div><div class="lbl">no limit</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats ── -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num">18+</div><div class="stat-lbl">Exchanges</div></div>
+      <div class="stat-box"><div class="stat-num">100+</div><div class="stat-lbl">Preset Coins</div></div>
+      <div class="stat-box"><div class="stat-num">4</div><div class="stat-lbl">Alert Modes</div></div>
+      <div class="stat-box"><div class="stat-num">9</div><div class="stat-lbl">Languages</div></div>
+    </div>
+  </section>
+
+  <!-- ── CTA Bottom ── -->
+  <section class="cta-section">
+    <h2>Start Now — Never Miss a Key Price Level</h2>
+    <p>7-Day Free Trial，cancel anytime — no risk</p>
+    <div class="cta-row">
+      <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/crypto-universal-alert-mobile.html">
+        <button class="btn-buy" style="font-size:16px;padding:16px 40px">🚀 Get Started Now</button>
+      </a>
+    </div>
+    <p style="font-size:12px;color:#556677;margin-top:12px">Refer friends for 30% lifetime commission · Mobile / works on desktop too</p>
+  </section>
+
+  <!-- ── Footer Support + Company Info ── -->
+  <div class="divider"></div>
+  <footer style="padding:48px 24px 36px;max-width:600px;margin:0 auto;text-align:center">
+    <div style="font-size:22px;font-weight:700;color:var(--tx);margin-bottom:6px">Contact Us</div>
+    <div style="font-size:13px;color:var(--light);margin-bottom:24px">Any questions? Contact support anytime</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:32px">
+      <a href="https://t.me/qunliangfeng" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--navy2);border:1px solid #1e3a5f;border-radius:12px;text-decoration:none">
+        <!-- Telegram official icon -->
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+          <circle cx="16" cy="16" r="16" fill="#29A9EB"/>
+          <path d="M6.5 15.5l3.8 1.4 1.5 4.8 1.9-2.5 4.2 3.1 4.6-14.3-16 7.5z" fill="white"/>
+          <path d="M10.3 16.9l.5 4.8 1.9-2.5" fill="#CAE9F5"/>
+          <path d="M10.3 16.9l5.7 4.4-2.6-6.6-3.1 2.2z" fill="#A8D8EA"/>
+        </svg>
+        <div style="text-align:left">
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">Telegram Support</div>
+          <div style="font-size:11px;color:var(--light)">@qunliangfeng</div>
+        </div>
+      </a>
+      <div onclick="copyWechat()" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--navy2);border:1px solid #1e3a5f;border-radius:12px;cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='#07C160'" onmouseout="this.style.borderColor='#1e3a5f'">
+        <!-- WeChatofficial icon -->
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+          <circle cx="16" cy="16" r="16" fill="#07C160"/>
+          <path d="M13 9c-3.6 0-6.5 2.5-6.5 5.5 0 1.7.9 3.2 2.3 4.2l-.6 1.8 2-.9c.5.1 1 .2 1.6.2h.2c-.1-.3-.2-.7-.2-1.1 0-2.8 2.6-5 5.8-5 .2 0 .4 0 .6.01C17.8 11.2 15.6 9 13 9zM11 13a.75.75 0 110-1.5A.75.75 0 0111 13zm4 0a.75.75 0 110-1.5A.75.75 0 0115 13z" fill="white"/>
+          <path d="M25 18.7c0-2.5-2.4-4.5-5.4-4.5s-5.4 2-5.4 4.5 2.4 4.5 5.4 4.5c.5 0 1-.07 1.5-.2l1.8.9-.5-1.6c1.2-1 2.1-2.3 2.1-3.6zM18 18a.75.75 0 110-1.5A.75.75 0 0118 18zm4 0a.75.75 0 110-1.5A.75.75 0 0122 18z" fill="white"/>
+        </svg>
+        <div style="text-align:left;flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">WeChat Support</div>
+          <div style="font-size:11px;color:var(--light)" id="wechatLabel">xibencongbot · Click to copy WeChat ID</div>
+        </div>
+        <span style="font-size:11px;color:#07C160">Copy</span>
+      </div>
+      <a href="mailto:xibencongbot@gmail.com" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--navy2);border:1px solid #1e3a5f;border-radius:12px;text-decoration:none">
+        <!-- email icon -->
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+          <circle cx="16" cy="16" r="16" fill="#EA4335"/>
+          <path d="M8 11.5v9A1.5 1.5 0 009.5 22h13a1.5 1.5 0 001.5-1.5v-9l-8 5.5-8-5.5z" fill="white"/>
+          <path d="M8 11.5l8 5.5 8-5.5A1.5 1.5 0 0022.5 10h-13A1.5 1.5 0 008 11.5z" fill="#FAFAFA"/>
+        </svg>
+        <div style="text-align:left">
+          <div style="font-size:13px;font-weight:600;color:var(--tx)">Email Support</div>
+          <div style="font-size:11px;color:var(--light)">xibencongbot@gmail.com</div>
+        </div>
+      </a>
+    </div>
+    <div style="font-size:13px;color:#f59e0b;font-weight:600;margin-bottom:6px">Crafted with care by Xstarship Technology — Quality Guaranteed</div>
+    <div style="font-size:12px;color:#475569">© 2026 Xstarship Global Trading Limited · All rights reserved</div>
+  </footer>
+
+</div>
+
+<!-- ── Payment Modal ── -->
+<div id="payOverlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:#0f1f3d;border:1px solid rgba(243,156,18,0.3);border-radius:20px;width:100%;max-width:440px;padding:36px 28px;position:relative;animation:modalIn .3s ease">
+    <button onclick="closePayModal()" style="position:absolute;top:14px;right:14px;background:#152744;border:none;color:#8899aa;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>
+    <div id="payContent"></div>
+  </div>
+</div>
+
+<style>
+@keyframes modalIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.pay-input {
+  width:100%; padding:12px 14px;
+  background:#152744; border:1px solid #1e3a5f;
+  border-radius:10px; color:#f0f4f8;
+  font-size:14px; font-family:'Inter',sans-serif;
+  outline:none; margin-bottom:12px;
+  transition:border-color .2s;
+}
+.pay-input:focus { border-color:#f39c12; }
+.pay-label { font-size:12px; color:#8899aa; margin-bottom:6px; display:block; }
+.pay-submit {
+  width:100%; padding:14px;
+  background:#f39c12; color:#000;
+  border:none; border-radius:10px;
+  font-size:15px; font-weight:700;
+  cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all .2s; margin-top:4px;
+}
+.pay-submit:hover { background:#e67e22; }
+.pay-submit:disabled { opacity:.5; cursor:not-allowed; }
+.pay-info-box {
+  background:#0a1628; border:1px solid #1e3a5f;
+  border-radius:10px; padding:14px 16px;
+  margin-bottom:16px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.addr-box {
+  background:#0a1628; border:1px solid #1e3a5f;
+  border-radius:10px; padding:14px 16px; margin-bottom:12px;
+}
+.addr-text { font-size:12px; color:#f39c12; font-family:'JetBrains Mono',monospace; word-break:break-all; margin-top:6px; }
+.amt-box {
+  background:rgba(39,174,96,0.1); border:1px solid rgba(39,174,96,0.3);
+  border-radius:10px; padding:14px; text-align:center; margin-bottom:14px;
+}
+.loading-spin { display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,0.3); border-top-color:#000; border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+
+<script>
+const NOWPAY_KEY = 'ZGX71FY-TQ7MJN4-GVXYB4S-RME2QBT';
+// TG Bot config moved to Cloudflare Worker environment variables
+
+const PLANS = {
+  trial:   { name:'7天Free Trial', price:0, free:true },
+  monthly: { name:'Monthly plan', price:11.88, label:'11.88 USDT / 月' },
+  yearly:  { name:'Yearly plan', price:68.88, label:'68.88 USDT / 年（省55%）' },
+};
+let curPlan = null;
+
+function openLightbox(src, title) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightboxTitle').textContent = title;
+  lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function copyWechat() {
+  navigator.clipboard.writeText('xibencongbot').then(() => {
+    const el = document.getElementById('wechatLabel');
+    if (el) {
+      el.textContent = '✅ Copied！Open WeChat and search to add';
+      el.style.color = '#07C160';
+      setTimeout(() => {
+        el.textContent = 'xibencongbot · Click to copy WeChat ID';
+        el.style.color = '';
+      }, 3000);
+    }
+  });
+}
+
+function openPayModal(plan) {
+  curPlan = PLANS[plan];
+  const ov = document.getElementById('payOverlay');
+  ov.style.display = 'flex';
+  curPlan.free ? renderTrialForm() : renderPayForm();
+}
+function closePayModal() {
+  document.getElementById('payOverlay').style.display = 'none';
+}
+document.getElementById('payOverlay').addEventListener('click', e => {
+  if(e.target === document.getElementById('payOverlay')) closePayModal();
+});
+
+function renderTrialForm() {
+  document.getElementById('payContent').innerHTML = `
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">🎁 Claim 7-Day Free Trial</div>
+    <div style="font-size:13px;color:#8899aa;margin-bottom:20px">Enter contact info — code delivered within 30 minutes</div>
+    <div style="background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.7">
+      ⚠️ Before claiming, complete one step：<br>
+      在 Telegram Search <a href="https://t.me/nvda_fql_bot" target="_blank" style="color:#f39c12;font-weight:700">@nvda_fql_bot</a>，Send <b>/start</b>，Otherwise you cannot receive the activation code<br>
+      <span style="color:#8899aa">If using email only, code will arrive within 60 minutes</span>
+    </div>
+    <label class="pay-label">Telegram Username <span style="color:#e74c3c">*</span></label>
+    <input class="pay-input" id="tTg" placeholder="@your_username">
+    <label class="pay-label" style="color:#556677">Email (optional, for records only）</label>
+    <input class="pay-input" id="tEmail" type="email" placeholder="your@email.com" style="opacity:0.6">
+    <button class="pay-submit" onclick="submitTrial()">Get Free Activation Code</button>
+    <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">One per person · No payment needed</div>
+  `;
+}
+
+function renderPayForm() {
+  const refFromUrl = new URLSearchParams(location.search).get('ref') || '';
+  document.getElementById('payContent').innerHTML = `
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">Subscribe ${curPlan.name}</div>
+    <div style="font-size:13px;color:#8899aa;margin-bottom:16px">USDT payment — Activation code sent automatically after on-chain confirmation</div>
+    <div class="pay-info-box">
+      <span style="font-size:13px;color:#8899aa">${curPlan.label}</span>
+      <span style="font-size:22px;font-weight:700;color:#f39c12;font-family:'JetBrains Mono',monospace">${curPlan.price} USDT</span>
+    </div>
+    <div style="background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:1.7">
+      ⚠️ Before paying, complete one step：<br>
+      在 Telegram Search <a href="https://t.me/nvda_fql_bot" target="_blank" style="color:#f39c12;font-weight:700">@nvda_fql_bot</a>，Send <b>/start</b>，Activation code will be sent to your TG<br>
+      <span style="color:#8899aa">If using email only, code will arrive within 60 minutes</span>
+    </div>
+    <label class="pay-label">Telegram Username <span style="color:#e74c3c">*</span></label>
+    <input class="pay-input" id="pTg" placeholder="@your_username">
+    <label class="pay-label" style="color:#556677">Email (optional, for records only）</label>
+    <input class="pay-input" id="pEmail" type="email" placeholder="your@email.com" style="opacity:0.6">
+    <label class="pay-label" style="color:#556677">Referral Code（optional，Fill in if you have a referral）</label>
+    <input class="pay-input" id="pRef" placeholder="REF-XXXXXX" value="${refFromUrl}" style="opacity:0.8">
+    <button class="pay-submit" id="pBtn" onclick="createPayment()">Generate Payment Address</button>
+    <div style="font-size:11px;color:#556677;text-align:center;margin-top:10px">Supports USDT TRC20 / ERC20 · 由 NOWPayments Securely processed</div>
+  `;
+}
+
+async function submitTrial() {
+  const tg = document.getElementById('tTg').value.trim();
+  const email = document.getElementById('tEmail').value.trim();
+  if(!tg && !email) { alert('Please enter Telegram or email'); return; }
+  const btn = document.querySelector('#payContent .pay-submit');
+  if(btn) { btn.disabled=true; btn.innerHTML='<span class="loading-spin"></span> Processing…'; }
+  try {
+    const res = await fetch('https://price-alert-worker.qunliang-feng.workers.dev/trial/request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ tg, email })
+    });
+    const data = await res.json();
+    if(data.success) {
+      document.getElementById('payContent').innerHTML = `
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:48px;margin-bottom:16px">✅</div>
+          <div style="font-size:18px;font-weight:700;margin-bottom:8px">Activation code sent!</div>
+          <div style="font-size:14px;color:#8899aa;line-height:1.7;margin-bottom:8px">
+            Activation code sent to your Telegram<br>
+            please check <b style="color:#f0f4f8">${tg||email}</b> 's message
+          </div>
+          <div style="font-size:12px;color:#556677;margin-bottom:24px">
+            ⚠️ If not received, send /start to your Bot first<br>then contact @xibencong get help
+          </div>
+          <button class="pay-submit" onclick="closePayModal()">Got it</button>
+        </div>
+      `;
+    } else {
+      const msg = data.message || 'Request failed，please try again';
+      document.getElementById('payContent').innerHTML = `
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+          <div style="font-size:18px;font-weight:700;margin-bottom:8px">Note</div>
+          <div style="font-size:14px;color:#8899aa;line-height:1.7;margin-bottom:24px">${msg}</div>
+          <button class="pay-submit" onclick="closePayModal()">Got it</button>
+        </div>
+      `;
+    }
+  } catch(e) {
+    if(btn) { btn.disabled=false; btn.textContent='retry'; }
+    alert('Network error — please try again');
+  }
+}
+
+async function createPayment() {
+  const tg = document.getElementById('pTg').value.trim();
+  const email = document.getElementById('pEmail').value.trim();
+  const ref = (document.getElementById('pRef')?.value || '').trim();
+  if(!tg && !email) { alert('Please enter Telegram or email to receive your activation code'); return; }
+  const btn = document.getElementById('pBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spin"></span> Generating…';
+  try {
+    // check minimum amount first — auto-selects the larger value
+    let payAmount = curPlan.price;
+    try {
+      const minRes = await fetch(`https://api.nowpayments.io/v1/min-amount?currency_from=usdttrc20&currency_to=usdttrc20`, {
+        headers: { 'x-api-key': NOWPAY_KEY }
+      });
+      const minData = await minRes.json();
+      const minAmount = parseFloat(minData.min_amount || 0);
+      if (minAmount > payAmount) payAmount = Math.ceil(minAmount * 10) / 10 + 0.1;
+    } catch(_) {}
+
+    const res = await fetch('https://api.nowpayments.io/v1/payment', {
+      method:'POST',
+      headers:{ 'x-api-key': NOWPAY_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        price_amount: payAmount,
+        price_currency: 'usdttrc20',
+        pay_currency: 'usdttrc20',
+        order_id: `xbc_${Date.now()}`,
+        order_description: `Xibencong ${curPlan.name} | TG:${tg} | Email:${email}${ref ? ' | Ref:'+ref : ''}`,
+        ipn_callback_url: 'https://price-alert-worker.qunliang-feng.workers.dev/nowpayments-webhook',
+      })
+    });
+    const data = await res.json();
+    if(data.pay_address) renderAddress(data, tg||email, ref);
+    else throw new Error(data.message||'Creation failed');
+  } catch(e) {
+    btn.disabled=false; btn.textContent='retry';
+    alert('Failed to create payment: '+e.message);
+  }
+}
+
+function renderAddress(data, contact, ref) {
+  let sec = 3600;
+  document.getElementById('payContent').innerHTML = `
+    <div style="font-size:18px;font-weight:700;margin-bottom:6px">💳 💳 Complete Payment</div>
+    <div style="font-size:13px;color:#8899aa;margin-bottom:16px">Please transfer within 60 minutes to transfer to the address below</div>
+    <div class="amt-box">
+      <div style="font-size:28px;font-weight:700;color:#27ae60;font-family:'JetBrains Mono',monospace">${parseFloat(data.pay_amount).toFixed(2)} USDT</div>
+      <div style="font-size:12px;color:#8899aa;margin-top:4px">TRC20 Network · Please transfer this exact amount</div>
+      <div style="font-size:11px;color:#556677;margin-top:4px">Transfer amount includes network fees, slightly above plan price</div>
+      <div style="font-size:11px;color:#e67e22;margin-top:4px">⚠️ Recommend withdrawing from exchange (Binance/OKX/Bitget), ~1 USDT fee. Ensure received amount equals the displayed amount</div>
+    </div>
+    <div class="addr-box">
+      <div style="font-size:11px;color:#8899aa">Payment Address（TRC20）</div>
+      <div class="addr-text" id="addrTxt">${data.pay_address}</div>
+      <div style="margin:12px auto;width:160px;height:160px;background:#fff;border-radius:8px;padding:8px;display:flex;align-items:center;justify-content:center">
+        <img id="qrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=144x144&data=${encodeURIComponent(data.pay_address)}" width="144" height="144" alt="Payment QR Code" style="border-radius:4px">
+      </div>
+      <div style="font-size:11px;color:#556677;margin-bottom:8px">📱 Scan QR code to pay</div>
+      <button onclick="copyAddress()" style="margin-top:4px;background:#152744;border:1px solid #1e3a5f;color:#8899aa;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer" id="copyBtn">Copy Address</button>
+    </div>
+    <div style="font-size:12px;color:#556677;margin-bottom:6px">Activation code will be sent to：${contact}</div>
+    <div style="font-size:12px;color:#27ae60;margin-bottom:6px" id="payStatusEl">⏳ Waiting for payment confirmation…</div>
+    <div style="font-size:12px;color:#556677" id="countdownEl">Time remaining: 60:00</div>
+  `;
+  // countdown
+  const timer = setInterval(()=>{
+    sec--;
+    const el = document.getElementById('countdownEl');
+    if(el) { const m=String(Math.floor(sec/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0'); el.textContent=`Time remaining: ${m}:${s}`; }
+    if(sec<=0) clearInterval(timer);
+  },1000);
+
+  // poll payment status every 10 seconds
+  const pollTimer = setInterval(async () => {
+    try {
+      const res = await fetch('https://price-alert-worker.qunliang-feng.workers.dev/payment/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId: data.payment_id })
+      });
+      const result = await res.json();
+      if (result.ready && result.code) {
+        clearInterval(pollTimer);
+        clearInterval(timer);
+        const el = document.getElementById('payStatusEl');
+        if(el) { el.textContent = '✅ Payment confirmed! Redirecting...…'; el.style.color='#27ae60'; }
+        setTimeout(() => {
+          const successUrl = `https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-success.html?code=${result.code}${ref ? '&ref='+encodeURIComponent(ref) : ''}`;
+          window.location.href = successUrl;
+        }, 1500);
+      }
+    } catch(_) {}
+  }, 10000);
+}
+
+function copyAddress() {
+  const addr = document.getElementById('addrTxt').textContent;
+  navigator.clipboard.writeText(addr).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    btn.textContent='Copied ✓'; btn.style.color='#27ae60';
+    setTimeout(()=>{ btn.textContent='Copy Address'; btn.style.color='#8899aa'; },2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -816,6 +816,8 @@ function closeLightbox() {
   document.getElementById('lightbox').style.display = 'none';
   document.body.style.overflow = '';
 }
+
+function openPayModal(plan) {
   curPlan = PLANS[plan];
   const ov = document.getElementById('payOverlay');
   ov.style.display = 'flex';

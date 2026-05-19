@@ -1357,12 +1357,14 @@ function applyLang(langCode) {
             <div style="font-size:11px;color:var(--tx3)">@qunliangfeng</div>
           </div>
         </a>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px">
+        <div onclick="copyWechatId(this)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;cursor:pointer;transition:border-color .2s"
+          onmouseover="this.style.borderColor='#22c55e'" onmouseout="this.style.borderColor='var(--bd)'">
           <span style="font-size:18px">💬</span>
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx)">微信客服</div>
-            <div style="font-size:11px;color:var(--tx3)">xibencongbot</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">WeChat Support</div>
+            <div style="font-size:11px;color:var(--tx3)" id="wxCopyHint">xibencongbot · tap to copy</div>
           </div>
+          <span style="font-size:11px;color:var(--tx3)">📋</span>
         </div>
         <a href="mailto:xibencongbot@gmail.com" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
           <span style="font-size:18px">📧</span>
@@ -3883,7 +3885,11 @@ function showLicenseScreen() {
         <div id="licMsg" style="font-size:12px;padding:8px 10px;border-radius:8px;margin-top:10px;display:none"></div>
         <div style="font-size:11px;color:var(--tx3);text-align:center;margin-top:14px;line-height:1.7">
           没有Activation Code？<br>
-          购买地址：<span style="color:var(--blue)">gumroad.com</span> 或 <span style="color:var(--blue)">afdian.com</span>
+          <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-landing-en.html"
+            target="_blank"
+            style="display:inline-block;margin-top:6px;padding:8px 18px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">
+            🛒 Go to Purchase Page
+          </a>
         </div>
       </div>
     </div>`;
@@ -4641,6 +4647,18 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initLang);
 } else {
   initLang();
+}
+
+function copyWechatId(el) {
+  navigator.clipboard.writeText('xibencongbot').then(() => {
+    const hint = document.getElementById('wxCopyHint');
+    if (hint) { hint.textContent = '✅ Copied! Search in WeChat to add'; hint.style.color='#22c55e'; }
+    el.style.borderColor = '#22c55e';
+    setTimeout(() => {
+      if (hint) { hint.textContent = 'xibencongbot · tap to copy'; hint.style.color=''; }
+      el.style.borderColor = 'var(--bd)';
+    }, 2500);
+  });
 }
 </script>
 

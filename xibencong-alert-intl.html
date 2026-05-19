@@ -354,7 +354,7 @@ const LANGS = {
       appTitle: 'Xibencong Crypto Alert',
       appSubtitle: 'Real-time Price Alerts',
       // Nav
-      navHome: 'Home', navSettings: 'Settings', navAbout: 'About', navEarn: 'Earn',
+      navHome: 'Market', navLog: 'Alert Log', navSettings: 'Settings', navAbout: 'About', navEarn: 'Earn',
       // Settings panel
       settingsTitle: 'System Settings', close: 'Close',
       exchange: 'Exchange', coinMonitor: 'Monitored Coins',
@@ -455,7 +455,8 @@ const LANGS = {
       exchange: 'Exchange', coinMonitor: 'Monedas monitoreadas',
       currentCoins: (n) => `Monitoreando ${n} monedas`, manageCoins: '⚙ Gestionar',
       alertControl: 'Control de alertas',
-      soundAlert: '🔔 Alerta sonora', alertVolume: '🔊 Volumen',
+      soundAlert: '🔔 Aler
+      navLog: 'Registro',ta sonora', alertVolume: '🔊 Volumen',
       voiceAlert: '🎙 Voz', voiceColor: 'Voz',
       voiceFemale: '👩 Femenina', voiceMale: '👨 Masculina',
       testSound: '🔔 Probar sonido', testVoice: '🎙 Probar voz',
@@ -539,7 +540,8 @@ const LANGS = {
       exchange: 'Exchange', coinMonitor: 'Moedas monitoradas',
       currentCoins: (n) => `Monitorando ${n} moedas`, manageCoins: '⚙ Gerenciar',
       alertControl: 'Controle de alertas',
-      soundAlert: '🔔 Alerta sonoro', alertVolume: '🔊 Volume',
+      soundAlert: '🔔 A
+      navLog: 'Registro',lerta sonoro', alertVolume: '🔊 Volume',
       voiceAlert: '🎙 Voz', voiceColor: 'Voz',
       voiceFemale: '👩 Feminina', voiceMale: '👨 Masculina',
       testSound: '🔔 Testar som', testVoice: '🎙 Testar voz',
@@ -623,7 +625,8 @@ const LANGS = {
       exchange: 'Биржа', coinMonitor: 'Отслеживаемые монеты',
       currentCoins: (n) => `Отслеживается ${n} монет`, manageCoins: '⚙ Управление',
       alertControl: 'Управление оповещениями',
-      soundAlert: '🔔 Звуковое оповещение', alertVolume: '🔊 Громкость',
+      soundAlert: '🔔 Звуковое о
+      navLog: 'Журнал',повещение', alertVolume: '🔊 Громкость',
       voiceAlert: '🎙 Голосовое оповещение', voiceColor: 'Голос',
       voiceFemale: '👩 Женский', voiceMale: '👨 Мужской',
       testSound: '🔔 Тест звука', testVoice: '🎙 Тест голоса',
@@ -707,7 +710,8 @@ const LANGS = {
       exchange: 'Borsa', coinMonitor: 'İzlenen Coinler',
       currentCoins: (n) => `${n} coin izleniyor`, manageCoins: '⚙ Yönet',
       alertControl: 'Uyarı Kontrolü',
-      soundAlert: '🔔 Ses Uyarısı', alertVolume: '🔊 Ses Seviyesi',
+      soundAlert: '🔔 Ses Uyarısı', alertVolume:
+      navLog: 'Kayıtlar', '🔊 Ses Seviyesi',
       voiceAlert: '🎙 Sesli Uyarı', voiceColor: 'Ses',
       voiceFemale: '👩 Kadın', voiceMale: '👨 Erkek',
       testSound: '🔔 Sesi Test Et', testVoice: '🎙 Sesi Test Et',
@@ -791,7 +795,8 @@ const LANGS = {
       exchange: '取引所', coinMonitor: '監視コイン',
       currentCoins: (n) => `${n}コイン監視中`, manageCoins: '⚙ 管理',
       alertControl: 'アラート制御',
-      soundAlert: '🔔 サウンドアラート', alertVolume: '🔊 音量',
+      soundAlert: '🔔 サウンドアラート', alertVolume: '🔊 
+      navLog: '履歴',音量',
       voiceAlert: '🎙 音声アラート', voiceColor: '音声',
       voiceFemale: '👩 Female', voiceMale: '👨 Male',
       testSound: '🔔 サウンドテスト', testVoice: '🎙 音声テスト',
@@ -875,7 +880,8 @@ const LANGS = {
       exchange: '거래소', coinMonitor: '모니터링 코인',
       currentCoins: (n) => `${n}개 코인 모니터링 중`, manageCoins: '⚙ 관리',
       alertControl: '알림 제어',
-      soundAlert: '🔔 사운드 알림', alertVolume: '🔊 볼륨',
+      soundAlert: '🔔 사운드 알림', ale
+      navLog: '기록',rtVolume: '🔊 볼륨',
       voiceAlert: '🎙 음성 알림', voiceColor: '음성',
       voiceFemale: '👩 여성', voiceMale: '👨 남성',
       testSound: '🔔 사운드 테스트', testVoice: '🎙 음성 테스트',
@@ -959,7 +965,8 @@ const LANGS = {
       exchange: 'Exchange', coinMonitor: 'Coins surveillés',
       currentCoins: (n) => `${n} coins surveillés`, manageCoins: '⚙ Gérer',
       alertControl: 'Contrôle des alertes',
-      soundAlert: '🔔 Alerte sonore', alertVolume: '🔊 Volume',
+      soundAlert: '🔔 Alerte sonore', al
+      navLog: 'Journal',ertVolume: '🔊 Volume',
       voiceAlert: '🎙 Voix', voiceColor: 'Voix',
       voiceFemale: '👩 Féminine', voiceMale: '👨 Masculine',
       testSound: '🔔 Tester le son', testVoice: '🎙 Tester la voix',
@@ -1105,7 +1112,7 @@ function applyLang(langCode) {
 <div class="scroll-area" id="scrollArea">
   <!-- Market type bar -->
   <div class="mkt-bar">
-    <button class="mkt-btn" id="mktSpot" onclick="switchMkt('SPOT')">📈 现货</button>
+    <button class="mkt-btn" id="mktSpot" onclick="switchMkt('SPOT')">📈 Spot</button>
     <button class="mkt-btn active" id="mktFutures" onclick="switchMkt('USDT-FUTURES')">📊 Perpetual</button>
   </div>
 
@@ -1118,7 +1125,7 @@ function applyLang(langCode) {
       <span class="log-title">Alert Log</span>
       <button class="log-clr" onclick="logs.length=0;renderLog()">Clear</button>
     </div>
-    <div class="log-list" id="logList"><div class="log-empty">等待Price触发…</div></div>
+    <div class="log-list" id="logList"><div class="log-empty">Waiting for trigger…</div></div>
   </div>
 </div>
 
@@ -1126,19 +1133,19 @@ function applyLang(langCode) {
 <nav class="bottom-nav">
   <button class="nav-tab active" id="tab-market" onclick="switchTab('market')">
     <svg viewBox="0 0 24 24"><use href="#ico-chart"/></svg>
-    行情
+    <span data-i18n="navHome">Market</span>
   </button>
   <button class="nav-tab" id="tab-log" onclick="switchTab('log')">
     <svg viewBox="0 0 24 24"><use href="#ico-log"/></svg>
-    播报记录
+    <span data-i18n="navLog">Alert Log</span>
   </button>
   <button class="nav-tab" id="tab-ref" onclick="showReferralPanel()">
     <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-    推荐赚钱
+    <span data-i18n="navEarn">Earn</span>
   </button>
   <button class="nav-tab" id="tab-settings" onclick="openDrawer()">
     <svg viewBox="0 0 24 24"><use href="#ico-settings"/></svg>
-    设置
+    <span data-i18n="navSettings">Settings</span>
   </button>
 </nav>
 
@@ -1232,7 +1239,7 @@ function applyLang(langCode) {
     </div>
     <div class="drow"><span class="drow-name">🎙 Voice Alert</span><button class="tgl" id="togVoice" onclick="togCtrl('voice')"></button></div>
     <div style="padding:4px 4px 8px;font-size:10px;color:var(--tx3);line-height:1.6">
-      ⚠️ 语音播报需 Chrome 或 Safari。小米/华为部分机型如提示失败，请到「设置→辅助功能→朗读内容」Install中文语音包。TG 推送不受影响。
+      ⚠️ Voice requires Chrome or Safari. Some Xiaomi/Huawei models may fail — go to Settings→Accessibility→TTS to install a language pack. TG alerts are unaffected.
     </div>
     <div class="drow" id="voiceGenderRow" style="padding-left:4px">
       <span class="drow-name" style="font-size:12px;color:var(--tx3)">Voice Type</span>
@@ -1343,7 +1350,7 @@ function applyLang(langCode) {
         </div>
         <!-- iOS 引导 -->
         <div id="pwaIosGuide" style="display:none;font-size:12px;color:var(--tx2);line-height:1.9">
-          1. 点底部工具栏的 <b>分享</b> 按钮 <span style="font-size:14px">⎙</span><br>
+          1. Tap the <b>Share</b> button <span style="font-size:14px">⎙</span> in the toolbar<br>
           2. 滑动菜单找到 <b>Add to Home Screen</b><br>
           3. 点右上角 <b>添加</b> 确认完成
         </div>
@@ -1850,7 +1857,7 @@ function applySettings(data) {
       document.getElementById('mktFutures').className  = 'mkt-btn'+(mktType==='USDT-FUTURES'?' active':'');
       document.getElementById('segSpot').className     = 'seg-btn'+(mktType==='SPOT'?' active':'');
       document.getElementById('segFutures').className  = 'seg-btn'+(mktType==='USDT-FUTURES'?' active':'');
-      const label = mktType==='USDT-FUTURES' ? '永续合约' : '现货';
+      const label = mktType==='USDT-FUTURES' ? 'Perpetual' : 'Spot';
       COINS.forEach(c => {
         const el = document.getElementById('csub-'+c.id);
         if (el) el.textContent = c.name+' · '+label;
@@ -2621,7 +2628,7 @@ function switchExchange(exId) {
 
 function updateCardSubtitles() {
   const ex = EXCHANGES[currentExchange];
-  const typeLabel = mktType==='USDT-FUTURES'?'永续合约':'现货';
+  const typeLabel = mktType==='USDT-FUTURES'?'Perpetual':'Spot';
   COINS.forEach(c => {
     const el = document.getElementById('csub-'+c.id);
     if(el) el.textContent = `${c.name} · ${ex.name} ${typeLabel}`;
@@ -2773,13 +2780,13 @@ function updateZone(id){
   const nearW=Math.min(100,s.nearDist*2/(hi-lo)*100);
   const tgtPct=(s.target-lo)/(hi-lo)*100;
   const _zq=getCoinQuote(id);
-  el.innerHTML=`<b>目标</b> ${fmt(id,s.target)} ${_zq} · 距离 <b>${distStr} ${_zq}</b><br>步进 <b>${step} ${_zq}</b>${near?' <span class="amb">⚠ 临近区加密播报</span>':''}
+  el.innerHTML=`<b>Target</b> ${fmt(id,s.target)} ${_zq} · Distance <b>${distStr} ${_zq}</b><br>Step <b>${step} ${_zq}</b>${near?' <span class="amb">⚠ Near zone</span>':''}
 <div class="zone-bar"><div class="zone-near-bg" style="left:${nearLo}%;width:${nearW}%"></div><div class="zone-cur-fill" style="width:${pct}%;background:${near?'var(--amber)':'var(--blue)'}"></div><div class="zone-tgt-mark" style="left:calc(${tgtPct}% - 1px)"></div></div>`;
 }
 
 // ── Build cards ───────────────────────────────────────────────────
 function buildCards(){
-  const typeLabel = mktType==='USDT-FUTURES' ? '永续合约' : '现货';
+  const typeLabel = mktType==='USDT-FUTURES' ? 'Perpetual' : 'Spot';
   document.getElementById('cardsWrap').innerHTML = COINS.map(c=>{
     const s=state[c.id];
     return`<div class="card${s.enabled ? ' coin-active' : ''}" id="card-${c.id}">
@@ -2811,7 +2818,7 @@ function buildCards(){
     </div>
   </div>
   <div class="range-wrap">
-    <div class="range-labels"><span>低</span><span>24H 区间</span><span>高</span></div>
+    <div class="range-labels"><span>Low</span><span>24H Range</span><span>High</span></div>
     <div class="range-bar"><div class="range-fill"></div><div class="range-cur" id="rf-${c.id}" style="left:50%"></div></div>
   </div>
   <button class="card-expand-btn" id="expbtn-${c.id}" onclick="togExpand('${c.id}')">
@@ -2886,7 +2893,7 @@ function buildCards(){
       <button class="${s.pointOn?'tgl on':'tgl'}" id="tog-point-${c.id}" onclick="togAlertMode('${c.id}','point')" aria-label="Price point alert开关"></button>
     </div>
     <div id="mb-point-${c.id}" style="opacity:${s.pointOn?'1':'0.4'}">
-      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">设置特定Price，到达时Repeat播报指定times数</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Alert when price hits a set level, repeat N times</div>
       <div id="point-list-${c.id}">
         ${[1,2,3,4,5].map(i=>{const pt=s.points&&s.points[i-1];const pv=pt&&pt.price>0?pt.price:'';const rv=pt&&pt.repeat||3;return`
         <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:6px">
@@ -2933,7 +2940,7 @@ function savePointPrice(id, idx, val) {
   if (st && val > 0) {
     const active = state[id].points.filter(p=>p.price>0);
     st.style.color = 'var(--tx3)';
-    st.textContent = `已设定 ${active.length} 个定点Price`;
+    st.textContent = `${active.length} price point${active.length>1?"s":""} set`;
   }
 }
 
@@ -2965,7 +2972,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
     if(st) { 
       const active = state[id].points?.filter(p=>p.price>0)||[];
       st.style.color='var(--tx3)'; 
-      st.textContent=active.length>0?`已设定 ${active.length} 个定点Price`:'';
+      st.textContent=active.length>0?`${active.length} price point${active.length>1?'s':''} set`:'';
     }
   }, repeat*5000+2000);
 
@@ -3051,9 +3058,9 @@ function setTimer(id, minutes) {
   const unitEl = document.getElementById('ti-unit-'+id);
   if (unitEl) {
     const secs = Math.round(minutes * 60);
-    if (secs < 60) unitEl.textContent = `= ${secs}秒 / times`;
+    if (secs < 60) unitEl.textContent = `= ${secs}s / alert`;
     else if (secs % 60 === 0) unitEl.textContent = `min / times`;
-    else unitEl.textContent = `= ${Math.floor(secs/60)}分${secs%60}秒 / times`;
+    else unitEl.textContent = `= ${Math.floor(secs/60)}m${secs%60}s / alert`;
   }
   // 更新预设按钮高亮
   const presets = document.querySelectorAll(`#tp-presets-${id} .preset`);
@@ -3096,11 +3103,11 @@ function updateTimerStatus(id) {
   if (s.timerOn) {
     const secs = Math.round((s.timerMin||5) * 60);
     let label;
-    if (secs < 60)         label = `${secs}秒`;
+    if (secs < 60)         label = `${secs}s`;
     else if (secs===3600)  label = '1hr';
     else if (secs%60===0)  label = `${secs/60}min`;
-    else                   label = `${Math.floor(secs/60)}分${secs%60}秒`;
-    el.textContent = `⏱ 每 ${label} 播报一times`;
+    else                   label = `${Math.floor(secs/60)}m${secs%60}s`;
+    el.textContent = `⏱ Every ${label} — 1 alert`;
     el.style.color = 'var(--green)';
   } else {
     el.textContent = '';
@@ -3419,7 +3426,7 @@ function showMsg(id,type,text){const e=document.getElementById(id);e.className='
 // ── Log ───────────────────────────────────────────────────────────
 function renderLog(){
   const el=document.getElementById('logList');
-  if(!logs.length){el.innerHTML='<div class="log-empty">等待Price触发播报…</div>';return;}
+  if(!logs.length){el.innerHTML='<div class="log-empty">Waiting for price trigger…</div>';return;}
   el.innerHTML=logs.map(l=>`
     <div class="log-row">
       <span class="lt">${l.t}</span>
@@ -3427,7 +3434,7 @@ function renderLog(){
       <span class="ld" style="color:${l.isUp?'var(--green)':'var(--red)'}">${l.isUp?'↑':'↓'}</span>
       <span class="lp">${fmt(l.id,l.level)}→${fmt(l.id,l.price)}</span>
       <span class="lm ${l.mode}">${l.mode==='target'?'🎯':l.mode==='timer'?'⏱':l.mode==='point'?'📌':'Fixed'}</span>
-      <div class="lchs">${l.chs.filter(c=>c!=='err').map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'微信':c==='snd'?'🔊':''}</span>`).join('')}</div>
+      <div class="lchs">${l.chs.filter(c=>c!=='err').map(c=>`<span class="lch ${c}">${c==='tg'?'TG':c==='wx'?'WeChat':c==='snd'?'🔊':''}</span>`).join('')}</div>
     </div>`).join('');
 }
 
@@ -3473,13 +3480,13 @@ function closeCoinManager() {
 
 function renderActiveCoinList() {
   const el = document.getElementById('activeCoinList');
-  if (!COINS.length) { el.innerHTML='<div style="color:var(--tx3);font-size:12px;text-align:center;padding:12px">暂无监控币种</div>'; return; }
+  if (!COINS.length) { el.innerHTML='<div style="color:var(--tx3);font-size:12px;text-align:center;padding:12px">No coins monitored</div>'; return; }
   el.innerHTML = COINS.map((c,i) => `
     <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:10px 12px">
       <div style="width:28px;height:28px;border-radius:50%;background:${c.bg};color:${c.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${c.id.slice(0,2)}</div>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600;color:var(--tx)">${c.name.includes('/')?c.name:c.id+'/USDT'}</div>
-        <div style="font-size:10px;color:var(--tx3)">${c.name} · 步进 ${c.defStep} ${c.quote||getCoinQuote(c.id)||'USDT'}</div>
+        <div style="font-size:10px;color:var(--tx3)">${c.name} · Step ${c.defStep} ${c.quote||getCoinQuote(c.id)||'USDT'}</div>
       </div>
       <div style="display:flex;gap:5px">
         ${i>0?`<button onclick="moveCoin(${i},-1)" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer">↑</button>`:''}
@@ -3582,7 +3589,7 @@ async function addPairCoin() {
   addCoin({ id:sym, name:`${base}/${quote}`, sym, quote, color:colors[COINS.length%colors.length], bg:'#111',
     presets:[step,step*2,step*5,step*10], defStep:step, defTarget:step*100,
     defFarStep:step, defNearStep:step/5, defNearDist:step*10 });
-  showPairMsg('ok',`✅ ${base}/${quote} 已添加，请在主页卡片设置步进`);
+  showPairMsg('ok',`✅ ${base}/${quote} added! Set step size in card`);
 }
 
 function autoDefaultStep(base, quote) {
@@ -3729,7 +3736,7 @@ function switchMkt(type){
   document.getElementById('mktFutures').className = 'mkt-btn'+(type==='USDT-FUTURES'?' active':'');
   updateSegBtns();
   // update card subtitles
-  const label=type==='USDT-FUTURES'?'永续合约':'现货';
+  const label=type==='USDT-FUTURES'?'Perpetual':'Spot';
   COINS.forEach(c=>{
     const el=document.getElementById('csub-'+c.id);
     if(el) el.textContent=c.name+' · '+label;
@@ -4127,7 +4134,7 @@ function showReferralPanel() {
           🚀 立即升级正式版，开启赚钱功能
         </a>
         <div style="font-size:11px;color:var(--tx3);text-align:center;margin-top:10px">
-          试用期结束前升级，数据与设置无缝延续
+          Upgrade before trial ends — settings carry over seamlessly
         </div>
       </div>
     </div>`;
@@ -4333,7 +4340,7 @@ function showWithdrawModal() {
   el.innerHTML =
     '<div style="background:var(--bg2);border:1px solid var(--bd);border-radius:16px;padding:24px;width:100%;max-width:360px;box-sizing:border-box">' +
       '<div style="font-size:15px;font-weight:600;color:var(--tx);margin-bottom:6px">💸 Withdraw to Wallet</div>' +
-      '<div style="font-size:12px;color:var(--tx3);margin-bottom:14px">可提现余额：<b style="color:var(--amber)">' + pending.toFixed(2) + ' USDT</b>（最低 5 USDT）</div>' +
+      '<div style="font-size:12px;color:var(--tx3);margin-bottom:14px">Available: <b style="color:var(--amber)">' + pending.toFixed(2) + ' USDT</b> (min 5 USDT)</div>' +
       '<div style="font-size:12px;color:var(--tx3);margin-bottom:6px">Select Network</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">' +
         '<button onclick="_selectNetwork(this,\'TRC20\')" class="netBtn" style="padding:8px 4px;background:var(--bg3);border:2px solid var(--blue);border-radius:8px;color:var(--tx);font-size:12px;cursor:pointer;text-align:center"><div style="font-weight:600">TRC20</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">波场</div></button>' +
@@ -4347,7 +4354,7 @@ function showWithdrawModal() {
       '<div style="font-size:12px;color:var(--tx3);margin-bottom:5px">USDT Wallet Address</div>' +
       '<input id="wdWallet" placeholder="请输入对应网络的Wallet Address" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box;margin-bottom:10px">' +
       '<div style="font-size:12px;color:var(--tx3);margin-bottom:5px">Withdrawal Amount（USDT）</div>' +
-      '<input id="wdAmount" type="number" placeholder="最低 5 USDT" value="' + (pending >= 5 ? pending.toFixed(2) : '') + '" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box;margin-bottom:10px">' +
+      '<input id="wdAmount" type="number" placeholder="Min 5 USDT" value="' + (pending >= 5 ? pending.toFixed(2) : '') + '" style="width:100%;padding:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-size:13px;box-sizing:border-box;margin-bottom:10px">' +
       '<div id="wdMsg" style="font-size:12px;color:var(--red);min-height:18px;margin-bottom:8px"></div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
         '<button onclick="document.getElementById(\'withdrawModal\').remove()" style="padding:10px;background:var(--bg3);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;font-size:13px;cursor:pointer">Cancel</button>' +
@@ -4374,7 +4381,7 @@ async function _submitWithdraw(licCode) {
   var network = window._selectedNetwork || 'TRC20';
   var msg = document.getElementById('wdMsg');
   if (!wallet) { if(msg) msg.textContent='请输入Wallet Address'; return; }
-  if (amount < 5) { if(msg) msg.textContent='最低Withdrawal Amount为 5 USDT'; return; }
+  if (amount < 5) { if(msg) msg.textContent='Minimum withdrawal is 5 USDT'; return; }
   if(msg) msg.textContent='Submitting…';
   try {
     var res = await fetch(WORKER_URL+'/ref/withdraw', {
@@ -4387,7 +4394,7 @@ async function _submitWithdraw(licCode) {
       alert('✅ Withdrawal request submitted！\n网络：' + network + '\n金额：' + amount + ' USDT\nWe will process within  1-3  business days。');
       loadRefStats(licCode);
     } else {
-      var errMap = { insufficient_balance:'Insufficient balance', min_amount:'低于最低Withdrawal Amount(5 USDT)', invalid_license:'Activation Code无效' };
+      var errMap = { insufficient_balance:'Insufficient balance', min_amount:'Below minimum withdrawal (5 USDT)', invalid_license:'Invalid activation code' };
       if(msg) msg.textContent = errMap[data.error] || data.error;
     }
   } catch(e) { if(msg) msg.textContent='Network error, please retry'; }
@@ -4403,7 +4410,7 @@ function showVoiceUnlockPrompt() {
   const el = document.createElement('div');
   el.id = 'voiceUnlockBanner';
   el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9000;background:var(--bg2);border:1px solid var(--amber);border-radius:12px;padding:10px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.4);cursor:pointer;white-space:nowrap';
-  el.innerHTML = '<span style="font-size:18px">🔊</span><span style="font-size:13px;color:var(--tx)">点击此处解锁语音播报</span>';
+  el.innerHTML = '<span style="font-size:18px">🔊</span><span style="font-size:13px;color:var(--tx)">Tap here to enable voice alerts</span>';
   el.onclick = () => {
     if ('speechSynthesis' in window) {
       const u = new SpeechSynthesisUtterance(' ');
@@ -4530,7 +4537,7 @@ function triggerPwaInstall() {
     const isMac = /Mac/.test(navigator.platform);
     let guide = '';
     if (isIos()) {
-      guide = '点底部工具栏分享按钮 ⎙\n→ 滑动找到「Add to Home Screen」\n→ 点右上角「添加」确认';
+      guide = 'Tap Share ⎙ in toolbar\n→ Scroll to "Add to Home Screen"\n→ Tap "Add" to confirm';
     } else if (isEdge) {
       guide = '点右上角 ··· 菜单\n→ 选择「应用」\n→ 点「将此站点Install为应用」';
     } else {
@@ -4557,7 +4564,7 @@ function showPwaBanner() {
   const banner = document.createElement('div');
   banner.id = 'pwaBanner';
   banner.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:8000;background:#1e3a5f;border:1px solid #2563eb;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:320px;width:calc(100% - 32px)';
-  const subtitle = isIosDev ? '点底部分享 ⎙ → Add to Home Screen' : '像 App 一样随时打开';
+  const subtitle = isIosDev ? 'Tap Share ⎙ → Add to Home Screen' : 'Open like an app anytime';
   const actionBtn = isIosDev ? '' : '<button onclick="triggerPwaInstall();hidePwaBanner()" style="padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Install</button>';
   banner.innerHTML =
     '<span style="font-size:24px;flex-shrink:0">📲</span>' +
@@ -4593,7 +4600,7 @@ window.addEventListener('load', () => {
     const subtitle = document.getElementById('pwaInstallSubtitle');
     if (btnWrap) btnWrap.style.display = 'none';
     if (iosGuide) iosGuide.style.display = 'block';
-    if (subtitle) subtitle.textContent = 'iOS Safari 手动添加步骤';
+    if (subtitle) subtitle.textContent = 'iOS Safari manual steps';
   }
   // 首times访问显示横幅（3秒后）
   if (!localStorage.getItem('pwa_banner_dismissed')) {

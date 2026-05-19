@@ -1163,7 +1163,7 @@ function applyLang(langCode) {
 
   <!-- Exchange + Market type -->
   <div class="dsec">
-    <div class="dsec-lbl">交易所</div>
+    <div class="dsec-lbl">Exchange</div>
     <!-- 4 quick shortcuts -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px" id="exBtnWrap">
       <button class="ex-btn active" data-ex="bitget"  onclick="switchExchange('bitget')">🟡 Bitget</button>
@@ -1227,10 +1227,10 @@ function applyLang(langCode) {
   <!-- Controls -->
   <div class="dsec">
     <div class="dsec-lbl">Alert Control</div>
-    <div class="drow"><span class="drow-name">🔊 声音提示</span><button class="tgl on" id="togSound" onclick="togCtrl('sound')"></button></div>
+    <div class="drow"><span class="drow-name">🔔 Sound Alert</span><button class="tgl on" id="togSound" onclick="togCtrl('sound')"></button></div>
     <div class="drow" style="flex-direction:column;align-items:flex-start;gap:6px">
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-        <span class="drow-name">🔈 播报音量</span>
+        <span class="drow-name">🔊 Alert Volume</span>
         <span id="volumeVal" style="font-size:12px;color:var(--tx2);font-family:var(--mono)">80%</span>
       </div>
       <input type="range" id="volumeSlider" min="0" max="100" value="80"
@@ -1360,7 +1360,7 @@ function applyLang(langCode) {
         <a href="https://t.me/qunliangfeng" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
           <span style="font-size:18px">✈️</span>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx)">Telegram 客服</div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">Telegram Support</div>
             <div style="font-size:11px;color:var(--tx3)">@qunliangfeng</div>
           </div>
         </a>
@@ -1376,7 +1376,7 @@ function applyLang(langCode) {
         <a href="mailto:xibencongbot@gmail.com" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;text-decoration:none">
           <span style="font-size:18px">📧</span>
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx)">客服邮箱</div>
+            <div style="font-size:13px;font-weight:600;color:var(--tx)">Email Support</div>
             <div style="font-size:11px;color:var(--tx3)">xibencongbot@gmail.com</div>
           </div>
         </a>
@@ -3242,6 +3242,8 @@ function unlockAudioAndVoice() {
   if ('speechSynthesis' in window) {
     const u = new SpeechSynthesisUtterance('');
     u.volume = 0;
+    const _ld = (typeof LANGS !== 'undefined' && LANGS[currentLang]) || {speechLang:'en-US'};
+    u.lang = _ld.speechLang || 'en-US';
     window.speechSynthesis.speak(u);
     // 预加载语音列表
     window.speechSynthesis.getVoices();
@@ -3274,23 +3276,41 @@ function playBeep(up) {
 
 function speak(text) {
   if (!('speechSynthesis' in window)) return;
+  // iOS Safari: cancel then brief delay helps avoid silent failures
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
   const langData = LANGS[currentLang] || LANGS['en'];
   const speechLang = langData.speechLang || 'en-US';
   const langPrefix = speechLang.split('-')[0];
-  u.lang = speechLang;
-  u.rate = 1.0;
-  u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
-  const voices = window.speechSynthesis.getVoices();
-  // Try to find a voice matching language and gender
   const isFemale = cfg.voiceGender !== 'male';
-  let voice = voices.find(v => v.lang === speechLang && (isFemale ? /female|woman|girl/i.test(v.name) : /male|man|boy/i.test(v.name)));
-  if (!voice) voice = voices.find(v => v.lang === speechLang);
-  if (!voice) voice = voices.find(v => v.lang.startsWith(langPrefix));
-  if (voice) u.voice = voice;
-  if (!isFemale && !voice?.name.match(/male|man/i)) u.pitch = 0.5;
-  window.speechSynthesis.speak(u);
+
+  function doSpeak() {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = speechLang;
+    u.rate = 1.0;
+    u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      let voice = voices.find(v => v.lang === speechLang && (isFemale ? /female|woman|girl/i.test(v.name) : /male|man|boy/i.test(v.name)));
+      if (!voice) voice = voices.find(v => v.lang === speechLang);
+      if (!voice) voice = voices.find(v => v.lang.startsWith(langPrefix));
+      if (voice) u.voice = voice;
+    }
+    // If no voice found, just set lang and let the system pick (works on iOS)
+    if (!isFemale) u.pitch = 0.5;
+    window.speechSynthesis.speak(u);
+  }
+
+  // On iOS, voices may not be loaded yet — wait for them
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0 && window.speechSynthesis.onvoiceschanged === null) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.onvoiceschanged = null;
+      doSpeak();
+    };
+    setTimeout(doSpeak, 300); // fallback if onvoiceschanged never fires
+  } else {
+    doSpeak();
+  }
 }
 
 // 说完才 resolve，用于定点Repeat播报
@@ -3302,7 +3322,7 @@ function speakAndWait(text) {
     const _ld = LANGS[currentLang] || LANGS['en'];
     const _sl = _ld.speechLang || 'en-US';
     const _lp = _sl.split('-')[0];
-    u.lang = _sl;
+    u.lang = _sl; // iOS will use system default if no voice found
     u.rate = 1.0;
     u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
     const _voices = window.speechSynthesis.getVoices();

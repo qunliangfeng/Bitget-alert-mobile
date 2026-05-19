@@ -1156,7 +1156,7 @@ function applyLang(langCode) {
     <div class="drawer-handle"></div>
     <div class="drawer-title">
       <span>System Settings</span>
-      <button class="drawer-close-btn" onclick="closeDrawer()">✕ 关闭</button>
+      <button class="drawer-close-btn" onclick="closeDrawer()">✕ Close</button>
     </div>
   </div>
   <div class="drawer-body">
@@ -1250,7 +1250,7 @@ function applyLang(langCode) {
     </div>
     <div class="drow" style="flex-direction:column;align-items:stretch;gap:6px">
       <div style="display:flex;gap:6px">
-        <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testSound()">🔊 测试声音</button>
+        <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testSound()">🔊 Test Sound</button>
         <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testVoice()">🎙 Test Voice</button>
       </div>
       <div id="audioTestMsg" style="font-size:11px;color:var(--tx3);text-align:center;display:none"></div>
@@ -1263,11 +1263,11 @@ function applyLang(langCode) {
       <button class="tgl" id="togWakeLock" onclick="togCtrl('wakeLock')"></button>
     </div>
     <div class="drow">
-      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>Telegram 推送</span>
+      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-tg"/></svg>Telegram Push</span>
       <button class="tgl on" id="togTg" onclick="togCtrl('tg')"></button>
     </div>
     <div class="drow">
-      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>微信推送</span>
+      <span class="drow-name"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>WeChat Push</span>
       <button class="tgl on" id="togWx" onclick="togCtrl('wx')"></button>
     </div>
     <div class="drow"><span class="drow-name">⏸ Pause Monitoring</span><button class="tgl" id="togPause" onclick="togPause()"></button></div>
@@ -1289,7 +1289,7 @@ function applyLang(langCode) {
     <div class="pbody" id="pb-wx">
       <div class="field"><label>WeCom Bot Webhook</label><input type="text" id="wxToken" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." oninput="cfg.wxToken=this.value;saveSettings()" autocomplete="off"></div>
       <div style="font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.6">
-        企业微信群 → 添加机器人 → 复制 Webhook 地址粘贴到上方
+        WeCom group → Add bot → Copy Webhook URL and paste above
       </div>
       <button class="big-btn" onclick="testWx()"><svg width="15" height="15" viewBox="0 0 24 24"><use href="#ico-wx"/></svg>Send Test</button>
       <div id="wxMsg" class="smsg"></div>
@@ -1301,15 +1301,15 @@ function applyLang(langCode) {
     <div class="dsec-lbl">Setup Guide</div>
     <div class="help-text">
       <b>Telegram Bot</b><br>
-      1. 搜索 <span class="cm">@BotFather</span> → 发送 <span class="cm">/newbot</span>，根据提示给机器人命名，获取 Bot Token<br>
-      2. 搜索 <span class="cm">@IDBot</span> → 发送 <span class="cm">/start</span>，根据提示发送你的 Telegram 用户名，获取 Chat ID<br>
-      3. 将 Bot Token 和 Chat ID 填入上方栏目<br>
-      详细教程可访问官网或联系客服获取<br><br>
+      1. Search <span class="cm">@BotFather</span> → send <span class="cm">/newbot</span>, follow prompts to get your Bot Token<br>
+      2. Search <span class="cm">@IDBot</span> → send <span class="cm">/start</span>, follow prompts to get your Chat ID<br>
+      3. Enter your Bot Token and Chat ID in the fields above<br>
+      For detailed guide, visit our website or contact support<br><br>
       <b>WeCom Bot</b><br>
-      1. 下载企业微信，注册企业（免费）<br>
-      2. 建群 → 添加机器人 → 新建机器人<br>
-      3. 复制 Webhook 地址填入上方<br>
-      4. 消息发到企业微信群，免费无限制
+      1. Download WeCom, register a company (free)<br>
+      2. Create group → Add bot → New bot<br>
+      3. Copy Webhook URL and paste above<br>
+      4. Messages sent to WeCom group — free, no limits
     </div>
   </div>
   <!-- 关于 & 版权 -->
@@ -1351,8 +1351,8 @@ function applyLang(langCode) {
         <!-- iOS 引导 -->
         <div id="pwaIosGuide" style="display:none;font-size:12px;color:var(--tx2);line-height:1.9">
           1. Tap the <b>Share</b> button <span style="font-size:14px">⎙</span> in the toolbar<br>
-          2. 滑动菜单找到 <b>Add to Home Screen</b><br>
-          3. 点右上角 <b>添加</b> 确认完成
+          2. Scroll and tap <b>Add to Home Screen</b><br>
+          3. Tap <b>Add</b> to confirm
         </div>
       </div>
 
@@ -1399,9 +1399,9 @@ function applyLang(langCode) {
 
       <!-- 免责声明 -->
       <div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px 14px">
-        <div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px">⚠️ 免责声明</div>
+        <div style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px">⚠️ Disclaimer</div>
         <div style="font-size:10px;color:var(--tx3);line-height:1.7">
-          本工具仅提供加密资产及相关品种的实时Price播报服务，所有播报内容均来源于第三方交易所公开数据，<b style="color:var(--tx2)">不构成任何投资建议或交易指引</b>。数字资产市场波动剧烈，投资存在重大风险，请用户根据自身风险承受能力独立判断。因使用本工具产生的任何直接或间接损失，作者不承担任何责任。
+          This tool provides real-time price alerts sourced from third-party exchanges. All content is <b style="color:var(--tx2)">for reference only and does not constitute investment advice</b>. Crypto markets are highly volatile. Invest at your own risk. The author is not liable for any losses arising from use of this tool.
         </div>
       </div>
     </div>
@@ -1417,7 +1417,7 @@ function applyLang(langCode) {
     <div class="drawer-handle"></div>
     <div class="drawer-title">
       <span>⚙️ Manage Monitored Coins</span>
-      <button class="drawer-close-btn" onclick="closeCoinManager()">✕ 关闭</button>
+      <button class="drawer-close-btn" onclick="closeCoinManager()">✕ Close</button>
     </div>
   </div>
   <div class="drawer-body">
@@ -4118,7 +4118,7 @@ function showReferralPanel() {
     panel.innerHTML = `
     <div style="max-width:420px;margin:0 auto">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-        <button onclick="document.getElementById('refPanel').remove()" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">← 返回</button>
+        <button onclick="document.getElementById('refPanel').remove()" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">← Back</button>
         <span style="font-size:16px;font-weight:600;color:var(--tx)">💰 Refer & Earn</span>
       </div>
       <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:24px;text-align:center">
@@ -4131,7 +4131,7 @@ function showReferralPanel() {
         </div>
         <a href="https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-landing.html" target="_blank"
           style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:18px;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none">
-          🚀 立即升级正式版，开启赚钱功能
+          🚀 Upgrade Now to Unlock Refer & Earn
         </a>
         <div style="font-size:11px;color:var(--tx3);text-align:center;margin-top:10px">
           Upgrade before trial ends — settings carry over seamlessly
@@ -4144,7 +4144,7 @@ function showReferralPanel() {
   panel.innerHTML = `
     <div style="max-width:420px;margin:0 auto">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-        <button onclick="document.getElementById('refPanel').remove()" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">← 返回</button>
+        <button onclick="document.getElementById('refPanel').remove()" style="background:var(--bg2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">← Back</button>
         <span style="font-size:16px;font-weight:600;color:var(--tx)">💰 Refer & Earn</span>
       </div>
 
@@ -4310,8 +4310,8 @@ if (location.protocol === 'file:') {
       }
       if (lic.expiresAt && expEl) {
         const d = new Date(lic.expiresAt);
-        const planName = lic.plan === 'yearly' ? 'Yearly' : lic.plan === 'monthly' ? 'Monthly' : '试用';
-        expEl.textContent = planName + ' · 到期 ' + d.toLocaleDateString('zh-CN');
+        const planName = lic.plan === 'yearly' ? 'Yearly' : lic.plan === 'monthly' ? 'Monthly' : 'Trial';
+        expEl.textContent = planName + ' · Expires ' + d.toLocaleDateString('en-US');
       }
     } catch(e) {}
   }, 500);
@@ -4539,9 +4539,9 @@ function triggerPwaInstall() {
     if (isIos()) {
       guide = 'Tap Share ⎙ in toolbar\n→ Scroll to "Add to Home Screen"\n→ Tap "Add" to confirm';
     } else if (isEdge) {
-      guide = '点右上角 ··· 菜单\n→ 选择「应用」\n→ 点「将此站点Install为应用」';
+      guide = 'Tap ··· menu\n→ Select "Apps"\n→ Tap "Install this site as an app"';
     } else {
-      guide = '点地址栏最右边的Install图标 ⊕\n或点右上角菜单 ⋮\n→ 选择「投放/保存/分享」\n→ 点「Install西本聪播报」';
+      guide = 'Tap install icon ⊕ in address bar\nor tap ⋮ menu\n→ Select "Install Xibencong"';
     }
     // 在按钮下方显示引导，不用 alert
     const box = document.getElementById('pwaInstallBox');

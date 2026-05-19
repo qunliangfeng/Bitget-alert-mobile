@@ -60,17 +60,107 @@
 
 <script>
 const WORKER_URL = 'https://price-alert-worker.qunliang-feng.workers.dev';
-const PLAYER_URL = 'https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-alert-mobile-701.html';
+// Player URL based on language
+const params_lang = new URLSearchParams(location.search);
+const isIntl = params_lang.get('lang') === 'en';
+const PLAYER_URL = isIntl
+  ? 'https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-alert-intl.html'
+  : 'https://qunliangfeng.github.io/Bitget-alert-mobile/xibencong-alert-mobile-701.html';
 
 let licCode = '';
 
+// i18n strings
+const i18n = {
+  zh: {
+    title: '付款成功！',
+    sub: '你的激活码已准备好，点击下方按钮立即激活进入播报器',
+    codeLabel: '你的激活码',
+    codeLoading: '加载中…',
+    refLabel: '推荐码（选填，有推荐人请填写）',
+    btnActivate: '🚀 立即激活进入播报器',
+    btnCopy: '复制激活码',
+    activating: '激活中…',
+    verifying: '正在验证激活码…',
+    successMsg: '✅ 激活成功！正在跳转到播报器…',
+    successBtn: '✅ 激活成功，跳转中…',
+    deviceSwitch: '此激活码已在另一台设备使用',
+    forceSwitch: '强制切换到此设备激活',
+    switching: '切换中…',
+    switchingMsg: '正在切换设备…',
+    switchSuccess: '✅ 切换成功！正在跳转…',
+    switchFail: '切换失败：',
+    retryActivate: '🚀 重试激活',
+    networkError: '网络错误，请重试',
+    invalidLink: '链接无效',
+    noCode: '未找到激活码，请检查链接或联系客服',
+    copied: '已复制 ✓',
+    copyBtn: '复制激活码',
+    errMap: { invalid_code:'激活码无效', expired:'激活码已过期', revoked:'激活码已停用' },
+    hintTg: '激活码同时已发送到你的 Telegram',
+    hintManual: '如需手动激活，请前往',
+    hintPlayer: '播报器页面',
+    hintContact: '有问题请联系',
+  },
+  en: {
+    title: 'Payment Successful!',
+    sub: 'Your activation code is ready. Click below to activate and enter the bot.',
+    codeLabel: 'Your Activation Code',
+    codeLoading: 'Loading…',
+    refLabel: 'Referral code (optional)',
+    btnActivate: '🚀 Activate & Enter Bot',
+    btnCopy: 'Copy Code',
+    activating: 'Activating…',
+    verifying: 'Verifying activation code…',
+    successMsg: '✅ Activated! Redirecting to bot…',
+    successBtn: '✅ Activated, redirecting…',
+    deviceSwitch: 'This code is active on another device',
+    forceSwitch: 'Switch to this device',
+    switching: 'Switching…',
+    switchingMsg: 'Switching device…',
+    switchSuccess: '✅ Switched! Redirecting…',
+    switchFail: 'Switch failed: ',
+    retryActivate: '🚀 Retry Activation',
+    networkError: 'Network error, please retry',
+    invalidLink: 'Invalid Link',
+    noCode: 'No activation code found. Please check the link or contact support.',
+    copied: 'Copied ✓',
+    copyBtn: 'Copy Code',
+    errMap: { invalid_code:'Invalid activation code', expired:'Activation code expired', revoked:'Activation code revoked' },
+    hintTg: 'Activation code also sent to your Telegram',
+    hintManual: 'To activate manually, go to',
+    hintPlayer: 'Bot page',
+    hintContact: 'Need help? Contact',
+  }
+};
+const lang = isIntl ? 'en' : 'zh';
+const T = i18n[lang];
+
+function applyI18n() {
+  document.getElementById('titleEl').textContent = T.title;
+  document.getElementById('subEl').textContent = T.sub;
+  document.getElementById('codeEl').textContent = T.codeLoading;
+  document.querySelector('.code-label').textContent = T.codeLabel;
+  document.getElementById('btnActivate').textContent = T.btnActivate;
+  document.getElementById('btnCopy').textContent = T.btnCopy;
+  document.querySelector('[placeholder="REF-XXXXXX"]').previousElementSibling.textContent = T.refLabel;
+  // Update hint
+  const hint = document.querySelector('.hint');
+  hint.innerHTML = `${T.hintTg}<br>
+    ${T.hintManual} <a href="${PLAYER_URL}" target="_blank">${T.hintPlayer}</a><br><br>
+    ${T.hintContact} <a href="https://t.me/qunliangfeng" target="_blank">@qunliangfeng</a>`;
+  if (isIntl) {
+    document.title = 'Payment Successful · Xibencong Crypto Bot';
+  }
+}
+
 function init() {
+  applyI18n();
   const params = new URLSearchParams(location.search);
   const code = params.get('code');
   if (!code) {
     document.getElementById('iconEl').textContent = '❌';
-    document.getElementById('titleEl').textContent = '链接无效';
-    document.getElementById('subEl').textContent = '未找到激活码，请检查链接或联系客服';
+    document.getElementById('titleEl').textContent = T.invalidLink;
+    document.getElementById('subEl').textContent = T.noCode;
     document.getElementById('codeBox').style.display = 'none';
     document.getElementById('btnActivate').style.display = 'none';
     document.getElementById('btnCopy').style.display = 'none';
@@ -81,7 +171,7 @@ function init() {
   document.getElementById('btnActivate').disabled = false;
   document.getElementById('btnCopy').disabled = false;
 
-  // 自动填入推荐码（如果 URL 里有）
+  // Auto-fill referral code from URL
   const ref = params.get('ref');
   if (ref) {
     const refInput = document.getElementById('refInput');
@@ -94,9 +184,9 @@ async function doActivate() {
   const btn = document.getElementById('btnActivate');
   const status = document.getElementById('statusEl');
   btn.disabled = true;
-  btn.textContent = '激活中…';
+  btn.textContent = T.activating;
   status.className = 'status loading';
-  status.textContent = '正在验证激活码…';
+  status.textContent = T.verifying;
 
   try {
     // 生成设备ID
@@ -127,8 +217,8 @@ async function doActivate() {
       document.cookie = `xbc_lic=${encodeURIComponent(JSON.stringify(licData))};expires=${expires};path=/;SameSite=Lax`;
 
       status.className = 'status ok';
-      status.textContent = '✅ 激活成功！正在跳转到播报器…';
-      btn.textContent = '✅ 激活成功，跳转中…';
+      status.textContent = T.successMsg;
+      btn.textContent = T.successBtn;
 
       setTimeout(() => {
         window.location.href = PLAYER_URL;
@@ -136,22 +226,21 @@ async function doActivate() {
     } else if (data.error === 'device_switch') {
       // 已在其他设备激活，提示用户
       status.className = 'status err';
-      status.textContent = '此激活码已在另一台设备使用';
+      status.textContent = T.deviceSwitch;
       btn.disabled = false;
-      btn.textContent = '强制切换到此设备激活';
+      btn.textContent = T.forceSwitch;
       btn.onclick = () => doActivateForce();
     } else {
-      const errMap = { invalid_code:'激活码无效', expired:'激活码已过期', revoked:'激活码已停用' };
       status.className = 'status err';
-      status.textContent = errMap[data.error] || '激活失败：' + data.error;
+      status.textContent = T.errMap[data.error] || (isIntl ? 'Activation failed: ' : '激活失败：') + data.error;
       btn.disabled = false;
-      btn.textContent = '🚀 重试激活';
+      btn.textContent = T.retryActivate;
     }
   } catch(e) {
     status.className = 'status err';
-    status.textContent = '网络错误，请重试';
+    status.textContent = T.networkError;
     btn.disabled = false;
-    btn.textContent = '🚀 重试激活';
+    btn.textContent = T.retryActivate;
   }
 }
 
@@ -159,9 +248,9 @@ async function doActivateForce() {
   const btn = document.getElementById('btnActivate');
   const status = document.getElementById('statusEl');
   btn.disabled = true;
-  btn.textContent = '切换中…';
+  btn.textContent = T.switching;
   status.className = 'status loading';
-  status.textContent = '正在切换设备…';
+  status.textContent = T.switchingMsg;
   try {
     const res = await fetch(WORKER_URL + '/activate', {
       method: 'POST',
@@ -183,11 +272,11 @@ async function doActivateForce() {
       const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
       document.cookie = `xbc_lic=${encodeURIComponent(JSON.stringify(licData))};expires=${expires};path=/;SameSite=Lax`;
       status.className = 'status ok';
-      status.textContent = '✅ 切换成功！正在跳转…';
+      status.textContent = T.switchSuccess;
       setTimeout(() => { window.location.href = PLAYER_URL; }, 1500);
     } else {
       status.className = 'status err';
-      status.textContent = '切换失败：' + data.error;
+      status.textContent = T.switchFail + data.error;
       btn.disabled = false;
       btn.textContent = '重试';
       btn.onclick = doActivateForce;
@@ -204,9 +293,9 @@ function copyCode() {
   if (!licCode) return;
   navigator.clipboard.writeText(licCode).then(() => {
     const btn = document.getElementById('btnCopy');
-    btn.textContent = '已复制 ✓';
+    btn.textContent = T.copied;
     btn.style.color = '#22c55e';
-    setTimeout(() => { btn.textContent = '复制激活码'; btn.style.color = ''; }, 2000);
+    setTimeout(() => { btn.textContent = T.copyBtn; btn.style.color = ''; }, 2000);
   });
 }
 

@@ -1040,9 +1040,11 @@ const LANGS = {
     }
   },
 };
+window.LANGS = LANGS; // expose globally for speak() across script tags
 
 // Current language state
 let currentLang = localStorage.getItem('xbc_lang') || 'en';
+window.currentLang = currentLang;
 function t(key, ...args) {
   const lang = LANGS[currentLang] || LANGS.en;
   const val = lang.t[key];
@@ -1051,6 +1053,7 @@ function t(key, ...args) {
 }
 function applyLang(langCode) {
   currentLang = langCode;
+  window.currentLang = langCode; // keep window in sync
   localStorage.setItem('xbc_lang', langCode);
   document.documentElement.lang = LANGS[langCode]?.speechLang?.split('-')[0] || 'en';
   // Re-render all translatable elements
@@ -3283,7 +3286,10 @@ function speak(text) {
   if (!('speechSynthesis' in window)) { console.log('[SPEAK] not supported'); return; }
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  const langData = LANGS[currentLang] || LANGS['en'];
+  // LANGS may not be available in all scopes - use window.LANGS safely
+  const _LANGS = (typeof LANGS !== 'undefined') ? LANGS : (typeof window.LANGS !== 'undefined' ? window.LANGS : null);
+  const _curLang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
+  const langData = _LANGS ? (_LANGS[_curLang] || _LANGS['en']) : {speechLang:'en-US'};
   const speechLang = langData.speechLang || 'en-US';
   u.lang = speechLang;
   u.onstart = () => console.log('[SPEAK] started');

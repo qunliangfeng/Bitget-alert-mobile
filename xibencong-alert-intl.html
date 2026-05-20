@@ -3223,7 +3223,7 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.voiceOn){
     const name=getCoinVoiceName(id);
     const dist=Math.abs(price-s.target);
-    const distTxt = (mode==='target') && s.target>0 ? `. distance ${fmtVoice(id, dist)}` : '';
+    const distTxt = (mode==='target') && s.target>0 ? `. distance ${fmtDist(id, dist, price).replace(/,/g,'').split('').map(ch=>ch==='.'?'point':ch).join(' ')}` : '';
     const txt = mode==='timer' ? `${name}. ${fmtVoice(id,level)}` : `${name}. ${isUp?'up':'down'}. ${fmtVoice(id,level)}${distTxt}`;
     console.log('[ALERT] speaking:', txt);
     speak(txt);

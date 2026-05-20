@@ -1207,7 +1207,7 @@ function selectLang(code) {
 
   <!-- Exchange + Market type -->
   <div class="dsec">
-    <div class="dsec-lbl">Language / 语言</div>
+    <div class="dsec-lbl">Language</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px" id="langGridWrap"></div>
 
     <div class="dsec-lbl">Exchange</div>
@@ -3523,6 +3523,7 @@ function openDrawer(){
   updateCoinCountLabel();
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
+  renderLangGrid();
 }
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');

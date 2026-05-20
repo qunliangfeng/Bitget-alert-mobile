@@ -1097,7 +1097,7 @@ function applyLang(langCode) {
     </div>
     <!-- Language Selector -->
     <div style="position:relative">
-      <button id="langBtn" onclick="toggleLangMenu()"
+      <button id="langBtn"
         style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--tx);display:flex;align-items:center;gap:5px;min-width:64px">
         <span style="font-size:15px">🌐</span>
         <span id="langFlag" style="font-size:15px">🇬🇧</span>
@@ -4637,13 +4637,18 @@ function buildLangMenu() {
   const menu = document.getElementById('langMenuItems');
   if (!menu) return;
   menu.innerHTML = Object.entries(window.LANGS||{}).map(([code, lang]) => `
-    <div onclick="selectLang('${code}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:var(--tx);border-bottom:1px solid var(--bd);transition:background 0.15s"
+    <div data-lang-code="${code}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:var(--tx);border-bottom:1px solid var(--bd);transition:background 0.15s"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <span style="font-size:18px">${lang.flag}</span>
       <span>${lang.name}</span>
       ${code === window.currentLang ? '<span style="margin-left:auto;color:var(--blue)">✓</span>' : ''}
     </div>
   `).join('');
+  // Bind clicks via event delegation on the container
+  menu.onclick = function(e) {
+    const item = e.target.closest('[data-lang-code]');
+    if (item) selectLang(item.getAttribute('data-lang-code'));
+  };
 }
 
 function toggleLangMenu() {
@@ -4681,6 +4686,12 @@ function initLang() {
   window.currentLang = saved;
   const flag = document.getElementById('langFlag');
   if (flag) flag.textContent = (window.LANGS&&window.LANGS[saved])?.flag || '🇬🇧';
+  // Bind button here so function is guaranteed to exist
+  const btn = document.getElementById('langBtn');
+  if (btn && !btn._langBound) {
+    btn._langBound = true;
+    btn.addEventListener('click', function(e){ e.stopPropagation(); toggleLangMenu(); });
+  }
   // Pre-load voices so they're available immediately
   if ('speechSynthesis' in window) {
     window.speechSynthesis.getVoices();

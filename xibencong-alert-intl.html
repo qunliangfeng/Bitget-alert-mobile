@@ -1115,6 +1115,7 @@ function selectLang(code) {
   applyLang(code);
   const f = document.getElementById('langFlag');
   if (f) f.textContent = LANGS[code] ? LANGS[code].flag : '🌐';
+  if (typeof renderLangGrid === 'function') renderLangGrid();
 }
 </script>
 </head>
@@ -1144,12 +1145,7 @@ function selectLang(code) {
     </div>
     <!-- Language Selector -->
     <div style="position:relative">
-      <button id="langBtn" onclick="event.stopPropagation();toggleLangMenu();"
-        style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--tx);display:flex;align-items:center;gap:5px;min-width:64px">
-        <span style="font-size:15px">🌐</span>
-        <span id="langFlag" style="font-size:15px">🇬🇧</span>
-        <span style="font-size:10px;color:var(--tx2)">▾</span>
-      </button>
+      <span id="langFlag" style="font-size:20px;cursor:default" title="Change language in Settings">🇬🇧</span>
     </div>
     <!-- langMenu is appended to body by JS to avoid stacking context issues -->
     <button class="nav-settings-btn" onclick="openDrawer()" aria-label="Settings">⚙️</button>
@@ -1211,6 +1207,9 @@ function selectLang(code) {
 
   <!-- Exchange + Market type -->
   <div class="dsec">
+    <div class="dsec-lbl">Language / 语言</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px" id="langGridWrap"></div>
+
     <div class="dsec-lbl">Exchange</div>
     <!-- 4 quick shortcuts -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px" id="exBtnWrap">
@@ -4696,7 +4695,19 @@ function buildLangMenu() {
   };
 }
 
-// Language menu functions are defined in head script
+function renderLangGrid() {
+  const wrap = document.getElementById('langGridWrap');
+  if (!wrap || !window.LANGS) return;
+  wrap.innerHTML = '';
+  Object.entries(LANGS).forEach(([code, lang]) => {
+    const btn = document.createElement('button');
+    const active = code === window.currentLang;
+    btn.style.cssText = 'display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;border:2px solid ' + (active ? '#3b82f6' : '#252a38') + ';background:' + (active ? '#1d3461' : '#1a1e28') + ';color:' + (active ? '#93c5fd' : '#e8eaf0');
+    btn.innerHTML = '<span style="font-size:18px">' + lang.flag + '</span><span>' + lang.name + '</span>' + (active ? '<span style="margin-left:auto;color:#3b82f6">✓</span>' : '');
+    btn.onclick = function() { selectLang(code); renderLangGrid(); };
+    wrap.appendChild(btn);
+  });
+}
 
 // Init language after DOM is ready
 function initLang() {
@@ -4718,7 +4729,7 @@ function initLang() {
     }
   }
   applyLang(saved);
-}
+  renderLangGrid();
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initLang);
 } else {

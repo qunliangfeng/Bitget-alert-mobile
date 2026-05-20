@@ -3128,6 +3128,7 @@ async function fireTimerAlert(id) {
 
   // 声音/语音 — 每times都播
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
+  console.log('[TIMER] voiceOn=',cfg.voiceOn,'coin=',coin,'price=',fmt(id,price));
   if (cfg.voiceOn) speak(`${coin} current price ${fmt(id,price)}`);
 
   // 推送 — 跟随定时器间隔，不额外限制
@@ -3195,12 +3196,14 @@ async function fireAlert(id, price, isUp, level, mode){
   }
   const chs=[];
   if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }
+  console.log('[ALERT] voiceOn=',cfg.voiceOn,'soundOn=',cfg.soundOn,'id=',id,'level=',level);
   if(cfg.voiceOn){
     const name=getCoinVoiceName(id);
-    // Target Price触发时才播报距离，Fixed梯度只报Price
     const dist=Math.abs(price-s.target);
     const distTxt = (mode==='target'||mode==='near') && s.target>0 ? `, Distance to target: ${fmtDist(id,dist,price)}` : '';
-    speak(`${name}${isUp?'▲ crossed':'▼ crossed'}${fmt(id,level)}${distTxt}`);
+    const txt = `${name}${isUp?'▲ crossed':'▼ crossed'}${fmt(id,level)}${distTxt}`;
+    console.log('[ALERT] speaking:', txt);
+    speak(txt);
   }
   // TG/微信推送，失败不影响日志记录
   try {
@@ -3276,12 +3279,16 @@ function playBeep(up) {
 }
 
 function speak(text) {
-  if (!('speechSynthesis' in window)) return;
+  console.log('[SPEAK] called, text=',text,'voiceOn=',cfg.voiceOn);
+  if (!('speechSynthesis' in window)) { console.log('[SPEAK] not supported'); return; }
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   const langData = LANGS[currentLang] || LANGS['en'];
   const speechLang = langData.speechLang || 'en-US';
   u.lang = speechLang;
+  u.onstart = () => console.log('[SPEAK] started');
+  u.onend   = () => console.log('[SPEAK] ended');
+  u.onerror = (e) => console.log('[SPEAK] error:', e.error);
   u.rate = 1.0;
   u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
   if (cfg.voiceGender === 'male') u.pitch = 0.5;

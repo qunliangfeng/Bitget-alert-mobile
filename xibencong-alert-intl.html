@@ -3015,8 +3015,8 @@ async function firePointAlert(id, price, pointPrice, repeat) {
   }
 
   // 推送
-  const tgMsg = `📌 ${id}/USDT Price Point Alert\nTriggered: ${fmt(id,pointPrice)}\nCurrent: ${fmt(id,price)}\nRepeat ${repeat} times\n🕐 ${timeStr}`;
-  const wxTitle = `📌 ${id}/USDT Price Point ${fmt(id,pointPrice)}`;
+  const tgMsg = `📌 ${id.replace(/(USDT|USDC|USD)$/,"")}/${getCoinQuote(id)||"USDT"} Price Point Alert\nTriggered: ${fmt(id,pointPrice)}\nCurrent: ${fmt(id,price)}\nRepeat ${repeat} times\n🕐 ${timeStr}`;
+  const wxTitle = `📌 ${id.replace(/(USDT|USDC|USD)$/,"")}/${getCoinQuote(id)||"USDT"} Price Point ${fmt(id,pointPrice)}`;
   const wxDesp  = `Hit: $${fmt(id,pointPrice)}\nCurrent: $${fmt(id,price)}\n${timeStr}`;
 
   const chs = [];
@@ -3027,7 +3027,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
         ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
         : Promise.resolve('skip'),
       cfg.wxOn && cfg.wxToken
-        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id}/USDT 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> Current：$${fmt(id,price)}\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
+        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`📌 **${id.replace(/(USDT|USDC|USD)$/,"")}/${getCoinQuote(id)||"USDT"} 定点触发**\n> 到达：$${fmt(id,pointPrice)}\n> Current：$${fmt(id,price)}\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
         : Promise.resolve('skip')
     ]);
     if (tr==='ok') chs.push('tg');
@@ -3158,8 +3158,8 @@ async function fireTimerAlert(id) {
   const chs = [];
   if (cfg.soundOn) chs.push('snd');
 
-  const tgMsg = `⏱ ${id}/USDT Timed Alert\nPrice: ${fmt(id,price)}\n24H: ${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
-  const wxTitle = `⏱ ${id}/USDT Timed Alert`;
+  const tgMsg = `⏱ ${id.replace(/(USDT|USDC|USD)$/,"")}/${getCoinQuote(id)||"USDT"} Timed Alert\nPrice: ${fmt(id,price)}\n24H: ${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n🕐 ${timeStr}`;
+  const wxTitle = `⏱ ${id.replace(/(USDT|USDC|USD)$/,"")}/${getCoinQuote(id)||"USDT"} Timed Alert`;
   const wxDesp = `Price: $${fmt(id,price)}\n24H: ${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n${timeStr}`;
 
   try {
@@ -3168,7 +3168,7 @@ async function fireTimerAlert(id) {
         ? fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text:tgMsg})}).then(r=>r.json()).then(d=>d.ok?'ok':'err')
         : Promise.resolve('skip'),
       cfg.wxOn && cfg.wxToken
-        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id}/USDT Timed Alert**\n> Price: $${fmt(id,price)}\n> 24H: ${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
+        ? fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:`⏱ **${id.replace(/(USDT|USDC|USD)$/,"")}/${getCoinQuote(id)||"USDT"} Timed Alert**\n> Price: $${fmt(id,price)}\n> 24H: ${mkt[id].change24h>=0?'+':''}${mkt[id].change24h.toFixed(2)}%\n> ${timeStr}`}})}).then(r=>r.json()).then(d=>d.errcode===0?'ok':'err')
         : Promise.resolve('skip')
     ]);
     if (tr==='ok') chs.push('tg');
@@ -3231,8 +3231,8 @@ async function fireAlert(id, price, isUp, level, mode){
   // TG/微信推送，失败不影响日志记录
   try {
     const [tr,wr]=await Promise.all([
-      cfg.tgOn?sendTg(id,price,isUp,level,near):Promise.resolve('skip'),
-      cfg.wxOn?sendWx(id,price,isUp,level,near):Promise.resolve('skip')
+      cfg.tgOn?sendTg(id,price,isUp,level,near,mode):Promise.resolve('skip'),
+      cfg.wxOn?sendWx(id,price,isUp,level,near,mode):Promise.resolve('skip')
     ]);
     if(tr==='ok') chs.push('tg');
     if(wr==='ok') chs.push('wx');
@@ -3404,22 +3404,26 @@ function testVoice() {
 }
 
 // ── Push ──────────────────────────────────────────────────────────
-async function sendTg(id,price,isUp,level,near){
+async function sendTg(id,price,isUp,level,near,mode){
   if(!cfg.tgToken||!cfg.tgChatId) return 'skip';
   const s=state[id],sym=isUp?'📈':'📉',dist=Math.abs(price-s.target);
   const _eq=getCoinQuote(id);
-  const extra=near?`\n🎯 Target ${fmt(id,s.target)} ${_eq} · Distance ${dist>=10?dist.toFixed(0):dist.toFixed(2)} ${_eq}`:'';
-  const text=`${sym} ${id}/USDT ${isUp?'▲ crossed':'▼ crossed'} ${fmt(id,level)}\nPrice: ${fmt(id,price)}${extra}\n🕐 ${new Date().toLocaleTimeString('en-US')}`;
+  const isTarget = mode==='target' && s.target>0;
+  const distStr = isTarget ? `\n🎯 Target: ${fmt(id,s.target)} ${_eq}\n📏 Distance: ${fmtDist(id,dist,price)} ${_eq}` : '';
+  const nearStr = near ? `\n⚠️ Near target zone` : '';
+  const coinBase = id.replace(/USDT$|USDC$|USD$|BTC$|ETH$/,'');
+  const text=`${sym} ${coinBase}/USDT ${isUp?'▲ crossed':'▼ crossed'} ${fmt(id,level)}\nPrice: ${fmt(id,price)} ${_eq}${distStr}${nearStr}\n🕐 ${new Date().toLocaleTimeString('en-US')}`;
   try{
     const r=await fetch(`https://api.telegram.org/bot${cfg.tgToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:cfg.tgChatId,text})});
     const d=await r.json();return d.ok?'ok':'err:'+d.description;
   }catch(e){return 'err:'+e.message;}
 }
-async function sendWx(id,price,isUp,level,near){
+async function sendWx(id,price,isUp,level,near,mode){
   if(!cfg.wxToken) return 'skip';
   const s=state[id], dist=Math.abs(price-s.target);
-  const content=`${isUp?'📈':'📉'} **${id}/USDT** ${isUp?'▲ crossed':'▼ crossed'} **${fmt(id,level)} ${getCoinQuote(id)}**\n> Price: ${fmt(id,price)} ${getCoinQuote(id)}${near?`\n> ⚠️ Near target ${fmt(id,s.target)}`:''}
-> ${new Date().toLocaleTimeString('en-US')}`;
+  const isTarget = mode==='target' && s.target>0;
+  const distLine = isTarget ? `\n> 🎯 Target: ${fmt(id,s.target)} · Distance: ${fmtDist(id,dist,price)} ${getCoinQuote(id)}${near?` ⚠️ Near zone`:''}` : (near?`\n> ⚠️ Near target ${fmt(id,s.target)}`:'');
+  const content=`${isUp?'📈':'📉'} **${id.replace(/(USDT|USDC|USD)$/,"")}/${getCoinQuote(id)||"USDT"}** ${isUp?'▲ crossed':'▼ crossed'} **${fmt(id,level)} ${getCoinQuote(id)}**\n> Price: ${fmt(id,price)} ${getCoinQuote(id)}${distLine}\n> ${new Date().toLocaleTimeString('en-US')}`;
   try{
     const r=await fetch(cfg.wxToken,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content}})});
     const d=await r.json();return d.errcode===0?'ok':'err:'+d.errmsg;

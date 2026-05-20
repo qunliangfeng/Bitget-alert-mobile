@@ -1103,10 +1103,8 @@ function applyLang(langCode) {
         <span id="langFlag" style="font-size:15px">🇬🇧</span>
         <span style="font-size:10px;color:var(--tx2)">▾</span>
       </button>
-      <div id="langMenu" style="display:none;position:absolute;right:0;top:110%;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;z-index:9999;min-width:180px;box-shadow:0 8px 30px #000a;overflow:hidden">
-        <div id="langMenuItems"></div>
-      </div>
     </div>
+    <!-- langMenu is appended to body by JS to avoid stacking context issues -->
     <button class="nav-settings-btn" onclick="openDrawer()" aria-label="Settings">⚙️</button>
   </div>
 </nav>
@@ -4652,32 +4650,42 @@ function buildLangMenu() {
 }
 
 function toggleLangMenu() {
-  const menu = document.getElementById('langMenu');
-  if (!menu) return;
-  if (menu.style.display === 'none') {
-    buildLangMenu();
-    menu.style.display = 'block';
-    setTimeout(() => document.addEventListener('click', closeLangMenuOutside), 10);
-  } else {
-    menu.style.display = 'none';
-  }
+  let menu = document.getElementById('langMenu');
+  if (menu) { menu.remove(); document.removeEventListener('click', closeLangMenuOutside); return; }
+  // Create menu and append to body to escape all stacking contexts
+  menu = document.createElement('div');
+  menu.id = 'langMenu';
+  menu.style.cssText = 'position:fixed;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;z-index:99999;min-width:180px;box-shadow:0 8px 30px #000a;overflow:hidden';
+  const items = document.createElement('div');
+  items.id = 'langMenuItems';
+  menu.appendChild(items);
+  document.body.appendChild(menu);
+  // Position below the button
+  const btn = document.getElementById('langBtn');
+  const r = btn.getBoundingClientRect();
+  menu.style.top = (r.bottom + 6) + 'px';
+  menu.style.right = (window.innerWidth - r.right) + 'px';
+  buildLangMenu();
+  setTimeout(() => document.addEventListener('click', closeLangMenuOutside), 10);
 }
 
 function closeLangMenuOutside(e) {
   const btn = document.getElementById('langBtn');
   const menu = document.getElementById('langMenu');
-  if (btn && !btn.contains(e.target) && menu && !menu.contains(e.target)) {
-    menu.style.display = 'none';
+  if (!menu) return;
+  if (btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.remove();
     document.removeEventListener('click', closeLangMenuOutside);
   }
 }
 
 function selectLang(code) {
-  document.getElementById('langMenu').style.display = 'none';
+  const menu = document.getElementById('langMenu');
+  if (menu) { menu.remove(); }
   document.removeEventListener('click', closeLangMenuOutside);
   applyLang(code);
-  document.getElementById('langFlag').textContent = (window.LANGS&&window.LANGS[code])?.flag || '🌐';
-  buildLangMenu();
+  const flagEl = document.getElementById('langFlag');
+  if (flagEl) flagEl.textContent = (window.LANGS&&window.LANGS[code])?.flag || '🌐';
 }
 
 // Init language after DOM is ready

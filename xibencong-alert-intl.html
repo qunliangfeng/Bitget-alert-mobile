@@ -2763,6 +2763,16 @@ function fmt(id,v){
   return v.toFixed(4);
 }
 
+// Format number for voice - no commas, TTS reads digits naturally
+function fmtVoice(id, v) {
+  if (!v && v !== 0) return '';
+  if (v >= 10000) return v.toFixed(0);  // 77400 → "seventy seven thousand" still, but cleaner
+  if (v >= 1000)  return v.toFixed(1);
+  if (v >= 100)   return v.toFixed(2);
+  if (v >= 10)    return v.toFixed(3);
+  return v.toFixed(4);
+}
+
 function updateNextLvls(id){
   const el=document.getElementById('nl-'+id); if(!el) return;
   const price=mkt[id].price; if(!price){el.innerHTML='';return;}
@@ -2986,7 +2996,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
     console.log('[Price point alert] 第', i+1, 'times，soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
     if (cfg.soundOn) { console.log('[Price point alert] 播放beep'); playBeep(price >= pointPrice); }
     if (cfg.voiceOn) {
-      const txt = `${coin}到达定点Price${fmt(id,pointPrice)}，第${i+1}times提醒`;
+      const txt = `${coin}. ${fmtVoice(id,pointPrice)}.`;
       console.log('[Price point alert] 语音:', txt);
       await speakAndWait(txt);
       await new Promise(r=>setTimeout(r, 2000)); // 说完后再等2秒
@@ -3133,7 +3143,7 @@ async function fireTimerAlert(id) {
   // 声音/语音 — 每times都播
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
   console.log('[TIMER] voiceOn=',cfg.voiceOn,'coin=',coin,'price=',fmt(id,price));
-  if (cfg.voiceOn) speak(`${coin} current price ${fmt(id,price)}`);
+  if (cfg.voiceOn) speak(`${coin}. ${fmtVoice(id,price)}`);
 
   // 推送 — 跟随定时器间隔，不额外限制
   const chs = [];
@@ -3204,8 +3214,8 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.voiceOn){
     const name=getCoinVoiceName(id);
     const dist=Math.abs(price-s.target);
-    const distTxt = (mode==='target'||mode==='near') && s.target>0 ? `, Distance to target: ${fmtDist(id,dist,price)}` : '';
-    const txt = `${name}${isUp?'▲ crossed':'▼ crossed'}${fmt(id,level)}${distTxt}`;
+    const distTxt = (mode==='target'||mode==='near') && s.target>0 ? `` : '';
+    const txt = `${name}. ${fmtVoice(id,level)}`;
     console.log('[ALERT] speaking:', txt);
     speak(txt);
   }

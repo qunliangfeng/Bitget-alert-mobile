@@ -1042,17 +1042,16 @@ const LANGS = {
 };
 window.LANGS = LANGS; // expose globally for speak() across script tags
 
-// Current language state
-let currentLang = localStorage.getItem('xbc_lang') || 'en';
-window.currentLang = currentLang;
+// Current language state — use window so all script blocks can access
+window.currentLang = localStorage.getItem('xbc_lang') || 'en';
 function t(key, ...args) {
-  const lang = LANGS[currentLang] || LANGS.en;
+  const lang = LANGS[window.currentLang] || LANGS.en;
   const val = lang.t[key];
   if (typeof val === 'function') return val(...args);
   return val || LANGS.en.t[key] || key;
 }
 function applyLang(langCode) {
-  currentLang = langCode;
+  window.currentLang = langCode;
   localStorage.setItem('xbc_lang', langCode);
   const _sl = LANGS[langCode]?.speechLang || 'en-US';
   window._xbc_speechLang = _sl; // expose for speak() in body scripts
@@ -4642,7 +4641,7 @@ function buildLangMenu() {
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <span style="font-size:18px">${lang.flag}</span>
       <span>${lang.name}</span>
-      ${code === currentLang ? '<span style="margin-left:auto;color:var(--blue)">✓</span>' : ''}
+      ${code === window.currentLang ? '<span style="margin-left:auto;color:var(--blue)">✓</span>' : ''}
     </div>
   `).join('');
 }
@@ -4679,7 +4678,7 @@ function selectLang(code) {
 // Init language after DOM is ready
 function initLang() {
   const saved = localStorage.getItem('xbc_lang') || 'en';
-  currentLang = saved;
+  window.currentLang = saved;
   const flag = document.getElementById('langFlag');
   if (flag) flag.textContent = (window.LANGS&&window.LANGS[saved])?.flag || '🇬🇧';
   // Pre-load voices so they're available immediately

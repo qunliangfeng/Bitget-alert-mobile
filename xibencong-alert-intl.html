@@ -3276,41 +3276,18 @@ function playBeep(up) {
 
 function speak(text) {
   if (!('speechSynthesis' in window)) return;
-  // iOS Safari: cancel then brief delay helps avoid silent failures
   window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
   const langData = LANGS[currentLang] || LANGS['en'];
   const speechLang = langData.speechLang || 'en-US';
-  const langPrefix = speechLang.split('-')[0];
-  const isFemale = cfg.voiceGender !== 'male';
-
-  function doSpeak() {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = speechLang;
-    u.rate = 1.0;
-    u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      let voice = voices.find(v => v.lang === speechLang && (isFemale ? /female|woman|girl/i.test(v.name) : /male|man|boy/i.test(v.name)));
-      if (!voice) voice = voices.find(v => v.lang === speechLang);
-      if (!voice) voice = voices.find(v => v.lang.startsWith(langPrefix));
-      if (voice) u.voice = voice;
-    }
-    // If no voice found, just set lang and let the system pick (works on iOS)
-    if (!isFemale) u.pitch = 0.5;
-    window.speechSynthesis.speak(u);
-  }
-
-  // On iOS, voices may not be loaded yet — wait for them
+  u.lang = speechLang;
+  u.rate = 1.0;
+  u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
+  if (cfg.voiceGender === 'male') u.pitch = 0.5;
   const voices = window.speechSynthesis.getVoices();
-  if (voices.length === 0 && window.speechSynthesis.onvoiceschanged === null) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.onvoiceschanged = null;
-      doSpeak();
-    };
-    setTimeout(doSpeak, 300); // fallback if onvoiceschanged never fires
-  } else {
-    doSpeak();
-  }
+  const matchVoice = voices.find(v => v.lang.startsWith(speechLang.split('-')[0]));
+  if (matchVoice) u.voice = matchVoice;
+  window.speechSynthesis.speak(u);
 }
 
 // 说完才 resolve，用于定点Repeat播报
@@ -3321,17 +3298,13 @@ function speakAndWait(text) {
     const u = new SpeechSynthesisUtterance(text);
     const _ld = LANGS[currentLang] || LANGS['en'];
     const _sl = _ld.speechLang || 'en-US';
-    const _lp = _sl.split('-')[0];
-    u.lang = _sl; // iOS will use system default if no voice found
+    u.lang = _sl;
     u.rate = 1.0;
     u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
+    if (cfg.voiceGender === 'male') u.pitch = 0.5;
     const _voices = window.speechSynthesis.getVoices();
-    const _isFem = cfg.voiceGender !== 'male';
-    let _voice = _voices.find(v => v.lang === _sl && (_isFem ? /female|woman|girl/i.test(v.name) : /male|man|boy/i.test(v.name)));
-    if (!_voice) _voice = _voices.find(v => v.lang === _sl);
-    if (!_voice) _voice = _voices.find(v => v.lang.startsWith(_lp));
+    const _voice = _voices.find(v => v.lang.startsWith(_sl.split('-')[0]));
     if (_voice) u.voice = _voice;
-    if (!_isFem && !_voice?.name.match(/male|man/i)) u.pitch = 0.5;
     u.onend = () => resolve();
     u.onerror = () => resolve();
     // 保险：最多等10秒

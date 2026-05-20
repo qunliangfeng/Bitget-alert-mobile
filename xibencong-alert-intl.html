@@ -1070,6 +1070,52 @@ function applyLang(langCode) {
     cfg._speechLang = LANGS[langCode]?.speechLang || 'en-US';
   }
 }
+
+// ── Language Menu — defined in head so HTML onclick can find it ──
+let _langMenuOpen = false;
+function toggleLangMenu() {
+  event && event.stopPropagation && event.stopPropagation();
+  const existing = document.getElementById('langMenu');
+  if (existing) { existing.remove(); _langMenuOpen = false; return; }
+  _langMenuOpen = true;
+  const menu = document.createElement('div');
+  menu.id = 'langMenu';
+  menu.style.cssText = 'position:fixed;background:#13161d;border:1px solid #252a38;border-radius:10px;z-index:2147483647;min-width:200px;box-shadow:0 8px 30px rgba(0,0,0,0.8);overflow:auto;max-height:70vh';
+  const btn = document.getElementById('langBtn');
+  const r = btn.getBoundingClientRect();
+  menu.style.top  = (r.bottom + 4) + 'px';
+  menu.style.left = Math.max(4, r.right - 200) + 'px';
+  Object.entries(LANGS).forEach(([code, lang]) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;font-size:14px;color:#e8eaf0;border-bottom:1px solid #252a38';
+    item.innerHTML = '<span style="font-size:20px">' + lang.flag + '</span><span>' + lang.name + '</span>' + (code === window.currentLang ? '<span style="margin-left:auto;color:#3b82f6;font-weight:700">✓</span>' : '');
+    item.onclick = function(e) { e.stopPropagation(); selectLang(code); };
+    item.onmouseenter = function(){ this.style.background='#1a1e28'; };
+    item.onmouseleave = function(){ this.style.background=''; };
+    menu.appendChild(item);
+  });
+  document.body.appendChild(menu);
+  setTimeout(function() {
+    function _outsideClick(e) {
+      const m = document.getElementById('langMenu');
+      if (!m) { document.removeEventListener('click', _outsideClick, true); return; }
+      const b = document.getElementById('langBtn');
+      if (b && b.contains(e.target)) return;
+      if (m.contains(e.target)) return;
+      m.remove(); _langMenuOpen = false;
+      document.removeEventListener('click', _outsideClick, true);
+    }
+    document.addEventListener('click', _outsideClick, true);
+  }, 100);
+}
+function selectLang(code) {
+  const m = document.getElementById('langMenu');
+  if (m) m.remove();
+  _langMenuOpen = false;
+  applyLang(code);
+  const f = document.getElementById('langFlag');
+  if (f) f.textContent = LANGS[code] ? LANGS[code].flag : '🌐';
+}
 </script>
 </head>
 <body>
@@ -1098,7 +1144,7 @@ function applyLang(langCode) {
     </div>
     <!-- Language Selector -->
     <div style="position:relative">
-      <button id="langBtn"
+      <button id="langBtn" onclick="event.stopPropagation();toggleLangMenu();"
         style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer;color:var(--tx);display:flex;align-items:center;gap:5px;min-width:64px">
         <span style="font-size:15px">🌐</span>
         <span id="langFlag" style="font-size:15px">🇬🇧</span>
@@ -4650,82 +4696,7 @@ function buildLangMenu() {
   };
 }
 
-let _langMenuOpen = false;
-
-function toggleLangMenu() {
-  const existing = document.getElementById('langMenu');
-  if (existing) {
-    existing.remove();
-    _langMenuOpen = false;
-    return;
-  }
-  _langMenuOpen = true;
-
-  // Build menu
-  const menu = document.createElement('div');
-  menu.id = 'langMenu';
-  menu.style.cssText = [
-    'position:fixed',
-    'background:var(--bg2)',
-    'border:1px solid var(--bd)',
-    'border-radius:10px',
-    'z-index:2147483647',
-    'min-width:200px',
-    'box-shadow:0 8px 30px rgba(0,0,0,0.6)',
-    'overflow:auto',
-    'max-height:70vh'
-  ].join(';');
-
-  // Position below button
-  const btn = document.getElementById('langBtn');
-  const r = btn.getBoundingClientRect();
-  menu.style.top  = (r.bottom + 4) + 'px';
-  menu.style.left = Math.max(4, r.right - 200) + 'px';
-
-  // Build items
-  const langs = window.LANGS || {};
-  Object.entries(langs).forEach(([code, lang]) => {
-    const item = document.createElement('div');
-    item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;font-size:14px;color:var(--tx);border-bottom:1px solid var(--bd)';
-    item.innerHTML = `<span style="font-size:20px">${lang.flag}</span><span>${lang.name}</span>${code === window.currentLang ? '<span style="margin-left:auto;color:#3b82f6;font-weight:700">✓</span>' : ''}`;
-    item.addEventListener('click', function(e) {
-      e.stopPropagation();
-      selectLang(code);
-    });
-    item.addEventListener('mouseenter', function(){ this.style.background='var(--bg3)'; });
-    item.addEventListener('mouseleave', function(){ this.style.background=''; });
-    menu.appendChild(item);
-  });
-
-  document.body.appendChild(menu);
-
-  // Close on outside click — use capture phase to beat other handlers
-  setTimeout(function() {
-    function outsideClick(e) {
-      const m = document.getElementById('langMenu');
-      const b = document.getElementById('langBtn');
-      if (!m) { document.removeEventListener('click', outsideClick, true); return; }
-      if (b && b.contains(e.target)) return; // clicking button toggles
-      if (m && m.contains(e.target)) return; // clicking inside menu
-      m.remove();
-      _langMenuOpen = false;
-      document.removeEventListener('click', outsideClick, true);
-    }
-    document.addEventListener('click', outsideClick, true);
-  }, 50);
-}
-
-function closeLangMenuOutside() {} // kept for compatibility
-
-function selectLang(code) {
-  const menu = document.getElementById('langMenu');
-  if (menu) menu.remove();
-  _langMenuOpen = false;
-  applyLang(code);
-  window.currentLang = code;
-  const flagEl = document.getElementById('langFlag');
-  if (flagEl) flagEl.textContent = (window.LANGS && window.LANGS[code]) ? window.LANGS[code].flag : '🌐';
-}
+// Language menu functions are defined in head script
 
 // Init language after DOM is ready
 function initLang() {

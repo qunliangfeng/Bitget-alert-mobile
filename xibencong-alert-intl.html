@@ -2018,9 +2018,16 @@ function applySettings(data) {
       });
     }
   } catch(_) {}
+  // Re-apply saved language (speech lang + flag)
+  const _lcode = localStorage.getItem('xbc_lang') || 'en';
+  const _ldata = window.LANGS && window.LANGS[_lcode];
+  window._xbc_speechLang = _ldata ? _ldata.speechLang : 'en-US';
+  cfg._speechLang = window._xbc_speechLang;
+  const _lf = document.getElementById('langFlag');
+  if (_lf && _ldata) _lf.textContent = _ldata.flag;
+  const _ls = document.getElementById('langSelect');
+  if (_ls) _ls.value = _lcode;
 }
-
-// ── 交易所配置 ────────────────────────────────────────────────────
 const EXCHANGES = {
   bitget: {
     name: 'Bitget', flag: '🟡',

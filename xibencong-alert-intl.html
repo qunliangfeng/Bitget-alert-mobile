@@ -1053,9 +1053,10 @@ function t(key, ...args) {
 }
 function applyLang(langCode) {
   currentLang = langCode;
-  window.currentLang = langCode; // keep window in sync
   localStorage.setItem('xbc_lang', langCode);
-  document.documentElement.lang = LANGS[langCode]?.speechLang?.split('-')[0] || 'en';
+  const _sl = LANGS[langCode]?.speechLang || 'en-US';
+  window._xbc_speechLang = _sl; // expose for speak() in body scripts
+  document.documentElement.lang = _sl.split('-')[0];
   // Re-render all translatable elements
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -3249,8 +3250,7 @@ function unlockAudioAndVoice() {
   if ('speechSynthesis' in window) {
     const u = new SpeechSynthesisUtterance('');
     u.volume = 0;
-    const _ld = (typeof LANGS !== 'undefined' && LANGS[currentLang]) || {speechLang:'en-US'};
-    u.lang = _ld.speechLang || 'en-US';
+    u.lang = window._xbc_speechLang || 'en-US';
     window.speechSynthesis.speak(u);
     // 预加载语音列表
     window.speechSynthesis.getVoices();
@@ -3282,24 +3282,16 @@ function playBeep(up) {
 }
 
 function speak(text) {
-  console.log('[SPEAK] called, text=',text,'voiceOn=',cfg.voiceOn);
-  if (!('speechSynthesis' in window)) { console.log('[SPEAK] not supported'); return; }
+  if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  // LANGS may not be available in all scopes - use window.LANGS safely
-  const _LANGS = (typeof LANGS !== 'undefined') ? LANGS : (typeof window.LANGS !== 'undefined' ? window.LANGS : null);
-  const _curLang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
-  const langData = _LANGS ? (_LANGS[_curLang] || _LANGS['en']) : {speechLang:'en-US'};
-  const speechLang = langData.speechLang || 'en-US';
-  u.lang = speechLang;
-  u.onstart = () => console.log('[SPEAK] started');
-  u.onend   = () => console.log('[SPEAK] ended');
-  u.onerror = (e) => console.log('[SPEAK] error:', e.error);
+  // Use _speechLang global set by applyLang - avoids cross-script LANGS reference
+  u.lang = window._xbc_speechLang || 'en-US';
   u.rate = 1.0;
   u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
   if (cfg.voiceGender === 'male') u.pitch = 0.5;
   const voices = window.speechSynthesis.getVoices();
-  const matchVoice = voices.find(v => v.lang.startsWith(speechLang.split('-')[0]));
+  const matchVoice = voices.find(v => v.lang.startsWith(u.lang.split('-')[0]));
   if (matchVoice) u.voice = matchVoice;
   window.speechSynthesis.speak(u);
 }
@@ -3310,8 +3302,7 @@ function speakAndWait(text) {
     if (!('speechSynthesis' in window)) { resolve(); return; }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const _ld = LANGS[currentLang] || LANGS['en'];
-    const _sl = _ld.speechLang || 'en-US';
+    const _sl = window._xbc_speechLang || 'en-US';
     u.lang = _sl;
     u.rate = 1.0;
     u.volume = cfg.volume !== undefined ? cfg.volume : 0.8;
@@ -3356,8 +3347,7 @@ function testVoice() {
   function doSpeak() {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance('Bitcoin crossed one thousand, attention');
-    const _tld = (typeof LANGS !== 'undefined' && LANGS[currentLang]) || {speechLang:'en-US'};
-    const _tsl = _tld.speechLang || 'en-US';
+    const _tsl = window._xbc_speechLang || 'en-US';
     u.lang = _tsl; u.rate = 1.0; u.volume = 1.0;
     const _tvs = window.speechSynthesis.getVoices();
     const _tisFem = cfg.voiceGender !== 'male';
@@ -4623,7 +4613,7 @@ if ('serviceWorker' in navigator) {
 function buildLangMenu() {
   const menu = document.getElementById('langMenuItems');
   if (!menu) return;
-  menu.innerHTML = Object.entries(LANGS).map(([code, lang]) => `
+  menu.innerHTML = Object.entries(window.LANGS||{}).map(([code, lang]) => `
     <div onclick="selectLang('${code}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:var(--tx);border-bottom:1px solid var(--bd);transition:background 0.15s"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <span style="font-size:18px">${lang.flag}</span>
@@ -4658,7 +4648,7 @@ function selectLang(code) {
   document.getElementById('langMenu').style.display = 'none';
   document.removeEventListener('click', closeLangMenuOutside);
   applyLang(code);
-  document.getElementById('langFlag').textContent = LANGS[code]?.flag || '🌐';
+  document.getElementById('langFlag').textContent = (window.LANGS&&window.LANGS[code])?.flag || '🌐';
   buildLangMenu();
 }
 
@@ -4667,7 +4657,7 @@ function initLang() {
   const saved = localStorage.getItem('xbc_lang') || 'en';
   currentLang = saved;
   const flag = document.getElementById('langFlag');
-  if (flag) flag.textContent = LANGS[saved]?.flag || '🇬🇧';
+  if (flag) flag.textContent = (window.LANGS&&window.LANGS[saved])?.flag || '🇬🇧';
   // Pre-load voices so they're available immediately
   if ('speechSynthesis' in window) {
     window.speechSynthesis.getVoices();

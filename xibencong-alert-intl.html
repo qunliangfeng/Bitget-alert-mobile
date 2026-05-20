@@ -2763,13 +2763,13 @@ function fmt(id,v){
   return v.toFixed(4);
 }
 
-// Format number for voice - no commas, TTS reads digits naturally
+// Format number for voice - use K/M so TTS says "77.4 K" not "seventy-seven thousand"
 function fmtVoice(id, v) {
   if (!v && v !== 0) return '';
-  if (v >= 10000) return v.toFixed(0);  // 77400 → "seventy seven thousand" still, but cleaner
-  if (v >= 1000)  return v.toFixed(1);
-  if (v >= 100)   return v.toFixed(2);
-  if (v >= 10)    return v.toFixed(3);
+  if (v >= 1000000) return (v/1000000).toFixed(2) + ' M';
+  if (v >= 1000)    return (v/1000).toFixed(1) + ' K';
+  if (v >= 100)     return v.toFixed(2);
+  if (v >= 10)      return v.toFixed(3);
   return v.toFixed(4);
 }
 
@@ -2996,7 +2996,7 @@ async function firePointAlert(id, price, pointPrice, repeat) {
     console.log('[Price point alert] 第', i+1, 'times，soundOn=', cfg.soundOn, 'voiceOn=', cfg.voiceOn);
     if (cfg.soundOn) { console.log('[Price point alert] 播放beep'); playBeep(price >= pointPrice); }
     if (cfg.voiceOn) {
-      const txt = `${coin}. ${fmtVoice(id,pointPrice)}.`;
+      const txt = `${coin}. hit. ${fmtVoice(id,pointPrice)}.`;
       console.log('[Price point alert] 语音:', txt);
       await speakAndWait(txt);
       await new Promise(r=>setTimeout(r, 2000)); // 说完后再等2秒
@@ -3143,7 +3143,7 @@ async function fireTimerAlert(id) {
   // 声音/语音 — 每times都播
   if (cfg.soundOn) playBeep(mkt[id].change24h>=0);
   console.log('[TIMER] voiceOn=',cfg.voiceOn,'coin=',coin,'price=',fmt(id,price));
-  if (cfg.voiceOn) speak(`${coin}. ${fmtVoice(id,price)}`);
+  if (cfg.voiceOn) speak(`${coin}. price. ${fmtVoice(id,price)}`);
 
   // 推送 — 跟随定时器间隔，不额外限制
   const chs = [];
@@ -3215,7 +3215,7 @@ async function fireAlert(id, price, isUp, level, mode){
     const name=getCoinVoiceName(id);
     const dist=Math.abs(price-s.target);
     const distTxt = (mode==='target'||mode==='near') && s.target>0 ? `` : '';
-    const txt = `${name}. ${fmtVoice(id,level)}`;
+    const txt = mode==='timer' ? `${name}. ${fmtVoice(id,level)}` : `${name}. ${isUp?'up':'down'}. ${fmtVoice(id,level)}`;
     console.log('[ALERT] speaking:', txt);
     speak(txt);
   }

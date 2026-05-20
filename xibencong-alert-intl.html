@@ -2766,11 +2766,20 @@ function fmt(id,v){
 // Format number for voice - use K/M so TTS says "77.4 K" not "seventy-seven thousand"
 function fmtVoice(id, v) {
   if (!v && v !== 0) return '';
-  if (v >= 1000000) return (v/1000000).toFixed(2) + ' M';
-  if (v >= 1000)    return (v/1000).toFixed(1) + ' K';
-  if (v >= 100)     return v.toFixed(2);
-  if (v >= 10)      return v.toFixed(3);
-  return v.toFixed(4);
+  // Determine decimal places based on coin size
+  let decimals;
+  if (v >= 10000)     decimals = 0;
+  else if (v >= 100)  decimals = 1;
+  else if (v >= 10)   decimals = 2;
+  else if (v >= 1)    decimals = 3;
+  else                decimals = 4;
+  const str = v.toFixed(decimals);
+  // Spell each character: digits read individually, dot read as "point", minus as "minus"
+  return str.split('').map(ch => {
+    if (ch === '.') return 'point';
+    if (ch === '-') return 'minus';
+    return ch; // each digit as its own token, TTS reads them one by one
+  }).join(' ');
 }
 
 function updateNextLvls(id){
@@ -3214,8 +3223,8 @@ async function fireAlert(id, price, isUp, level, mode){
   if(cfg.voiceOn){
     const name=getCoinVoiceName(id);
     const dist=Math.abs(price-s.target);
-    const distTxt = (mode==='target'||mode==='near') && s.target>0 ? `` : '';
-    const txt = mode==='timer' ? `${name}. ${fmtVoice(id,level)}` : `${name}. ${isUp?'up':'down'}. ${fmtVoice(id,level)}`;
+    const distTxt = (mode==='target') && s.target>0 ? `. distance ${fmtVoice(id, dist)}` : '';
+    const txt = mode==='timer' ? `${name}. ${fmtVoice(id,level)}` : `${name}. ${isUp?'up':'down'}. ${fmtVoice(id,level)}${distTxt}`;
     console.log('[ALERT] speaking:', txt);
     speak(txt);
   }

@@ -1253,6 +1253,7 @@ function applyLang(langCode) {
         <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testSound()">🔊 Test Sound</button>
         <button class="big-btn" style="flex:1;padding:10px;font-size:13px" onclick="testVoice()">🎙 Test Voice</button>
       </div>
+      <button class="big-btn" style="width:100%;margin-top:6px;padding:10px;font-size:12px;background:var(--bg3)" onclick="debugSpeak()">🔍 Debug Voice</button>
       <div id="audioTestMsg" style="font-size:11px;color:var(--tx3);text-align:center;display:none"></div>
     </div>
     <div class="drow">
@@ -3644,14 +3645,9 @@ const COIN_VOICE_NAME = {
   COIN:'Coinbase', AMZN:'Amazon', GOOGL:'Google', META:'Meta', MSTR:'Microstrategy',
 };
 function getCoinVoiceName(id) {
-  // 先尝试原始 id（如 BTC）
-  if (COIN_VOICE_NAME[id]) return COIN_VOICE_NAME[id];
-  // Custom币 id 可能是完整交易对如 XRPUSDT，去掉稳定币后缀取 base
+  // Spell out letters for reliable TTS in any language
   const base = id.replace(/USDT$|BUSD$|USDC$|BTC$|ETH$/i, '').toUpperCase();
-  if (base && base !== id && COIN_VOICE_NAME[base]) return COIN_VOICE_NAME[base];
-  // 没有中文名：用 base（去掉后缀后的部分）逐字母读
-  const readId = base || id;
-  return readId.split('').join(' ');
+  return (base || id).split('').join(' ');
 }
 function onMoreExSelect(exId) {
   if (!exId) return;
@@ -4684,6 +4680,30 @@ function copyWechatId(el) {
       el.style.borderColor = 'var(--bd)';
     }, 2500);
   });
+}
+
+function debugSpeak() {
+  const msg = document.getElementById('voiceTestMsg');
+  if (msg) { msg.style.display='block'; msg.style.color='var(--blue)'; msg.textContent='Checking…'; }
+
+  const synth = window.speechSynthesis;
+  if (!synth) { if(msg) msg.textContent='❌ speechSynthesis not supported'; return; }
+
+  const voices = synth.getVoices();
+  const enVoices = voices.filter(v => v.lang.startsWith('en'));
+  const info = `Voices: ${voices.length} total, ${enVoices.length} English. Lang: ${navigator.language}`;
+  if (msg) msg.textContent = info;
+
+  // Try simplest possible speak
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance('Hello. Bitcoin crossed one thousand.');
+  u.lang = 'en-US';
+  u.volume = 1.0;
+  u.rate = 1.0;
+  u.onstart = () => { if(msg){msg.style.color='var(--green)';msg.textContent='✅ Speaking: '+info;} };
+  u.onend   = () => { if(msg){msg.style.color='var(--green)';msg.textContent='✅ Done. '+info;} };
+  u.onerror = (e) => { if(msg){msg.style.color='var(--red)';msg.textContent='❌ Error: '+e.error+' | '+info;} };
+  synth.speak(u);
 }
 </script>
 

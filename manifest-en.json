@@ -1,6 +1,6 @@
 {
-  "name": "Xibencong Crypto Alert",
-  "short_name": "Crypto Alert",
+  "name": "Xibencong Alert",
+  "short_name": "Xibencong Alert",
   "description": "Real-time crypto price alerts with voice & Telegram push",
   "start_url": "/Bitget-alert-mobile/xibencong-alert-en.html",
   "scope": "/Bitget-alert-mobile/",

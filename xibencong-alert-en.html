@@ -3277,7 +3277,12 @@ async function fireAlert(id, price, isUp, level, mode){
   if(card){
     const isActive = card.classList.contains('coin-active');
     card.className='card'+(isActive?' coin-active':'')+' flash-'+(isUp?'up':'down')+(near?' near-target':'');
-    setTimeout(()=>{ card.className='card'+(isActive?' coin-active':'')+(near?' near-target':''); },2500);
+    setTimeout(()=>{
+      // Re-read enabled state at timeout time, not from closure
+      const stillActive = state[id] && state[id].enabled;
+      const stillNear = isNear(id, state[id]?.price||0);
+      card.className='card'+(stillActive?' coin-active':'')+(stillNear?' near-target':'');
+    },2500);
   }
   const chs=[];
   if(cfg.soundOn){ playBeep(isUp); chs.push('snd'); }

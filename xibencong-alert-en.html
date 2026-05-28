@@ -1804,6 +1804,46 @@ async function syncSettingsToCloud(data) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ licenseCode, settings: data }),
     });
+    // Also sync monitor settings so Worker Cron can push when page is closed
+    await syncMonitorToCloud(licenseCode, data);
+  } catch(_) {}
+}
+
+// Sync monitor config to Worker — enables background TG push when page is closed
+async function syncMonitorToCloud(licenseCode, data) {
+  try {
+    const coins = COINS.map(c => {
+      const s = state[c.id] || {};
+      return {
+        id: c.id,
+        sym: c.sym,
+        exchange: currentExchange || 'bitget',
+        fixedOn:   s.fixedOn   || false,
+        fixedStep: s.fixedStep || 0,
+        lastLevel: s.lastLevel || 0,
+        targetOn:  s.targetOn  || false,
+        target:    s.target    || 0,
+        farStep:   s.farStep   || 0,
+        nearStep:  s.nearStep  || 0,
+        nearDist:  s.nearDist  || 0,
+        pointOn:   s.pointOn   || false,
+        points:    s.points    || [],
+      };
+    }).filter(c => c.fixedOn || c.targetOn || c.pointOn);
+
+    await fetch(`${WORKER_URL}/monitor/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        licenseCode,
+        settings: {
+          tgToken:  data.cfg?.tgToken  || cfg.tgToken,
+          tgChatId: data.cfg?.tgChatId || cfg.tgChatId,
+          tgOn:     data.cfg?.tgOn !== false,
+          coins,
+        }
+      }),
+    });
   } catch(_) {}
 }
 

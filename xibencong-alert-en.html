@@ -1794,7 +1794,8 @@ function saveSettings() {
 // 上传设置到 Worker KV
 async function syncSettingsToCloud(data) {
   try {
-    const licRaw = localStorage.getItem(LIC_KEY) || getCookie('xbc_lic');
+    const _licKey = 'bitget_license_v1';
+    const licRaw = localStorage.getItem(_licKey) || getCookie('xbc_lic');
     if (!licRaw) return;
     const licObj = JSON.parse(licRaw);
     const licenseCode = licObj.code;
@@ -1818,6 +1819,7 @@ async function syncMonitorToCloud(licenseCode, data) {
         id: c.id,
         sym: c.sym,
         exchange: currentExchange || 'bitget',
+        mktType: mktType || 'spot',
         fixedOn:   s.fixedOn   || false,
         fixedStep: s.fixedStep || 0,
         lastLevel: s.lastLevel || 0,
@@ -1831,7 +1833,7 @@ async function syncMonitorToCloud(licenseCode, data) {
       };
     }).filter(c => c.fixedOn || c.targetOn || c.pointOn);
 
-    await fetch(`${WORKER_URL}/monitor/save`, {
+    await fetch('https://price-alert-worker.qunliang-feng.workers.dev/monitor/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

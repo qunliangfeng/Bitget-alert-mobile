@@ -87,15 +87,6 @@ export default {
     if (path === '/monitor/save' && request.method === 'POST') return handleMonitorSave(request, env);
     if (path === '/monitor/get'  && request.method === 'POST') return handleMonitorGet(request, env);
     if (path === '/monitor/stop' && request.method === 'POST') return handleMonitorStop(request, env);
-    if (path === '/monitor/debug' && request.method === 'GET') {
-      const list = await env.LICENSES.list({ prefix: 'monitor:', limit: 20 });
-      const result = [];
-      for (const key of list.keys) {
-        const raw = await env.LICENSES.get(key.name);
-        result.push({ key: key.name, data: raw ? JSON.parse(raw) : null });
-      }
-      return json({ count: result.length, monitors: result });
-    }
 
     // Webhook
     if (path === '/trial/request'    && request.method === 'POST') return handleTrialRequest(request, env);
@@ -793,6 +784,16 @@ async function handleMonitorSave(request, env) {
     JSON.stringify(monitorData),
     { expirationTtl: 30 * 24 * 3600 } // 30天后自动删除
   );
+
+  // 维护监控索引（避免 Cron 使用 list() 消耗配额）
+  const idxRaw = await env.LICENSES.get('monitor_index');
+  const idx = idxRaw ? JSON.parse(idxRaw) : [];
+  const code = licenseCode.toUpperCase();
+  if (!idx.includes(code)) {
+    idx.push(code);
+    await env.LICENSES.put('monitor_index', JSON.stringify(idx), { expirationTtl: 60 * 24 * 3600 });
+  }
+
   return json({ success: true });
 }
 
@@ -809,11 +810,13 @@ async function handleMonitorGet(request, env) {
 async function handleMonitorStop(request, env) {
   const { licenseCode } = await request.json();
   if (!licenseCode) return json({ error: 'missing_params' });
-  const raw = await env.LICENSES.get(`monitor:${licenseCode.toUpperCase()}`);
-  if (raw) {
-    const data = JSON.parse(raw);
-    data.enabled = false;
-    await env.LICENSES.put(`monitor:${licenseCode.toUpperCase()}`, JSON.stringify(data), { expirationTtl: 30 * 24 * 3600 });
+  const code = licenseCode.toUpperCase();
+  await env.LICENSES.delete(`monitor:${code}`);
+  // Remove from index
+  const idxRaw = await env.LICENSES.get('monitor_index');
+  if (idxRaw) {
+    const idx = JSON.parse(idxRaw).filter(c => c !== code);
+    await env.LICENSES.put('monitor_index', JSON.stringify(idx), { expirationTtl: 60 * 24 * 3600 });
   }
   return json({ success: true });
 }
@@ -876,16 +879,18 @@ async function sendTelegram(token, chatId, text) {
 
 // Cron 主函数 — 每分钟执行
 async function runMonitor(env) {
-  // 列出所有监控设置
-  const list = await env.LICENSES.list({ prefix: 'monitor:', limit: 100 });
-  if (!list.keys.length) return;
+  // 用索引读取所有监控key，避免使用 list() 消耗KV配额
+  const idxRaw = await env.LICENSES.get('monitor_index');
+  if (!idxRaw) return;
+  const codes = JSON.parse(idxRaw);
+  if (!codes.length) return;
 
   const now = Date.now();
-  const timeStr = new Date(now).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  const timeStr = new Date(now).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  for (const key of list.keys) {
+  for (const code of codes) {
     try {
-      const raw = await env.LICENSES.get(key.name);
+      const raw = await env.LICENSES.get(`monitor:${code}`);
       if (!raw) continue;
       const monitor = JSON.parse(raw);
       if (!monitor.enabled) continue;
